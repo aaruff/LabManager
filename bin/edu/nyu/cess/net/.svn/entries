@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="90"
+   name=""
+   committed-date="2009-10-07T20:48:10.814684Z"
+   url="file:///home/anwarruff/subversion/CESSApplicationManager/trunk/CESSApplicationManager/src/edu/nyu/cess/net"
+   last-author="anwarruff"
+   kind="dir"
+   uuid="279a53ef-e270-0410-bc1d-e261a0466cbe"
+   repos="file:///home/anwarruff/subversion"
+   revision="160"/>
+<entry
+   committed-rev="81"
+   name="ClientNetworkInterfaceObserver.java"
+   text-time="2011-03-31T00:46:45.000000Z"
+   committed-date="2009-10-05T19:34:28.391541Z"
+   checksum="554b474e23352b228272274958a1b18f"
+   last-author="anwarruff"
+   kind="file"
+   prop-time="2011-03-31T00:46:45.000000Z"/>
+<entry
+   committed-rev="39"
+   name="DataPacket.java"
+   text-time="2011-03-31T00:46:45.000000Z"
+   committed-date="2009-09-02T15:10:09.940888Z"
+   checksum="08d88b866138ed0e519b76b91ec58d75"
+   last-author="anwarruff"
+   kind="file"
+   prop-time="2011-03-31T00:46:45.000000Z"/>
+<entry
+   committed-rev="90"
+   name="SocketInfo.java"
+   text-time="2011-03-31T00:46:45.000000Z"
+   committed-date="2009-10-07T20:48:10.814684Z"
+   checksum="5ec380423afe3e43d4247592fe127d01"
+   last-author="anwarruff"
+   kind="file"
+   prop-time="2011-03-31T00:46:45.000000Z"/>
+<entry
+   committed-rev="83"
+   name="LiteClientNetworkInterface.java"
+   text-time="2011-03-31T00:46:45.000000Z"
+   committed-date="2009-10-05T21:38:47.633922Z"
+   checksum="88d21d0534f7171ddba6122fd12e5d0d"
+   last-author="anwarruff"
+   kind="file"
+   prop-time="2011-03-31T00:46:45.000000Z"/>
+<entry
+   committed-rev="82"
+   name="ClientNetworkInterface.java"
+   text-time="2011-03-31T00:46:45.000000Z"
+   committed-date="2009-10-05T20:57:31.108869Z"
+   checksum="3ed114903f53f060bd5423bd732e41a0"
+   last-author="anwarruff"
+   kind="file"
+   prop-time="2011-03-31T00:46:45.000000Z"/>
+<entry
+   committed-rev="69"
+   name="ClientNetworkInterfaceObservable.java"
+   text-time="2011-03-31T00:46:45.000000Z"
+   committed-date="2009-09-30T16:54:24.972935Z"
+   checksum="b7b71cf7d7412d888d016cd7308ab9e5"
+   last-author="anwarruff"
+   kind="file"
+   prop-time="2011-03-31T00:46:45.000000Z"/>
+</wc-entries>
