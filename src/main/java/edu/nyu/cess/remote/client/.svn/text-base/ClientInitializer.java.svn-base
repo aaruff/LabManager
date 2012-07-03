@@ -1,0 +1,10 @@
+package edu.nyu.cess.client;
+
+public class ClientInitializer {
+
+	public static void main(String[] args) {
+		Client client = new Client();
+		client.initServerConnection();
+	}
+
+}
