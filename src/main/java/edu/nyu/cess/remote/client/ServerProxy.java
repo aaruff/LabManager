@@ -6,12 +6,12 @@ package edu.nyu.cess.remote.client;
 import java.io.File;
 import java.util.ArrayList;
 
-import edu.nyu.cess.remote.app.ExecutionRequest;
-import edu.nyu.cess.remote.app.State;
-import edu.nyu.cess.remote.network.ClientNetworkInterface;
-import edu.nyu.cess.remote.network.ClientNetworkInterfaceObserver;
-import edu.nyu.cess.remote.network.DataPacket;
-import edu.nyu.cess.remote.network.SocketInfo;
+import edu.nyu.cess.remote.common.app.ExecutionRequest;
+import edu.nyu.cess.remote.common.app.State;
+import edu.nyu.cess.remote.common.net.ClientNetworkInterface;
+import edu.nyu.cess.remote.common.net.ClientNetworkInterfaceObserver;
+import edu.nyu.cess.remote.common.net.DataPacket;
+import edu.nyu.cess.remote.common.net.SocketInfo;
 
 /**
  * @author akira

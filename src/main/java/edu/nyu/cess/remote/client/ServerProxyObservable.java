@@ -3,7 +3,7 @@
  */
 package edu.nyu.cess.remote.client;
 
-import edu.nyu.cess.remote.app.ExecutionRequest;
+import edu.nyu.cess.remote.common.app.ExecutionRequest;
 
 public interface ServerProxyObservable {
 

@@ -2,12 +2,48 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.nyu.cess.remote.client</groupId>
   <artifactId>AppRemoteClient</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>1.0</version>
+  <packaging>jar</packaging>
+
+
+  <properties>
+    <project.build.sourceEncoding>
+    UTF-8
+    </project.build.sourceEncoding>
+    <project.reporting.outputEncoding>
+    UTF-8
+    </project.reporting.outputEncoding>
+  </properties>
+
+  <name>CESS Remote</name>
+  <organization>
+  	<name>The Center for Experimental Social Science</name>
+  	<url>http://cess.nyu.edu</url>
+  </organization>
+
   <dependencies>
   	<dependency>
   		<groupId>edu.nyu.cess.remote.common</groupId>
   		<artifactId>AppRemoteCommon</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0</version>
   	</dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+        <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <configuration>
+                <archive>
+                    <manifest>
+                        <mainClass>edu.nyu.cess.remote.client.ClientInitializer</mainClass>
+                    </manifest>
+                </archive>
+                <descriptorRefs>
+                    <descriptorRef>jar-with-dependencies</descriptorRef>
+                </descriptorRefs>
+            </configuration>
+        </plugin>
+    </plugins>
+  </build>
 </project>

@@ -6,12 +6,12 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
-import edu.nyu.cess.remote.app.Application;
-import edu.nyu.cess.remote.app.ApplicationObserver;
-import edu.nyu.cess.remote.app.ExecutionRequest;
-import edu.nyu.cess.remote.app.StartedState;
-import edu.nyu.cess.remote.app.State;
-import edu.nyu.cess.remote.app.StopedState;
+import edu.nyu.cess.remote.common.app.Application;
+import edu.nyu.cess.remote.common.app.ApplicationObserver;
+import edu.nyu.cess.remote.common.app.ExecutionRequest;
+import edu.nyu.cess.remote.common.app.StartedState;
+import edu.nyu.cess.remote.common.app.State;
+import edu.nyu.cess.remote.common.app.StopedState;
 
 /**
  * The {@link Client} essentially manages local application execution requests
