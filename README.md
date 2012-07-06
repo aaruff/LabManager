@@ -3,9 +3,9 @@ CESS Application Remote (Client)
 The client application starts, stops, and monitors applications
 specified by the remote server.
 
-Version
+Requirement
 --------------
-1.0.0
+Java 1.6
 
 Installation
 ------------------
