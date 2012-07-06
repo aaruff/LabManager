@@ -1,3 +1,0 @@
-package edu.nyu.cess.app;
-
-public interface State {}
