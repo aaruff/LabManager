@@ -3,6 +3,8 @@
  */
 package edu.nyu.cess.remote.server;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -12,7 +14,7 @@ import java.util.TreeSet;
 import edu.nyu.cess.remote.common.app.State;
 
 /**
- * @author akira
+ * @author Anwar A. Ruff 
  */
 public class LiteClients implements LiteClientsObservable {
 
@@ -25,43 +27,24 @@ public class LiteClients implements LiteClientsObservable {
 
 	String sortedHostNames[];
 
-	private final HashMap<String, String> hostNames = new HashMap<String, String>();
-
 	public LiteClients() {
-		hostNames.put("192.168.171.33", "Lab-01");
-		hostNames.put("192.168.171.28", "Lab-02");
-		hostNames.put("192.168.171.29", "Lab-03");
-		hostNames.put("192.168.171.32", "Lab-04");
-		hostNames.put("192.168.171.8", "Lab-05");
-		hostNames.put("192.168.171.10", "Lab-06");
-		hostNames.put("192.168.171.37", "Lab-07");
-		hostNames.put("192.168.171.40", "Lab-08");
-		hostNames.put("192.168.171.39", "Lab-09");
-		hostNames.put("192.168.171.38", "Lab-10");
-		hostNames.put("192.168.171.42", "Lab-11");
-		hostNames.put("192.168.171.43", "Lab-12");
-		hostNames.put("192.168.171.45", "Lab-13");
-		hostNames.put("192.168.171.46", "Lab-14");
-		hostNames.put("192.168.171.47", "Lab-15");
-		hostNames.put("192.168.171.48", "Lab-16");
-		hostNames.put("192.168.171.49", "Lab-17");
-		hostNames.put("192.168.171.51", "Lab-18");
-		hostNames.put("192.168.171.52", "Lab-19");
-		hostNames.put("192.168.171.53", "Lab-20");
-		hostNames.put("192.168.171.54", "Lab-21");
-		hostNames.put("192.168.171.55", "Lab-22");
-		hostNames.put("192.168.171.56", "Lab-23");
-		hostNames.put("192.168.171.57", "Lab-24");
-
 		sortedHostNames = new String[0];
 	}
 
 	public LiteClient put(String ipAddress, LiteClient liteClient) {
-
-		String hostName = hostNames.get(ipAddress);
-		if (hostName == null) {
+		
+		String hostName;
+		try {
+			InetAddress addr = InetAddress.getByName(ipAddress);
+			hostName = addr.getHostName();
+			if (hostName.isEmpty()) {
+				hostName = ipAddress;
+			}
+		} 
+		catch (UnknownHostException e) {
 			hostName = ipAddress;
 		}
+			
 
 		liteClient.setHostName(hostName);
 
