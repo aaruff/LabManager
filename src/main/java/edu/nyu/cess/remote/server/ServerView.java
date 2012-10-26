@@ -79,7 +79,7 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 	private final Server server;
 
 	public ServerView(Server server) {
-		super("Center for Experimental Social Science Lab Application Manager (CESS LAM)");
+		super("CESS Application Remote");
 		this.server = server;
 	}
 
