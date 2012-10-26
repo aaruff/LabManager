@@ -2,10 +2,103 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.nyu.cess.remote.client</groupId>
   <artifactId>AppRemoteClient</artifactId>
-  <version>1.0</version>
-  <packaging>jar</packaging>
+  <version>1.0-SNAPSHOT</version>
 
+  <dependencies>
+  	<dependency>
+  		<groupId>edu.nyu.cess.remote.common</groupId>
+  		<artifactId>AppRemoteCommon</artifactId>
+  		<version>1.0-SNAPSHOT</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>log4j</groupId>
+  		<artifactId>log4j</artifactId>
+  		<version>1.2.8</version>
+  	</dependency>
+  </dependencies>
+  
+  <dependencyManagement>
+  	<dependencies>
+  		<dependency>
+  			<groupId>edu.nyu.cess.remote.common</groupId>
+  			<artifactId>AppRemoteCommon</artifactId>
+  			<version>1.0-SNAPSHOT</version>
+  		</dependency>
+  	</dependencies>
+  </dependencyManagement>
 
+  <name>CESS Application Remote Client</name>
+  <organization>
+  	<name>The Center for Experimental Social Science</name>
+  	<url>http://cess.nyu.edu</url>
+  </organization>
+
+ <build>
+	 <sourceDirectory>src/main/java</sourceDirectory>
+     <resources>
+	     <resource>
+		     <directory>src/main/java/resource</directory>
+		     <excludes>
+		         <exclude>**/*.java</exclude>
+		     </excludes>
+	     </resource>
+	     <resource>
+		     <directory>${basedir}/src/main/resource/logging</directory>
+		     <includes>
+			     <include>log4j.xml</include>
+		     </includes>
+	     </resource>
+   	</resources>
+   	
+    <plugins>
+    
+	    <plugin>
+	        <artifactId>maven-compiler-plugin</artifactId>
+	        <version>2.3.2</version>
+	        <configuration>
+	          <source>1.6</source>
+	          <target>1.6</target>
+	        </configuration>
+	    </plugin>
+	    
+        <plugin>
+	      	<groupId>org.apache.maven.plugins</groupId>
+	      	<artifactId>maven-assembly-plugin</artifactId>
+        </plugin>
+         
+        <plugin>
+	      	<groupId>org.apache.maven.plugins</groupId>
+	      	<artifactId>maven-jar-plugin</artifactId>
+	      	<version>2.3.2</version>
+	      	<configuration>
+	          <archive>
+	            <manifest>
+	              <addClasspath>true</addClasspath>
+	              <mainClass>edu.nyu.cess.remote.client.ClientInitializer</mainClass>
+	            </manifest>
+	          </archive>
+	        </configuration>
+        </plugin>
+        
+        <plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-shade-plugin</artifactId>
+	      	<version>2.0</version>
+			<executions>
+				<execution>
+					<phase>package</phase>
+					<goals>
+						<goal>shade</goal>
+					</goals>
+				</execution>
+			</executions>
+			<configuration>
+				<finalName>uber-${project.artifactId}-${project.version}</finalName>
+			</configuration>
+		</plugin>
+      </plugins>
+  </build>
+  
   <properties>
     <project.build.sourceEncoding>
     UTF-8
@@ -14,36 +107,4 @@
     UTF-8
     </project.reporting.outputEncoding>
   </properties>
-
-  <name>CESS Remote</name>
-  <organization>
-  	<name>The Center for Experimental Social Science</name>
-  	<url>http://cess.nyu.edu</url>
-  </organization>
-
-  <dependencies>
-  	<dependency>
-  		<groupId>edu.nyu.cess.remote.common</groupId>
-  		<artifactId>AppRemoteCommon</artifactId>
-  		<version>1.0</version>
-  	</dependency>
-  </dependencies>
-
-  <build>
-    <plugins>
-        <plugin>
-            <artifactId>maven-assembly-plugin</artifactId>
-            <configuration>
-                <archive>
-                    <manifest>
-                        <mainClass>edu.nyu.cess.remote.client.ClientInitializer</mainClass>
-                    </manifest>
-                </archive>
-                <descriptorRefs>
-                    <descriptorRef>jar-with-dependencies</descriptorRef>
-                </descriptorRefs>
-            </configuration>
-        </plugin>
-    </plugins>
-  </build>
 </project>
