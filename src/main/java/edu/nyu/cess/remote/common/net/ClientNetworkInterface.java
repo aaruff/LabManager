@@ -103,7 +103,7 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 	 * @return initialized {@link Socket}, or null if a socket connection is not
 	 *         established.
 	 */
-	public Socket initializeSocketConnection() {
+	public Socket getSocketConnection() {
 		socket = null;
 		try {
 			socket = new Socket(remoteIPAddress, remotePortNumber);
@@ -134,12 +134,12 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 	public void pollServerUntilSocketInitialized(int pollInterval) {
 		socket = null;
 
-		socket = initializeSocketConnection();
+		socket = getSocketConnection();
 		while (socket == null) {
 			try {
 				Thread.sleep(pollInterval);
 				System.out.println("Attempting to connect to server: " + remoteIPAddress);
-				socket = initializeSocketConnection();
+				socket = getSocketConnection();
 			} catch (InterruptedException e) {
 				System.out.println("Thread sleep interruped...");
 			}
