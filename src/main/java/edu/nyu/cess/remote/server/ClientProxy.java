@@ -13,7 +13,6 @@ import edu.nyu.cess.remote.common.net.ClientNetworkInterfaceObserver;
 import edu.nyu.cess.remote.common.net.DataPacket;
 import edu.nyu.cess.remote.common.net.LiteClientNetworkInterface;
 
-// TODO: Auto-generated Javadoc
 /**
  * The Class ClientProxy.
  */
@@ -34,44 +33,35 @@ public class ClientProxy implements ClientNetworkInterfaceObserver, ClientProxyO
 	}
 
 	/**
-	 * Inits way too many things at the moment.
+	 * init() blocks until a socket connections requests is received from a remote clients.
+	 * Upon each socket connection request the following steps occur:
+	 * 		1. A  LiteClientNetworkInterface is created for management of the socket connection.
+	 * 		2. The LiteClientNetworkInterface is added to a collection clientNetworkInterfaces.
+	 * 		3. The ClientProxyObserver is notified that I new socket connection has been made.
+	 * 		4. The ClientNetworkInterface starts a network communication monitoring thread.
 	 */
-	public void init() {
-
+	public void connectionRequestHandler() {
 		serverNetworkInterface = new ServerNetworkInterface(PORT_NUMBER);
 		serverNetworkInterface.initializeServerSocketConnection();
 
 		while (true) {
-			// wait for inbound client connections
+			// Blocks until a socket connection request is received
 			Socket clientSocket = serverNetworkInterface.waitForIncomingConnection();
+			
+			String IPAddress = clientSocket.getInetAddress().getHostAddress();
+			if (IPAddress != null && !IPAddress.isEmpty() && clientNetworkInterfaces.get(IPAddress) == null) {
+				LiteClientNetworkInterface clientNetworkInterface = new LiteClientNetworkInterface();
+				System.out.println("Client Connected: " + clientNetworkInterface.getRemoteIPAddress());
 
-			String remoteIPAddress = clientSocket.getInetAddress().getHostAddress();
+				clientNetworkInterface.setSocket(clientSocket);
+				clientNetworkInterface.addObserver(this);
+				clientNetworkInterfaces.put(clientNetworkInterface.getRemoteIPAddress(), clientNetworkInterface);
 
-			if (remoteIPAddress != null) {
-				if ((clientNetworkInterfaces.get(remoteIPAddress)) == null) {
+				notifyNetworkClientAdded(clientNetworkInterface.getRemoteIPAddress());
 
-					LiteClientNetworkInterface clientNetworkInterface = new LiteClientNetworkInterface();
-					clientNetworkInterface.setSocket(clientSocket);
-
-					System.out.println("Client Connected: " + clientNetworkInterface.getRemoteIPAddress());
-
-					// add ClientProxy as a ClientNetworkInterfaceObserver
-					clientNetworkInterface.addObserver(this);
-
-					// add the clientNetworkInterface to the hashmap using the remote clients ip address as a key
-					clientNetworkInterfaces.put(clientNetworkInterface.getRemoteIPAddress(), clientNetworkInterface);
-
-					// notify all ClientProxy observers that a new client has connected
-					notifyNetworkClientAdded(clientNetworkInterface.getRemoteIPAddress());
-
-					// start the network monitoring thread for this connection
-					clientNetworkInterface.startThreadedInboundCommunicationMonitor();
-				}
-
+				clientNetworkInterface.startThreadedInboundCommunicationMonitor();
 			}
-
 		}
-
 	}
 
 	public void networkPacketUpdate(DataPacket dataPacket, String ipAddress) {
