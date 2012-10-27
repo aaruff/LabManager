@@ -14,7 +14,7 @@ import edu.nyu.cess.remote.common.net.DataPacket;
 import edu.nyu.cess.remote.common.net.SocketInfo;
 
 /**
- * @author akira
+ * @author Anwar A. Ruff 
  */
 public class ServerProxy implements ClientNetworkInterfaceObserver, ServerProxyObservable {
 
