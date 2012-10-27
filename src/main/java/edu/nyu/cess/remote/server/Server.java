@@ -49,7 +49,6 @@ public class Server implements ClientProxyObserver {
 	 * handles network communication between the server and clients.
 	 */
 	public void init() {
-
 		applicationInfo = new ApplicationInfo();
 		applicationInfo.readFromFile(new File("application_info.txt"));
 
@@ -65,7 +64,7 @@ public class Server implements ClientProxyObserver {
 			}
 		});
 
-		clientProxy.init();
+		clientProxy.connectionRequestHandler();
 	}
 
 	public String[] getSortedHostNames() {
