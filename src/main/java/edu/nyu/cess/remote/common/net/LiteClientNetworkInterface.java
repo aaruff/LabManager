@@ -27,14 +27,10 @@ public class LiteClientNetworkInterface implements ClientNetworkInterfaceObserva
 	public boolean setSocket(Socket sock) {
 		boolean result = false;
 
-		if (sock != null) {
-
-			if (sock.isConnected()) {
-				socket = sock;
-				remoteIPAddress = socket.getInetAddress().getHostAddress();
-
-				result = true;
-			}
+		if (sock != null && sock.isConnected()) {
+			this.socket = sock;
+			remoteIPAddress = this.socket.getInetAddress().getHostAddress();
+			result = true;
 		}
 
 		return result;
@@ -221,12 +217,22 @@ public class LiteClientNetworkInterface implements ClientNetworkInterfaceObserva
 
 	}
 
+	/**
+	 * The network stream monitor thread is used to periodically (every 40 seconds)
+	 * poll the client with an empty packet to determine if the socket connection is
+	 * still established. The termination of this tread is used as a flag to signal
+	 * that the connection between the server and the client has been broken.
+	 */
 	private class NetworkStreamMonitor implements Runnable {
 
 		public void run() {
 			boolean interfaceState = true;
 			DataPacket packet = new DataPacket(null);
 
+			/* 
+			 *  Sends an empty packet to the respective client
+			 *  to determine if the socket connection is still established.
+			 */
 			while (interfaceState) {
 				try {
 					interfaceState = writeDataPacket(packet);
