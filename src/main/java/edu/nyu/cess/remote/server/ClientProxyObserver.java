@@ -7,10 +7,12 @@ import edu.nyu.cess.remote.common.app.State;
 
 public interface ClientProxyObserver {
 
-	public void newClientUpdate(String ipAddress);
+	public void updateNewClientConnected(String ipAddress);
 
-	public void applicationStateUpdate(String ipAddress, State applicationState);
+	public void updateApplicationStateChanged(String ipAddress, State applicationState);
 
-	public void networkStatusUpdate(String ipAddress, boolean isConnected);
+	public void updateClientConnectionStateChanged(String ipAddress, boolean isConnected);
+	
+	public void updateClientHostNameUpdate(String hostName, String ipAddress);
 
 }
