@@ -22,5 +22,7 @@ public interface LiteClientsObservable {
 	public void notifyClientRemoved(String ipAddress);
 
 	public void notifyClientStateChanged(String ipAddress);
+	
+	public void notifyClientHostNameChanged(String ipAddress);
 
 }
