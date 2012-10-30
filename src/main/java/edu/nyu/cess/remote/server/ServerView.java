@@ -3,29 +3,33 @@
  */
 package edu.nyu.cess.remote.server;
 
+import java.awt.BasicStroke;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.LinearGradientPaint;
+import java.awt.RenderingHints;
+import java.awt.Stroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.HashMap;
 
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTabbedPane;
@@ -33,13 +37,12 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
 import edu.nyu.cess.remote.server.ui.NoInsetsPanel;;
 
 /**
- * @author akira
+ * @author Anwar A. Ruff 
  */
 public class ServerView extends JFrame implements ActionListener, LiteClientsObserver {
 
@@ -51,9 +54,10 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 	private final HashMap<String, JButton> clientStopButtons = new HashMap<String, JButton>();
 
 	private final HashMap<String, JLabel> applicationStateLabels = new HashMap<String, JLabel>();
+	private final HashMap<String, JLabel> clientDescriptionLabels = new HashMap<String, JLabel>();
 
 	private final JPanel contentPane = new JPanel(new GridBagLayout());
-	private final JPanel clientPanel = new JPanel(new GridLayout(0, 6));
+	private final JPanel clientPanel = new JPanel(new GridLayout(0, 6, 10, 10));
 	private final JPanel applicationExecutionRangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 	private final JPanel applicationMessageRangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 	private final JPanel messageRangeCards = new JPanel(new CardLayout());
@@ -107,13 +111,18 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 		/*
 		 * Clients Panel
 		 */
-		clientPanel.setBorder(new TitledBorder("Computers Connected: " + server.getSortedHostNames().length));
+		TitledBorder titledBorder = BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),
+				"Connections: " + server.getLiteClients().size());
+		clientPanel.setBorder(titledBorder);
+		//clientPanel.setBorder(new TitledBorder("Computers Connected: " + server.getLiteClients().size()));
+		clientPanel.setBackground(Color.white);
 
 		GridBagConstraints constraint = getConstraint(0, 0, 1.0, 0.8);
 		constraint.fill = GridBagConstraints.BOTH;
 		constraint.gridwidth = 2;
 		constraint.insets = new Insets(10, 0, 0, 0);
 
+		contentPane.setBackground(Color.white);
 		contentPane.add(clientPanel, constraint);
 
 		/*
@@ -121,6 +130,7 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 		 */
 		setApplicationRangePanel(new JComboBox(), new JComboBox());
 
+		applicationSelectionPanel.setBackground(Color.white);
 		applicationSelectionPanel.setOpaque(false);
 
 		JLabel applicationLabel = new JLabel("Select a Program: ");
@@ -128,6 +138,7 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 		clientApplicationsComboBox = new JComboBox(server.getApplicationNames());
 
 		JPanel programSelectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		programSelectionPanel.setBackground(Color.white);
 		programSelectionPanel.setOpaque(false);
 		programSelectionPanel.add(applicationLabel);
 		programSelectionPanel.add(clientApplicationsComboBox);
@@ -138,10 +149,10 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 
 		applicationSelectionPanel.add(programSelectionPanel, constraint);
 
-		JButton startApplicationButton = new JButton("Start In Range");
+		JButton startApplicationButton = new JButton("Start Group");
 		startApplicationButton.setToolTipText("Starts the selected program on all computers in the selected range.");
 
-		JButton killApplicationButton = new JButton("Stop In Range");
+		JButton killApplicationButton = new JButton("Stop Group");
 		killApplicationButton.setToolTipText("Stops the running program on all computers in the selected range");
 
 		startApplicationButton.addActionListener(new StartClientsInRangeListener());
@@ -158,9 +169,6 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 		constraint.insets = new Insets(0, 5, 0, 5);
 		applicationSelectionPanel.add(buttonRangePanel, constraint);
 
-		/*
-		 * Message Sending Panel
-		 */
 		JPanel messageRadioButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		messageRadioButtonPanel.setOpaque(false);
 		messageRadioButtonPanel.setBorder(new TitledBorder("Select a Message Option"));
@@ -222,7 +230,9 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 		controlTab.add("Message Sending", clientMessagingPanel);
 
 		NoInsetsPanel tabPanel = new NoInsetsPanel(new GridBagLayout());
-		tabPanel.setBorder(new TitledBorder(""));
+		//tabPanel.setBorder(new TitledBorder(""));
+		tabPanel.setBorder(BorderFactory.createEmptyBorder());
+		tabPanel.setBackground(Color.white);
 		tabPanel.setOpaque(false);
 		constraint = getConstraint(0, 0, 1, 1);
 		constraint.fill = GridBagConstraints.BOTH;
@@ -234,30 +244,6 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 		constraint.ipady = 20;
 		constraint.insets = new Insets(0, 0, 10, 0);
 		contentPane.add(tabPanel, constraint);
-
-		JMenu helpMenu = new JMenu("Help");
-
-		JMenuItem helpItem = new JMenuItem("How To");
-		helpItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				displayTutorial();
-			}
-		});
-
-		JMenuItem aboutItem = new JMenuItem("About");
-		aboutItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				displayAbout();
-			}
-		});
-
-		helpMenu.add(helpItem);
-		helpMenu.add(aboutItem);
-
-		JMenuBar helpMenuBar = new JMenuBar();
-		helpMenuBar.add(helpMenu);
-
-		setJMenuBar(helpMenuBar);
 
 		setContentPane(contentPane);
 		pack();
@@ -297,6 +283,7 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 	 */
 	private void setApplicationRangePanel(JComboBox lowerBound, JComboBox upperBound) {
 		applicationExecutionRangePanel.removeAll();
+		applicationExecutionRangePanel.setBackground(Color.white);
 		applicationExecutionRangePanel.setOpaque(true);
 		applicationExecutionRangePanel.add(new JLabel("Computer Range: "));
 		applicationExecutionRangePanel.add(lowerBound);
@@ -335,24 +322,13 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 		cl.show(messageRangeCards, radioButtonID);
 	}
 
-	private void displayTutorial() {
-		JOptionPane.showMessageDialog(this,
-				"For a tutorial on the use of this software visit our website at http://cess.nyu.edu");
-	}
-
-	private void displayAbout() {
-		JOptionPane
-				.showMessageDialog(this,
-						"This application was commisioned by The Center for Experimental Social Science, and written by Anwar A. Ruff.");
-	}
-
 	/**
 	 * This method is called when a {@link LiteClient} is added to the
 	 * {@link LiteClients} collection.
 	 */
 	public void updateLiteClientAdded(String ipAddress) {
 		LiteClients liteClients = server.getLiteClients();
-		LiteClient liteClient = liteClients.get(ipAddress);
+		LiteClient liteClient = liteClients.getLiteClientByIPAddress(ipAddress);
 		SwingUtilities.invokeLater(new AddClientRunnable(ipAddress, liteClient));
 	}
 
@@ -370,6 +346,11 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 	 * changed).
 	 */
 	public void updateLiteClientStateChanged(LiteClient liteClient) {
+		SwingUtilities.invokeLater(new UpdateClient(liteClient));
+	}
+	
+	public void updateLiteClientHostNameChanged(LiteClient liteClient) {
+		System.out.println("Hostname chaged to:" + liteClient.getHostName() + "\n");
 		SwingUtilities.invokeLater(new UpdateClient(liteClient));
 	}
 
@@ -393,6 +374,9 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 				clientStartButtons.get(liteClient.getIPAddress()).setEnabled(false);
 				clientStopButtons.get(liteClient.getIPAddress()).setEnabled(true);
 				clientStopButtons.get(liteClient.getIPAddress()).setToolTipText("Stops running application.");
+				if(!liteClient.getHostName().isEmpty()) {
+					clientDescriptionLabels.get(liteClient.getIPAddress()).setText("" + liteClient.getHostName());
+				}
 				contentPane.validate();
 				repaint();
 			}
@@ -401,6 +385,9 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 				applicationStateLabels.get(liteClient.getIPAddress()).setForeground(Color.red);
 				clientStartButtons.get(liteClient.getIPAddress()).setEnabled(true);
 				clientStopButtons.get(liteClient.getIPAddress()).setEnabled(false);
+				if(!liteClient.getHostName().isEmpty()) {
+					clientDescriptionLabels.get(liteClient.getIPAddress()).setText("" + liteClient.getHostName());
+				}
 				contentPane.validate();
 				repaint();
 			}
@@ -417,42 +404,57 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 		}
 
 		public void run() {
-			String hostName = liteClient.getHostName();
-
 			System.out.println("Adding client " + ipAddress + " to the clientConnectionPanel");
 
-			JPanel panel = new JPanel();
-			panel.setBorder(new EtchedBorder(EtchedBorder.RAISED));
+			JPanel panel = new JPanel() {
+				 private final int gradientSize = 18;
+				    private final Color lighterColor = new Color(250, 250, 250);
+				    private final Color darkerColor = new Color(225, 225, 230);
+				    private final Color edgeColor = new Color(140, 145, 145);
+				    private final Stroke edgeStroke = new BasicStroke(1);
+				    private final GradientPaint upperGradient = new GradientPaint(
+				            0, 0, lighterColor,
+				            0, gradientSize, darkerColor);
+				    
+				@Override
+			    public void paintComponent(Graphics g) {
+
+			        Graphics2D g2 = (Graphics2D) g;
+			        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+			                            RenderingHints.VALUE_ANTIALIAS_ON);
+			        float gradientPerc = (float)gradientSize/getHeight();
+			        LinearGradientPaint lgp = new LinearGradientPaint(0,0,0,getHeight()-1,
+			           new float[] {0, gradientPerc, 1-gradientPerc, 1f},
+			           new Color[] {lighterColor, darkerColor, darkerColor, lighterColor});
+			        g2.setPaint(lgp);
+			        g.fillRoundRect(0, 0, getWidth()-1, getHeight()-1,
+			            gradientSize, gradientSize);
+			        g2.setColor(edgeColor);
+			        g2.setStroke(edgeStroke);
+			        g.drawRoundRect(0, 0, getWidth()-1, getHeight()-1,
+			            gradientSize, gradientSize);
+			    }
+			};
+			//panel.setBorder(new EtchedBorder(EtchedBorder.RAISED));
 			panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-			JPanel buttonPanel = new JPanel(new FlowLayout());
-
 			JLabel descriptionLabel;
-			JLabel hostIDLabel;
-
-			/*
-			 * If hostname is set use it for the host name label, otherwise use
-			 * the IP Address for the host name label.
-			 */
-			if (!hostName.equals("")) {
-				descriptionLabel = new JLabel("Name: ");
-				hostIDLabel = new JLabel(hostName);
-				hostIDLabel.setForeground(new Color(0, 0, 128));
+			if (!liteClient.getHostName().isEmpty()) {
+				descriptionLabel = new JLabel("" + liteClient.getHostName());
 			}
 			else {
-				descriptionLabel = new JLabel("Address: ");
-				hostIDLabel = new JLabel(ipAddress);
-				hostIDLabel.setForeground(new Color(0, 0, 128));
-				hostName = ipAddress;
+				descriptionLabel = new JLabel("" + liteClient.getIPAddress());
 			}
+			descriptionLabel.setForeground(new Color(0, 0, 128));
+			clientDescriptionLabels.put(ipAddress, descriptionLabel);
 
 			JPanel applicationStatePanel = new JPanel(new FlowLayout());
-
+			applicationStatePanel.setOpaque(false);
 			JLabel applicationStateLabel = new JLabel("Stopped");
 			applicationStateLabel.setForeground(Color.red);
 			applicationStatePanel.add(applicationStateLabel);
-
 			applicationStateLabels.put(ipAddress, applicationStateLabel);
+			panel.add(applicationStatePanel);
 
 			JButton startButton = new JButton("Start");
 			startButton.setToolTipText("Starts selected application on " + ipAddress + ".");
@@ -465,45 +467,37 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 			clientStopButtons.get(ipAddress).setEnabled(false);
 
 			JPanel clientDescriptionPanel = new JPanel(new FlowLayout());
+			clientDescriptionPanel.setOpaque(false);
 			clientDescriptionPanel.add(descriptionLabel);
-			clientDescriptionPanel.add(hostIDLabel);
+			panel.add(clientDescriptionPanel);
 
+			JPanel buttonPanel = new JPanel(new FlowLayout());
+			buttonPanel.setOpaque(false);
 			buttonPanel.add(clientStartButtons.get(ipAddress));
 			buttonPanel.add(clientStopButtons.get(ipAddress));
-
-			panel.add(clientDescriptionPanel);
-			panel.add(applicationStatePanel);
 			panel.add(buttonPanel);
 
 			liteClientPanels.put(ipAddress, panel);
-
-			String[] sortedHostNames = server.getSortedHostNames();
-			int sortedSetSize = sortedHostNames.length;
-
-			LiteClients liteClients = server.getLiteClients();
-
+			
 			clientPanel.removeAll();
-
-			String retrievedIPAddress;
-			JPanel retrievedClientPanel;
-			for (int i = 0; i < sortedSetSize; i++) {
-				retrievedIPAddress = liteClients.getIPAddressFromHostName(sortedHostNames[i]);
-				retrievedClientPanel = liteClientPanels.get(retrievedIPAddress);
-				clientPanel.add(retrievedClientPanel);
+			
+			LiteClient[] sortedClients = server.getLiteClients().getSortedLiteClients();
+			String[] clientHostNames = new String[sortedClients.length];
+			for (int i = 0; i < sortedClients.length; ++i) {
+				clientHostNames[i] = sortedClients[i].getHostName();
+				clientPanel.add(liteClientPanels.get(sortedClients[i].getIPAddress()));
 			}
+			
+			TitledBorder titledBorder = BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),
+					"Connections: " + sortedClients.length);
+			clientPanel.setBorder(titledBorder);
 
-			clientPanel.setBorder(new TitledBorder("Computers Connected: " + sortedSetSize));
-
-			clientsLowerBoundComboBox = new JComboBox(sortedHostNames);
-			clientsUpperBoundComboBox = new JComboBox(sortedHostNames);
+			clientsLowerBoundComboBox = new JComboBox(clientHostNames);
+			clientsUpperBoundComboBox = new JComboBox(clientHostNames);
+			
 			setApplicationRangePanel(clientsLowerBoundComboBox, clientsUpperBoundComboBox);
-
-			connectedComputersComboBox = new JComboBox(sortedHostNames);
-			setMessagePanel(connectedComputersComboBox);
-
-			clientsMessageLowerBound = new JComboBox(sortedHostNames);
-			clientsMessageUpperBound = new JComboBox(sortedHostNames);
-			setMessageRangePanel(clientsMessageLowerBound, clientsMessageUpperBound);
+			setMessagePanel(new JComboBox(clientHostNames));
+			setMessageRangePanel(new JComboBox(clientHostNames), new JComboBox(clientHostNames));
 
 			GridBagConstraints constraint = getConstraint(0, 1, 1.0, 0.0);
 			constraint.fill = GridBagConstraints.HORIZONTAL;
@@ -532,28 +526,32 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 			System.out.println("Removing client " + ipAddress + " from the clientConnectionPanel");
 
 			clientPanel.remove(liteClientPanels.get(ipAddress));
-
 			liteClientPanels.remove(ipAddress);
-
+			
+			clientDescriptionLabels.remove(ipAddress);
 			applicationStateLabels.remove(ipAddress);
 
 			clientStartButtons.remove(ipAddress);
 			clientStopButtons.remove(ipAddress);
 
-			String[] sortedHostNames = server.getSortedHostNames();
+			LiteClient[] sortedClients = server.getLiteClients().getSortedLiteClients();
+			String[] clientHostNames = new String[sortedClients.length];
+			for (int i = 0; i < sortedClients.length; ++i) {
+				clientHostNames[i] = sortedClients[i].getHostName();
+			}
 
-			clientPanel.setBorder(new TitledBorder("Workstations Connected: " + sortedHostNames.length));
+			clientPanel.setBorder(new TitledBorder("Computers Connected: " + clientHostNames.length));
 
-			clientsLowerBoundComboBox = new JComboBox(sortedHostNames);
-			clientsUpperBoundComboBox = new JComboBox(sortedHostNames);
+			clientsLowerBoundComboBox = new JComboBox(clientHostNames);
+			clientsUpperBoundComboBox = new JComboBox(clientHostNames);
 
 			setApplicationRangePanel(clientsLowerBoundComboBox, clientsUpperBoundComboBox);
 
-			connectedComputersComboBox = new JComboBox(sortedHostNames);
+			connectedComputersComboBox = new JComboBox(clientHostNames);
 			setMessagePanel(connectedComputersComboBox);
 
-			clientsMessageLowerBound = new JComboBox(sortedHostNames);
-			clientsMessageUpperBound = new JComboBox(sortedHostNames);
+			clientsMessageLowerBound = new JComboBox(clientHostNames);
+			clientsMessageUpperBound = new JComboBox(clientHostNames);
 			setMessageRangePanel(clientsMessageLowerBound, clientsMessageUpperBound);
 
 			GridBagConstraints constraint = getConstraint(0, 1, 1.0, 0.0);
@@ -582,72 +580,40 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 			LiteClients liteClients = server.getLiteClients();
 			String message = messageTextField.getText();
 			messageTextField.setText("");
+			
+			if (message.isEmpty()) {
+				messageJLabel.setText("Messaging Error: No text entered");
+				return;
+			}
 
-			if (!message.equals("")) {
-				if (singleRadioButton.isSelected()) {
-					String computerSelected = (String) connectedComputersComboBox.getSelectedItem();
-
-					String ipAddress = liteClients.getIPAddressFromHostName(computerSelected);
-
-					// TODO: move conversion of host name to ipAddress to server
-					server.messageClient(message, ipAddress);
-
-					messageJLabel.setText("Message sent to computer " + computerSelected);
+			if (singleRadioButton.isSelected()) {
+				String hostNameSelected = (String) connectedComputersComboBox.getSelectedItem();
+				
+				if (hostNameSelected.isEmpty()) {
+					messageJLabel.setText("Messaging Error: A computer was not selected.");
+					return;
 				}
-				else {
-					String clientLowerBound = (String) clientsMessageLowerBound.getSelectedItem();
-					String clientUpperBound = (String) clientsMessageUpperBound.getSelectedItem();
-
-					server.messageClientInRange(message, clientLowerBound, clientUpperBound);
-
-					messageJLabel.setText("Message sent to computers " + clientLowerBound + " through "
-							+ clientUpperBound + ".");
-				}
+				server.messageClient(message, liteClients.getLiteClientByHostName(hostNameSelected).getIPAddress());
 			}
 			else {
-				messageJLabel.setText("Messaging Error: No text entered");
+				server.messageClientInRange(message,
+						(String) clientsMessageLowerBound.getSelectedItem(), (String) clientsMessageUpperBound.getSelectedItem());
 			}
-
 		}
 	}
 
 	private class StopClientsInRangeListener implements ActionListener {
 
 		public void actionPerformed(ActionEvent e) {
-			boolean inRange = false;
 			String clientLowerBound = (String) clientsLowerBoundComboBox.getSelectedItem();
 			String clientUpperBound = (String) clientsUpperBoundComboBox.getSelectedItem();
-
-			String[] sortedHostNames = server.getSortedHostNames();
-
-			LiteClients liteClients = server.getLiteClients();
-
-			if (sortedHostNames != null) {
-				for (int i = 0; i < sortedHostNames.length; ++i) {
-
-					if ((sortedHostNames[i]).equals(clientLowerBound) || (sortedHostNames[i]).equals(clientUpperBound)) {
-						inRange = (inRange == false) ? true : false;
-					}
-
-					if (inRange || (sortedHostNames[i]).equals(clientLowerBound)
-							|| (sortedHostNames[i]).equals(clientUpperBound)) {
-						server.stopApplication(liteClients.getIPAddressFromHostName(sortedHostNames[i]));
-					}
-
-					if (clientLowerBound.equals(clientUpperBound) && (sortedHostNames[i]).equals(clientLowerBound)) {
-						i = sortedHostNames.length;
-					}
-
-				}
-			}
+			server.stopApplicationInRange(clientLowerBound, clientUpperBound);
 		}
-
 	}
 
 	private class StartClientsInRangeListener implements ActionListener {
 
 		public void actionPerformed(ActionEvent e) {
-
 			String applicationSelected = (String) clientApplicationsComboBox.getSelectedItem();
 			String clientLowerBound = (String) clientsLowerBoundComboBox.getSelectedItem();
 			String clientUpperBound = (String) clientsUpperBoundComboBox.getSelectedItem();
@@ -670,7 +636,7 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 			System.out.println(ipAddress + " Start button selected");
 
 			LiteClients liteClients = server.getLiteClients();
-			LiteClient liteClient = liteClients.get(ipAddress);
+			LiteClient liteClient = liteClients.getLiteClientByIPAddress(ipAddress);
 			liteClient.setApplicationName(applicationSelected);
 
 			server.startApplication(applicationSelected, ipAddress);
@@ -691,5 +657,6 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 		}
 
 	}
+
 
 }
