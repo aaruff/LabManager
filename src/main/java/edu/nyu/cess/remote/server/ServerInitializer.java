@@ -5,7 +5,7 @@ package edu.nyu.cess.remote.server;
 
 import edu.nyu.cess.remote.server.Server;
 /**
- * @author akira
+ * @author Anwar A. Ruff 
  */
 public class ServerInitializer {
 
