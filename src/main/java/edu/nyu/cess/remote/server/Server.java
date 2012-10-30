@@ -67,11 +67,6 @@ public class Server implements ClientProxyObserver {
 		clientProxy.connectionRequestHandler();
 	}
 
-	public String[] getSortedHostNames() {
-		String empty[] = new String[0];
-		return (liteClients.getSortedHostNames() == null) ? empty : liteClients.getSortedHostNames();
-	}
-
 	public void startApplicationInRange(String applicationSelected, String clientLowerBound, String clientUpperBound) {
 
 		Thread startApplicationInRange = new Thread(new StartApplicationInRangeRunnable(applicationSelected,
@@ -79,11 +74,16 @@ public class Server implements ClientProxyObserver {
 		startApplicationInRange.start();
 	}
 
+	public void stopApplicationInRange(String clientLowerBound, String clientUpperBound) {
+		Thread stopApplicationInRange = new Thread(new StopApplicationInRangeRunnable(clientLowerBound, clientUpperBound));
+		stopApplicationInRange.start();
+	}
+	
 	/**
 	 * Called by the {@link ClientProxy} when a new client connection is
 	 * established.
 	 */
-	public void newClientUpdate(String ipAddress) {
+	public void updateNewClientConnected(String ipAddress) {
 		liteClients.put(ipAddress, new LiteClient(ipAddress));
 		System.out.println("liteClient " + ipAddress + " was added to liteClients");
 	}
@@ -92,7 +92,7 @@ public class Server implements ClientProxyObserver {
 	 * Called by the {@link ClientProxy} when applicationState update has been
 	 * received from a client.
 	 */
-	public void applicationStateUpdate(String ipAddress, State applicationState) {
+	public void updateApplicationStateChanged(String ipAddress, State applicationState) {
 		liteClients.updateState(applicationState, ipAddress);
 	}
 
@@ -100,13 +100,19 @@ public class Server implements ClientProxyObserver {
 	 * Called by the {@link ClientProxy} when a clients network status has
 	 * changed.
 	 */
-	public void networkStatusUpdate(String ipAddress, boolean isConnected) {
+	public void updateClientConnectionStateChanged(String ipAddress, boolean isConnected) {
 		if (isConnected == false) {
 			System.out.println(ipAddress + " has disconnected, and has been removed from the client list");
 			liteClients.remove(ipAddress);
 		}
 	}
 
+
+
+	public synchronized void messageClient(String message, String ipAddress) {
+		clientProxy.sendMessageToClient(message, ipAddress);
+	}
+	
 	/**
 	 * Prepares an {@link ExecutionRequest}, which contains the information
 	 * needed to execute the chosen application on the client, and passes it to
@@ -121,41 +127,15 @@ public class Server implements ClientProxyObserver {
 	 */
 	public synchronized void startApplication(String applicationName, String ipAddress) {
 		StartedState startState = new StartedState();
-
+		
+		if (applicationName == null || applicationName.isEmpty()) {
+			System.out.println("Error: No application selected");
+			return;
+		}
 		HashMap<String, String> appInfo = applicationsInfo.get(applicationName);
 		ExecutionRequest executionRequest = new ExecutionRequest(appInfo.get("file_name"), appInfo.get("path"), appInfo
 				.get("args"), startState);
 		clientProxy.startApplicationOnClient(executionRequest, ipAddress);
-	}
-
-	public synchronized void messageClientInRange(String message, String lowerBoundHostName, String upperBoundHostName) {
-		boolean inRange = false;
-
-		String[] sortedHostNames = getSortedHostNames();
-
-		if (sortedHostNames != null) {
-			for (int i = 0; i < sortedHostNames.length; ++i) {
-
-				if ((sortedHostNames[i]).equals(lowerBoundHostName) || (sortedHostNames[i]).equals(upperBoundHostName)) {
-					inRange = (inRange == false) ? true : false;
-				}
-
-				if (inRange || (sortedHostNames[i]).equals(lowerBoundHostName)
-						|| (sortedHostNames[i]).equals(upperBoundHostName)) {
-
-					messageClient(message, liteClients.getIPAddressFromHostName(sortedHostNames[i]));
-				}
-
-				if (lowerBoundHostName.equals(upperBoundHostName) && (sortedHostNames[i]).equals(lowerBoundHostName)) {
-					i = sortedHostNames.length;
-				}
-			}
-		}
-
-	}
-
-	public synchronized void messageClient(String message, String ipAddress) {
-		clientProxy.sendMessageToClient(message, ipAddress);
 	}
 
 	/**
@@ -209,53 +189,102 @@ public class Server implements ClientProxyObserver {
 	public LiteClients getLiteClients() {
 		return liteClients;
 	}
+	
+	public synchronized void messageClientInRange(String message, String lowerBoundHostName, String upperBoundHostName) {
+		if (lowerBoundHostName.isEmpty() || upperBoundHostName.isEmpty()) {
+			return; // Error: Host range not set
+		}
+		
+		LiteClient[] sortedLiteClients = this.liteClients.getSortedLiteClients(); 
+		if (sortedLiteClients.length == 0) {
+			return; // Error: No clients connected 
+		}
+		
+		for (int i = 0; i < sortedLiteClients.length; ++i) {
+			if (sortedLiteClients[i].getHostName().compareTo(lowerBoundHostName) >= 0 
+					&& sortedLiteClients[i].getHostName().compareTo(upperBoundHostName) <= 0) {
+				messageClient(message, sortedLiteClients[i].getIPAddress());
+			}
+		}
+	}
 
+	/**
+	 * Thread request application execution on a remote client 
+	 * @author Anwar A. Ruff
+	 *
+	 */
 	private class StartApplicationInRangeRunnable implements Runnable {
 		private final String applicationSelected;
 		private final String clientLowerBound;
 		private final String clientUpperBound;
 
-		public StartApplicationInRangeRunnable(String applicationSelected, String clientLowerBound,
-				String clientUpperBound) {
+		public StartApplicationInRangeRunnable(String applicationSelected, String clientLowerBound,	String clientUpperBound) {
 			this.applicationSelected = applicationSelected;
 			this.clientLowerBound = clientLowerBound;
 			this.clientUpperBound = clientUpperBound;
 		}
 
 		public void run() {
-			boolean inRange = false;
-
-			String[] sortedHostNames = getSortedHostNames();
-
-			if (sortedHostNames != null) {
-				for (int i = 0; i < sortedHostNames.length; ++i) {
-
-					if ((sortedHostNames[i]).equals(clientLowerBound) || (sortedHostNames[i]).equals(clientUpperBound)) {
-						inRange = (inRange == false) ? true : false;
-					}
-
-					if (inRange || (sortedHostNames[i]).equals(clientLowerBound)
-							|| (sortedHostNames[i]).equals(clientUpperBound)) {
-
-						startApplication(applicationSelected, liteClients.getIPAddressFromHostName(sortedHostNames[i]));
-
-						(liteClients.get(liteClients.getIPAddressFromHostName(sortedHostNames[i])))
-								.setApplicationName(applicationSelected);
-					}
-
-					if (clientLowerBound.equals(clientUpperBound) && (sortedHostNames[i]).equals(clientLowerBound)) {
-						i = sortedHostNames.length;
-					}
-
-					try {
-						Thread.sleep(200);
-					}
-					catch (InterruptedException e) {}
-				}
+			if (clientLowerBound.isEmpty() || clientUpperBound.isEmpty()) {
+				return; // Error: Host range not set
 			}
+			
+			LiteClient[] sortedLiteClients = liteClients.getSortedLiteClients(); 
+			if (sortedLiteClients.length == 0) {
+				return; // Error: No clients connected 
+			}
+			
+			for (int i = 0; i < sortedLiteClients.length; ++i) {
+				if (sortedLiteClients[i].getHostName().compareTo(clientLowerBound) >= 0 
+						&& sortedLiteClients[i].getHostName().compareTo(clientUpperBound) <= 0) {
+						startApplication(applicationSelected, sortedLiteClients[i].getIPAddress());
+						sortedLiteClients[i].setApplicationName(applicationSelected);
+				}
+				try {
+					Thread.sleep(200);
+				}
+				catch (InterruptedException e) {}
+			}
+		}
+	}
+	
+	private class StopApplicationInRangeRunnable implements Runnable {
+		private final String clientLowerBound;
+		private final String clientUpperBound;
 
+		public StopApplicationInRangeRunnable(String clientLowerBound,	String clientUpperBound) {
+			this.clientLowerBound = clientLowerBound;
+			this.clientUpperBound = clientUpperBound;
 		}
 
+		public void run() {
+			if (clientLowerBound.isEmpty() || clientUpperBound.isEmpty()) {
+				return; // Error: Host range not set
+			}
+			
+			LiteClient[] sortedLiteClients = liteClients.getSortedLiteClients(); 
+			if (sortedLiteClients.length == 0) {
+				return; // Error: No clients connected 
+			}
+			
+			for (int i = 0; i < sortedLiteClients.length; ++i) {
+				if (sortedLiteClients[i].getHostName().compareTo(clientLowerBound) >= 0 
+						&& sortedLiteClients[i].getHostName().compareTo(clientUpperBound) <= 0) {
+						stopApplication(sortedLiteClients[i].getIPAddress());
+						// Todo: clear old program name 
+						//sortedLiteClients[i].setApplicationName(applicationSelected);
+				}
+				try {
+					Thread.sleep(200);
+				}
+				catch (InterruptedException e) {}
+			}
+		}
+	}
+	
+
+	public void updateClientHostNameUpdate(String hostName, String ipAddress) {
+		liteClients.updateHostName(hostName, ipAddress);
 	}
 
 }
