@@ -7,8 +7,11 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeSet;
 
 import edu.nyu.cess.remote.common.app.State;
@@ -19,20 +22,11 @@ import edu.nyu.cess.remote.common.app.State;
 public class LiteClients implements LiteClientsObservable {
 
 	HashMap<String, LiteClient> liteClients = new HashMap<String, LiteClient>();
-
-	HashMap<String, String> hostNameToIPAddress = new HashMap<String, String>();
-	HashMap<String, String> ipAddressToHostName = new HashMap<String, String>();
-
 	ArrayList<LiteClientsObserver> observers = new ArrayList<LiteClientsObserver>();
 
-	String sortedHostNames[];
-
-	public LiteClients() {
-		sortedHostNames = new String[0];
-	}
+	public LiteClients() {}
 
 	public LiteClient put(String ipAddress, LiteClient liteClient) {
-		
 		String hostName;
 		try {
 			InetAddress addr = InetAddress.getByName(ipAddress);
@@ -44,17 +38,9 @@ public class LiteClients implements LiteClientsObservable {
 		catch (UnknownHostException e) {
 			hostName = ipAddress;
 		}
-			
-
 		liteClient.setHostName(hostName);
 
 		LiteClient tempLiteClient = liteClients.put(ipAddress, liteClient);
-
-		hostNameToIPAddress.put(hostName, ipAddress);
-		ipAddressToHostName.put(ipAddress, hostName);
-
-		sortHostNames();
-
 		notifyClientAdded(ipAddress);
 
 		return tempLiteClient;
@@ -65,58 +51,51 @@ public class LiteClients implements LiteClientsObservable {
 		liteClient.setApplicationState(applicationState);
 		notifyClientStateChanged(ipAddress);
 	}
+	
+	public void updateHostName(String hostName, String ipAddress) {
+		liteClients.get(ipAddress).setHostName(hostName);
+		notifyClientHostNameChanged(ipAddress);
+	}
 
 	public LiteClient remove(String ipAddress) {
 		LiteClient liteClient = liteClients.get(ipAddress);
-
-		hostNameToIPAddress.put(liteClient.getHostName(), liteClient.getIPAddress());
-		ipAddressToHostName.put(liteClient.getIPAddress(), liteClient.getHostName());
-
 		liteClients.remove(ipAddress);
-
-		sortHostNames();
-
+		
 		notifyClientRemoved(ipAddress);
-
 		return liteClient;
 	}
 
-	public String getIPAddressFromHostName(String hostName) {
-		return hostNameToIPAddress.get(hostName);
-	}
-
-	public String getHostNameFromIPAddress(String ipAddress) {
-		return ipAddressToHostName.get(ipAddress);
-	}
-
-	public LiteClient get(String ipAddress) {
+	public LiteClient getLiteClientByIPAddress(String ipAddress) {
 		return liteClients.get(ipAddress);
 	}
-
-	/**
-	 * Generates an array of sorted host strings from the hostNameToIPAddress
-	 * ArrayList.
-	 *
-	 * @return sorted array of host names
-	 */
-	private void sortHostNames() {
-		List<String> hostNameKeys = new ArrayList<String>(hostNameToIPAddress.keySet());
-		TreeSet<String> sortedHostNameKeys = new TreeSet<String>(hostNameKeys);
-
-		Object[] hstNames = sortedHostNameKeys.toArray();
-
-		int sortedSetSize = hstNames.length;
-		sortedHostNames = new String[sortedSetSize];
-
-		for (int i = 0; i < sortedSetSize; i++) {
-			sortedHostNames[i] = (String) hstNames[i];
+	
+	public LiteClient getLiteClientByHostName(String hostName) {
+		for (LiteClient c : this.liteClients.values()) {
+			if (hostName.equals(c.getHostName())) {
+				return c;
+			}
 		}
-
-		Arrays.sort(sortedHostNames);
+		
+		return null;
 	}
 
-	public String[] getSortedHostNames() {
-		return sortedHostNames;
+	public LiteClient[] getSortedLiteClients() {
+		Map<String, LiteClient> clients = this.liteClients;
+		String clientKeys[] = new String[this.liteClients.size()];
+		int i = 0;
+		for (String key : clients.keySet()) {
+			clientKeys[i++] = key;
+		}
+		
+		Arrays.sort(clientKeys);
+	
+		i = 0;
+		LiteClient[] sortedClients = new LiteClient[this.liteClients.size()];
+		for (String key : clientKeys) {
+			sortedClients[i++] = this.liteClients.get(key);
+		}
+		
+		return sortedClients;
 	}
 
 	public void notifyClientAdded(String ipAddress) {
@@ -133,12 +112,18 @@ public class LiteClients implements LiteClientsObservable {
 
 	public void notifyClientStateChanged(String ipAddress) {
 		for (LiteClientsObserver observer : observers) {
-			observer.updateLiteClientStateChanged(liteClients.get(ipAddress));
+			observer.updateLiteClientStateChanged(this.liteClients.get(ipAddress));
+		}
+	}
+	
+	public void notifyClientHostNameChanged(String ipAddress) {
+		for (LiteClientsObserver observer : observers) {
+			observer.updateLiteClientHostNameChanged(this.liteClients.get(ipAddress));
 		}
 	}
 
 	public int size() {
-		return liteClients.size();
+		return this.liteClients.size();
 	}
 
 	public void addObserver(LiteClientsObserver observer) {
