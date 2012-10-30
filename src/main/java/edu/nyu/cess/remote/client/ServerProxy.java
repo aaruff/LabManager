@@ -4,6 +4,8 @@
 package edu.nyu.cess.remote.client;
 
 import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 import edu.nyu.cess.remote.common.app.ExecutionRequest;
@@ -11,6 +13,7 @@ import edu.nyu.cess.remote.common.app.State;
 import edu.nyu.cess.remote.common.net.ClientNetworkInterface;
 import edu.nyu.cess.remote.common.net.ClientNetworkInterfaceObserver;
 import edu.nyu.cess.remote.common.net.DataPacket;
+import edu.nyu.cess.remote.common.net.PacketType;
 import edu.nyu.cess.remote.common.net.SocketInfo;
 
 /**
@@ -29,15 +32,15 @@ public class ServerProxy implements ClientNetworkInterfaceObserver, ServerProxyO
 		socketInfo.readFromFile(serverLocation);
 
 		networkInterface = new ClientNetworkInterface(socketInfo);
-		networkInterface.addObserver(this);
+		networkInterface.addClientNetworkInterfaceObserver(this);
 
 	}
 
-	public void initPersistentServerConnection() {
+	public void establishPersistentServerConnection() {
 
 		while (true) {
-			networkInterface.pollServerUntilSocketInitialized(POLL_INTERVAL);
-			networkInterface.readPacketsUntilSocketClosed();
+			networkInterface.setServerSocketConnection(POLL_INTERVAL);
+			networkInterface.handleInboundPacketRequests();
 			try {
 				Thread.sleep(POLL_INTERVAL);
 			} catch (InterruptedException e) {
@@ -45,56 +48,75 @@ public class ServerProxy implements ClientNetworkInterfaceObserver, ServerProxyO
 			System.out.println("attempting to reconnect to server...");
 		}
 	}
-
-	public void updateApplicationState(State state) {
-		networkInterface.writeDataPacket(new DataPacket(state));
+	
+	public void sendServerApplicationState(State state) {
+		DataPacket dataPacket = new DataPacket(PacketType.APPLICATION_STATE_CHAGE, state);
+		networkInterface.writeDataPacket(dataPacket);
 	}
 
-	public void addObserver(ServerProxyObserver observer) {
+	public void addServerProxyObserver(ServerProxyObserver observer) {
 		observers.add(observer);
 	}
 
-	public void deleteObserver(ServerProxyObserver observer) {
+	public void deleteServerProxyObserver(ServerProxyObserver observer) {
 		observers.remove(observer);
 	}
 
 	public void notifyApplicationExececutionRequestReceived(ExecutionRequest execRequest) {
 		for (ServerProxyObserver observer : observers) {
-			observer.execRequestUpdate(execRequest);
+			observer.updateServerExecutionRequestReceived(execRequest);
 		}
 	}
 
-	public void notifyNetworkStatusUpdate(boolean isConnected) {
+	public void notifyObserverNetworkStateChanged(boolean isConnected) {
 		for (ServerProxyObserver observer : observers) {
-			observer.networkStatusUpdate(isConnected);
+			observer.updateNetworkStateChanged(isConnected);
 		}
 	}
 
 	public void notifyServerMessageReceived(String message) {
 		for (ServerProxyObserver observer : observers) {
-			observer.serverMessageUpdate(message);
+			observer.updateServerMessageReceived(message);
 		}
 	}
 
-	public void networkPacketUpdate(DataPacket dataPacket, String ipAddress) {
+	public void updateNetworkPacketReceived(DataPacket dataPacket, String ipAddress) {
 		System.out.println("Network Packet Received.");
-		Object obj = dataPacket.getContent();
-		if (obj != null) {
-			if (obj instanceof ExecutionRequest) {
-				System.out.println("Packet Content: ApplicationExecRequest");
-				ExecutionRequest execReq = (ExecutionRequest) dataPacket.getContent();
-				notifyApplicationExececutionRequestReceived(execReq);
+		
+		PacketType dataPacketType = dataPacket.getPacketType();
+		if (!(dataPacketType instanceof PacketType)) {
+			return;
+		}
+		
+		switch(dataPacket.getPacketType()) {
+		case APPLICATION_EXECUTION_REQUEST:
+			ExecutionRequest execRequest = (ExecutionRequest) dataPacket.getPayload();
+			if (execRequest != null && execRequest instanceof ExecutionRequest) {
+					System.out.println("Packet Content: ApplicationExecRequest");
+					notifyApplicationExececutionRequestReceived(execRequest);
 			}
-			else if (obj instanceof String) {
-				System.out.println("String received from " + ipAddress);
-
-				notifyServerMessageReceived(((String) obj));
+			break;
+		case MESSAGE:
+			String message = (String) dataPacket.getPayload();
+			if (message != null && !message.isEmpty()) {
+				notifyServerMessageReceived(message);
 			}
+			break;
+		case APPLICATION_STATE_CHAGE:
+		case HOST_INFO:
+			// Not supported by the Client
+			break;
+		case SOCKET_TEST:
+			// No processing occurs during a socket test
+			break;
+		default:
+			// Do nothing
+			break;
 		}
 	}
 
-	public void networkStatusUpdate(String ipAddress, boolean isConnected) {
-		notifyNetworkStatusUpdate(isConnected);
+	public void updateNetworkConnectionStateChanged(String ipAddress, boolean isConnected) {
+		notifyObserverNetworkStateChanged(isConnected);
 	}
 
 }
