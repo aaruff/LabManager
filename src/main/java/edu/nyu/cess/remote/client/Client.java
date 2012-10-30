@@ -34,13 +34,13 @@ public class Client implements ApplicationObserver, ServerProxyObserver {
 
 	public void initServerConnection() {
 		serverProxy = new ServerProxy(new File("server_location.txt"));
-		serverProxy.addObserver(this);
-		serverProxy.initPersistentServerConnection();
+		serverProxy.addServerProxyObserver(this);
+		serverProxy.establishPersistentServerConnection();
 	}
 
 	public void applicationUpdate(State applicationState) {
 
-		serverProxy.updateApplicationState(applicationState);
+		serverProxy.sendServerApplicationState(applicationState);
 
 		if (applicationState instanceof StartedState) {
 			System.out.println("Sending Started State");
@@ -50,7 +50,7 @@ public class Client implements ApplicationObserver, ServerProxyObserver {
 		}
 	}
 
-	public void execRequestUpdate(ExecutionRequest exeReq) {
+	public void updateServerExecutionRequestReceived(ExecutionRequest exeReq) {
 
 		State requestedApplicationState = exeReq.getApplicationState();
 		System.out.println("Application execution request received from the server.");
@@ -87,7 +87,7 @@ public class Client implements ApplicationObserver, ServerProxyObserver {
 		}
 	}
 
-	public void networkStatusUpdate(boolean isConnected) {
+	public void updateNetworkStateChanged(boolean isConnected) {
 		if (isConnected && application != null) {
 			if (application.isStarted()) {
 				System.out.println("notifying server of applications prior state (StartedState).");
@@ -96,7 +96,7 @@ public class Client implements ApplicationObserver, ServerProxyObserver {
 		}
 	}
 
-	public void serverMessageUpdate(String message) {
+	public void updateServerMessageReceived(String message) {
 		SwingUtilities.invokeLater(new MessageRunnable(message));
 	}
 

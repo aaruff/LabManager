@@ -10,10 +10,10 @@ import edu.nyu.cess.remote.common.app.ExecutionRequest;
  */
 public interface ServerProxyObserver {
 
-	public void execRequestUpdate(ExecutionRequest executionRequest);
+	public void updateServerExecutionRequestReceived(ExecutionRequest executionRequest);
 
-	public void networkStatusUpdate(boolean isConnected);
+	public void updateNetworkStateChanged(boolean isConnected);
 
-	public void serverMessageUpdate(String message);
+	public void updateServerMessageReceived(String message);
 
 }
