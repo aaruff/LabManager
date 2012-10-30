@@ -6,14 +6,10 @@ import edu.nyu.cess.remote.common.app.StopedState;
 
 public class LiteClient {
 
-	private final String ipAddress;
-
+	private String ipAddress;
 	private String hostName;
-
 	private State applicationState;
-
 	private String applicationName;
-
 	private boolean isConnected = true;
 
 	public LiteClient(String ipAddress) {
