@@ -11,7 +11,9 @@ import edu.nyu.cess.remote.common.app.ExecutionRequest;
 import edu.nyu.cess.remote.common.app.State;
 import edu.nyu.cess.remote.common.net.ClientNetworkInterfaceObserver;
 import edu.nyu.cess.remote.common.net.DataPacket;
+import edu.nyu.cess.remote.common.net.HostInfo;
 import edu.nyu.cess.remote.common.net.LiteClientNetworkInterface;
+import edu.nyu.cess.remote.common.net.PacketType;
 
 /**
  * The Class ClientProxy.
@@ -29,7 +31,6 @@ public class ClientProxy implements ClientNetworkInterfaceObserver, ClientProxyO
 	HashMap<String, LiteClientNetworkInterface> clientNetworkInterfaces = new HashMap<String, LiteClientNetworkInterface>();
 
 	public ClientProxy() {
-
 	}
 
 	/**
@@ -54,7 +55,7 @@ public class ClientProxy implements ClientNetworkInterfaceObserver, ClientProxyO
 				System.out.println("Client Connected: " + clientNetworkInterface.getRemoteIPAddress());
 
 				clientNetworkInterface.setSocket(clientSocket);
-				clientNetworkInterface.addObserver(this);
+				clientNetworkInterface.addClientNetworkInterfaceObserver(this);
 				clientNetworkInterfaces.put(clientNetworkInterface.getRemoteIPAddress(), clientNetworkInterface);
 
 				notifyNetworkClientAdded(clientNetworkInterface.getRemoteIPAddress());
@@ -64,20 +65,40 @@ public class ClientProxy implements ClientNetworkInterfaceObserver, ClientProxyO
 		}
 	}
 
-	public void networkPacketUpdate(DataPacket dataPacket, String ipAddress) {
-		State appState = null;
-
+	public void updateNetworkPacketReceived(DataPacket dataPacket, String ipAddress) {
 		System.out.println("Packet received from client " + ipAddress);
-
-		Object obj = dataPacket.getContent();
-		if (obj != null) {
-			if ((appState = (State) obj) instanceof State) {
+		
+		switch(dataPacket.getPacketType()) {
+		case APPLICATION_EXECUTION_REQUEST:
+			// Not supported by the server
+			break;
+		case APPLICATION_STATE_CHAGE:
+			State appState = (State) dataPacket.getPayload();
+			if (appState != null && appState instanceof State) {
 				notifyApplicationStateReceived(appState, ipAddress);
+			} 
+			break;
+		case HOST_INFO:
+			HostInfo hostInfo = (HostInfo) dataPacket.getPayload();
+			String hostName = hostInfo.getHostName();
+			
+			if(hostName != null && !hostName.isEmpty()) {
+				notifyClientHostNameUpdate(hostName, ipAddress);
 			}
+			break;
+		case MESSAGE:
+			// Not supported by the server
+			break;
+		case SOCKET_TEST:
+			// No processing is done when a socket test is received
+			break;
+		default:
+			// Do nothing
+			break;
 		}
 	}
 
-	public void networkStatusUpdate(String ipAddress, boolean isConnected) {
+	public void updateNetworkConnectionStateChanged(String ipAddress, boolean isConnected) {
 
 		System.out.println("Client " + ipAddress + " has "
 				+ ((isConnected) ? " connected to the server" : " disconnected"));
@@ -100,34 +121,40 @@ public class ClientProxy implements ClientNetworkInterfaceObserver, ClientProxyO
 
 	public void notifyApplicationStateReceived(State applicationState, String ipAddress) {
 		for (ClientProxyObserver clientProxyObserver : observers) {
-			clientProxyObserver.applicationStateUpdate(ipAddress, applicationState);
+			clientProxyObserver.updateApplicationStateChanged(ipAddress, applicationState);
+		}
+	}
+	
+	public void notifyClientHostNameUpdate(String hostName, String ipAddress) {
+		for (ClientProxyObserver clientProxyObserver : observers) {
+			clientProxyObserver.updateClientHostNameUpdate(hostName, ipAddress);
 		}
 	}
 
 	public void notifyNetworkClientAdded(String ipAddress) {
 		for (ClientProxyObserver observer : observers) {
-			observer.newClientUpdate(ipAddress);
+			observer.updateNewClientConnected(ipAddress);
 		}
 	}
 
 	public void notifyNetworkStatusChange(String ipAddress, boolean isConnected) {
 		for (ClientProxyObserver observer : observers) {
-			observer.networkStatusUpdate(ipAddress, isConnected);
+			observer.updateClientConnectionStateChanged(ipAddress, isConnected);
 		}
 	}
 
 	public void startApplicationOnClient(ExecutionRequest applicationExecutionRequest, String ipAddress) {
-		DataPacket dataPacket = new DataPacket(applicationExecutionRequest);
+		DataPacket dataPacket = new DataPacket(PacketType.APPLICATION_EXECUTION_REQUEST, applicationExecutionRequest);
 		clientNetworkInterfaces.get(ipAddress).writeDataPacket(dataPacket);
 	}
 
 	public void stopApplicationOnClient(ExecutionRequest stopExecutionRequest, String ipAddress) {
-		DataPacket dataPacket = new DataPacket(stopExecutionRequest);
+		DataPacket dataPacket = new DataPacket(PacketType.APPLICATION_EXECUTION_REQUEST, stopExecutionRequest);
 		clientNetworkInterfaces.get(ipAddress).writeDataPacket(dataPacket);
 	}
 
 	public void sendMessageToClient(String message, String ipAddress) {
-		DataPacket dataPacket = new DataPacket(message);
+		DataPacket dataPacket = new DataPacket(PacketType.MESSAGE, message);
 		clientNetworkInterfaces.get(ipAddress).writeDataPacket(dataPacket);
 	}
 }
