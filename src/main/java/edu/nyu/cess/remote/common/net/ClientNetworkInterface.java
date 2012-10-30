@@ -46,21 +46,22 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 	 * @return an {@link ObjectInputStream} or <code>null</code> if
 	 *         initialization failed.
 	 */
-	private boolean initializeObjectInputStream() {
+	private boolean setServerObjectInputStream() {
 		boolean result = false;
 
-		if (socket.isConnected()) {
+		if (this.socket.isConnected()) {
 			try {
-				InputStream inputStream = socket.getInputStream();
+				InputStream inputStream = this.socket.getInputStream();
 				if (inputStream != null) {
-					objectInputStream = new ObjectInputStream(inputStream);
+					this.objectInputStream = new ObjectInputStream(inputStream);
 					result = true;
 				}
 			} catch (IOException ex) {
-				objectInputStream = null;
+				this.objectInputStream = null;
 				result = false;
 			}
 		}
+		
 		return result;
 	}
 
@@ -69,7 +70,7 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 	 *
 	 * @return an {@link ObjectOutputStream} or null if initialization failed.
 	 */
-	private boolean initializeObjectOutputStream() {
+	private boolean setServerObjectOutputStream() {
 		boolean result = false;
 
 		if (socket != null) {
@@ -91,7 +92,7 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 	 *
 	 * @return true if the socket is connected, otherwise false
 	 */
-	public boolean isConnected() {
+	public boolean isServerSocketConnected() {
 		return (socket != null) ? socket.isConnected() : false;
 	}
 
@@ -103,7 +104,7 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 	 * @return initialized {@link Socket}, or null if a socket connection is not
 	 *         established.
 	 */
-	public Socket getSocketConnection() {
+	public Socket getServerSocketConnection() {
 		socket = null;
 		try {
 			socket = new Socket(remoteIPAddress, remotePortNumber);
@@ -131,15 +132,15 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 	 *            interval in which the remote node will be polled until a
 	 *            socket connection is established.
 	 */
-	public void pollServerUntilSocketInitialized(int pollInterval) {
+	public void setServerSocketConnection(int pollInterval) {
 		socket = null;
 
-		socket = getSocketConnection();
+		socket = getServerSocketConnection();
 		while (socket == null) {
 			try {
 				Thread.sleep(pollInterval);
 				System.out.println("Attempting to connect to server: " + remoteIPAddress);
-				socket = getSocketConnection();
+				socket = getServerSocketConnection();
 			} catch (InterruptedException e) {
 				System.out.println("Thread sleep interruped...");
 			}
@@ -155,24 +156,52 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 		networkInterfaceMonitorThread.start();
 
 	}
+	
+	private String getLocalHostName() {
+		String hostName;
+		try {
+			hostName = InetAddress.getLocalHost().getHostName();
+		} catch (UnknownHostException e) {
+			hostName = "";
+		}
+		
+		return hostName;
+	}
+	
+	private String getLocalIPAddress() {
+		String ip;
+		try {
+			ip = InetAddress.getLocalHost().getHostAddress();
+		}
+		catch(UnknownHostException e) {
+			ip = new String("");
+		}
+		return ip;
+	}
 
 	/**
 	 * This function reads data packets and passes read {@link DataPacket}s to
 	 * {@link ClientNetworkInterfaceObserver}s.
 	 */
-	public void readPacketsUntilSocketClosed() {
-
+	public void handleInboundPacketRequests() {
+		HostInfo hostInfo = new HostInfo();
+		hostInfo.setHostName(getLocalHostName());
+		hostInfo.setIPAddress(getLocalIPAddress());
+		
+		DataPacket dataPacket = new DataPacket(PacketType.HOST_INFO, hostInfo);
+		writeDataPacket(dataPacket);
+		
+		dataPacket = null;
+	
 		localIPAddress = socket.getLocalAddress().getHostAddress();
 		startNetworkInterfaceMonitor();
 
-		DataPacket dataPacket = null;
-
 		System.out.println("Waiting for message from " + remoteIPAddress);
 
-		notifyNetworkStatusUpdate(remoteIPAddress, true);
+		notifyNetworkStatusChanged(remoteIPAddress, true);
 
 		while ((dataPacket = readDataPacket()) != null) {
-			notifyObservers(dataPacket);
+			notifyNetworkPacketReceived(dataPacket);
 		}
 
 		if (objectOutputStream != null) {
@@ -192,7 +221,7 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 			}
 		}
 
-		notifyNetworkStatusUpdate(remoteIPAddress, false);
+		notifyNetworkStatusChanged(remoteIPAddress, false);
 
 	}
 
@@ -211,7 +240,7 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 			if (socket.isConnected()) {
 
 				if (objectInputStream == null) {
-					streamInitialized = initializeObjectInputStream();
+					streamInitialized = setServerObjectInputStream();
 				}
 
 				if (objectInputStream != null && streamInitialized) {
@@ -248,7 +277,7 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 			if (socket.isConnected()) {
 
 				if (objectOutputStream == null) {
-					streamInitialized = initializeObjectOutputStream();
+					streamInitialized = setServerObjectOutputStream();
 				}
 
 				if (objectOutputStream != null) {
@@ -266,7 +295,7 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 		return streamInitialized;
 	}
 
-	public void close() {
+	public void closeServerNetworkConnection() {
 		if (socket != null) {
 			try {
 				socket.close();
@@ -296,23 +325,23 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 		}
 	}
 
-	public boolean addObserver(ClientNetworkInterfaceObserver networkObserver) {
+	public boolean addClientNetworkInterfaceObserver(ClientNetworkInterfaceObserver networkObserver) {
 		return observers.add(networkObserver);
 	}
 
-	public boolean deleteObserver(ClientNetworkInterfaceObserver networkObserver) {
+	public boolean deleteClientNetworkInterfaceObserver(ClientNetworkInterfaceObserver networkObserver) {
 		return observers.remove(networkObserver);
 	}
 
-	public synchronized void notifyObservers(DataPacket packet) {
+	public synchronized void notifyNetworkPacketReceived(DataPacket packet) {
 		for (ClientNetworkInterfaceObserver observer : observers) {
-			observer.networkPacketUpdate(packet, remoteIPAddress);
+			observer.updateNetworkPacketReceived(packet, remoteIPAddress);
 		}
 	}
 
-	public synchronized void notifyNetworkStatusUpdate(String ipAddress, boolean isConnected) {
+	public synchronized void notifyNetworkStatusChanged(String ipAddress, boolean isConnected) {
 		for (ClientNetworkInterfaceObserver observer : observers) {
-			observer.networkStatusUpdate(ipAddress, isConnected);
+			observer.updateNetworkConnectionStateChanged(ipAddress, isConnected);
 		}
 
 	}
@@ -354,7 +383,7 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 				}
 			}
 
-			close();
+			closeServerNetworkConnection();
 			System.out.println("Network Interface Is Down!!!");
 			System.out.println("Attempting to interrupt the network communication thread...");
 
