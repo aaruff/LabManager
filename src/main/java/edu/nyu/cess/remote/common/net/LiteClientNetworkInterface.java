@@ -181,23 +181,23 @@ public class LiteClientNetworkInterface implements ClientNetworkInterfaceObserva
 		}
 	}
 
-	public boolean addObserver(ClientNetworkInterfaceObserver networkObserver) {
+	public boolean addClientNetworkInterfaceObserver(ClientNetworkInterfaceObserver networkObserver) {
 		return observers.add(networkObserver);
 	}
 
-	public boolean deleteObserver(ClientNetworkInterfaceObserver networkObserver) {
+	public boolean deleteClientNetworkInterfaceObserver(ClientNetworkInterfaceObserver networkObserver) {
 		return observers.remove(networkObserver);
 	}
 
-	public void notifyNetworkStatusUpdate(String ipAddress, boolean isConnected) {
+	public void notifyNetworkStatusChanged(String ipAddress, boolean isConnected) {
 		for (ClientNetworkInterfaceObserver observer : observers) {
-			observer.networkStatusUpdate(ipAddress, isConnected);
+			observer.updateNetworkConnectionStateChanged(ipAddress, isConnected);
 		}
 	}
 
-	public void notifyObservers(DataPacket dataPacket) {
+	public void notifyNetworkPacketReceived(DataPacket dataPacket) {
 		for (ClientNetworkInterfaceObserver observer : observers) {
-			observer.networkPacketUpdate(dataPacket, remoteIPAddress);
+			observer.updateNetworkPacketReceived(dataPacket, remoteIPAddress);
 		}
 	}
 
@@ -227,8 +227,7 @@ public class LiteClientNetworkInterface implements ClientNetworkInterfaceObserva
 
 		public void run() {
 			boolean interfaceState = true;
-			DataPacket packet = new DataPacket(null);
-
+			DataPacket packet = new DataPacket(PacketType.SOCKET_TEST, null);
 			/* 
 			 *  Sends an empty packet to the respective client
 			 *  to determine if the socket connection is still established.
@@ -250,15 +249,15 @@ public class LiteClientNetworkInterface implements ClientNetworkInterfaceObserva
 		public void run() {
 			DataPacket dataPacket = null;
 
-			notifyNetworkStatusUpdate(remoteIPAddress, true);
+			notifyNetworkStatusChanged(remoteIPAddress, true);
 
 			System.out.println("Waiting for message from Client " + remoteIPAddress);
 			while ((dataPacket = readDataPacket()) != null) {
 				System.out.println("Data Packet Received");
-				notifyObservers(dataPacket);
+				notifyNetworkPacketReceived(dataPacket);
 			}
 
-			notifyNetworkStatusUpdate(remoteIPAddress, false);
+			notifyNetworkStatusChanged(remoteIPAddress, false);
 
 			System.out.println("Client " + remoteIPAddress + " connection closed...");
 		}
