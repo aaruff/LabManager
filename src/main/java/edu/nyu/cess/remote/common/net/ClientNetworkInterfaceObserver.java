@@ -16,7 +16,7 @@ public interface ClientNetworkInterfaceObserver {
 	 * @param ipAddress
 	 *            the ip address
 	 */
-	public void networkPacketUpdate(DataPacket dataPacket, String ipAddress);
+	public void updateNetworkPacketReceived(DataPacket dataPacket, String ipAddress);
 
 	/**
 	 * This method is called when the {@link NetworkClientInterface} connection
@@ -25,6 +25,6 @@ public interface ClientNetworkInterfaceObserver {
 	 * @param isConnected
 	 *            the is connected
 	 */
-	public void networkStatusUpdate(String ipAddress, boolean isConnected);
+	public void updateNetworkConnectionStateChanged(String ipAddress, boolean isConnected);
 
 }
