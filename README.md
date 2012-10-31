@@ -20,14 +20,14 @@ The above file will be used by the server to locate the program to execute on th
 
 **For Example:**
 
-`zLeaf-2.0.1, C:\zleaf\zLeaf-2.0.1.exe, /server 192.168.0.1 /language en,
-zLeaf-3.1.1, C:\zleaf\zLeaf-3.1.1.exe, /server 192.168.0.1 /language en,`
+	zLeaf-2.0.1, C:\zleaf\zLeaf-2.0.1.exe, /server 192.168.0.1 /language en,
+	zLeaf-3.1.1, C:\zleaf\zLeaf-3.1.1.exe, /server 192.168.0.1 /language en,
 
 The above configuration file specifies the location and arguments for two zLeaf programs.
 
-	* The first section (ZLeaf-2.0.1) contains the name to be displayed for selection in the server program.
-	* The second section (C:\zleaf\zLeaf-2.0.1.exe) specifies the path to the program to be executed on the client.
-	* The third section (/server 192.168.0.1 /langauge en) specifies an addition information that must be passed to the program upon execution.
+* The first section (ZLeaf-2.0.1) contains the name to be displayed for selection in the server program.
+* The second section (C:\zleaf\zLeaf-2.0.1.exe) specifies the path to the program to be executed on the client.
+* The third section (/server 192.168.0.1 /langauge en) specifies an addition information that must be passed to the program upon execution.
 
 4. Create a shortcut to the __C:\LabRemote\Remote-Server.jar__ on to the desktop for easy execution of the application remote server.
 
@@ -46,11 +46,11 @@ The above file will be used by the server to locate the program to execute on th
 
 **The format for the application_info.txt file is as follows:**
 
-`<program name>, <path to the program to execute>, <command line arguments>,`
+	<program name>, <path to the program to execute>, <command line arguments>,
 
 **For Example:**
 
-`zLeaf-2.0.1, /usr/bin/wine, /home/subject/z-leafs/zLeaf-2.0.1.exe /server 192.168.0.1 /language en,`
+	zLeaf-2.0.1, /usr/bin/wine, /home/subject/z-leafs/zLeaf-2.0.1.exe /server 192.168.0.1 /language en,
 
 The above configuration file specifies the location and arguments for one zLeaf program, which is executed on a linux client using [wine](http://www.winehq.org/).
 
