@@ -14,10 +14,10 @@ Installation: Windows
 3. Add the program names, path, and arguments to the "application_info.txt" configuration file.
 The above file will be used by the server to locate the program to execute on the client computers.
 
-**The format for the application_info.txt file is as follows:**
+**The format for the application_info.txt file is as follows:**  
 	program name __,__ path to the program to execute __,__ command line arguments __,__
 
-**For Example:**
+**For Example:**  
 	zLeaf-2.0.1, C:\zleaf\zLeaf-2.0.1.exe, /server 192.168.0.1 /language en,
 	zLeaf-3.1.1, C:\zleaf\zLeaf-3.1.1.exe, /server 192.168.0.1 /language en,
 	
