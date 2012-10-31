@@ -9,16 +9,17 @@ Java 1.6
 
 Installation: Windows
 ------------------
-1. Create the "LabRemote" folder on the C drive of the server (__C:\LabRemote__).
+1. Create the __LabRemote__ folder on the C drive of the server (__C:\LabRemote__).
 2. Download the [Server](https://github.com/downloads/aaruff/AppRemoteServer/Remote-Server.zip) app and unzip it in the __C:\LabRemote__ directory.
-3. Add the program names, path, and arguments to the "application_info.txt" configuration file.
+3. Add the program names, path, and arguments to the __application_info.txt__ configuration file.
 	The above file will be used by the server to locate the program to execute on the client computers.
 	
 	**The format for the application_info.txt file is as follows:**  
 	
 		program name , path to the program to execute , command line arguments ,
+	_Note:_ Each section is separated by a comma.
 	
-	**For Example:**  
+	**Example:**  
 	
 		zLeaf-2.0.1, C:\zleaf\zLeaf-2.0.1.exe, /server 192.168.0.1 /language en,
 		zLeaf-3.1.1, C:\zleaf\zLeaf-3.1.1.exe, /server 192.168.0.1 /language en,
@@ -36,18 +37,19 @@ __Note 2:__ The Z-Tree program must be running on the server before z-Leaf clien
 
 Installation: Linux and OS X
 ----------------------------
-1. Create the "LabRemote" directory in the users home directory.
+1. Create the __LabRemote__ directory in the users home directory.
 	* On OS X: /Users/<user>/LabRemote
 	* On Linux /home/<user>/LabRemote
 2. Download the [Server](https://github.com/downloads/aaruff/AppRemoteServer/Remote-Server.zip) app and unzip into the newly created LabRemote Directory.
-3. Add the program names, path, and arguments to the "application_info.txt" configuration file. 
+3. Add the program names, path, and arguments to the __application_info.txt__ configuration file. 
 The above file will be used by the server to locate the program to execute on the client computers.
 
 	**The format for the application_info.txt file is as follows:**  
 	
 		program name , path to the program to execute , command line arguments ,
+	_Note:_ Each section is separated by a comma.
 	
-	**For Example:**  
+	**Example:**  
 	
 		zLeaf-2.0.1, /usr/bin/wine, /home/subject/z-leafs/zLeaf-2.0.1.exe /server 192.168.0.1 /language en,
 	
