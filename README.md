@@ -53,7 +53,6 @@ The above file will be used by the server to locate the program to execute on th
 	
 	The above configuration file specifies the location and arguments for one zLeaf program, 
 	which is executed on a linux client using [wine](http://www.winehq.org/).  
-	
 	* The first section (ZLeaf-2.0.1) contains the name to be displayed for selection in the server program.
 	* The second section (/usr/bin/wine) is the path to the Wine program that will be used to run the z-leaf program.
 	* The third section (/home/subject/z-leafs/zLeaf-2.0.1.exe /server 192.168.0.1 /language en) contains the path the the z-Tree program wine will execute and it's arguments.
