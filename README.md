@@ -9,8 +9,8 @@ Java 1.6
 
 Installation: Windows
 ------------------
-1. Create the "LabRemote" folder on the C drive of the server (C:\LabRemote).
-2. Download the [Server](https://github.com/downloads/aaruff/AppRemoteServer/Remote-Server.zip) app and unzip it in the C:\LabRemote directory.
+1. Create the "LabRemote" folder on the C drive of the server (__C:\LabRemote__).
+2. Download the [Server](https://github.com/downloads/aaruff/AppRemoteServer/Remote-Server.zip) app and unzip it in the __C:\LabRemote__ directory.
 3. Add the program names, path, and arguments to the "application_info.txt" configuration file. 
 The above file will be used by the server to locate the program to execute on the client computers. 
 
@@ -29,9 +29,10 @@ The above configuration file specifies the location and arguments for two zLeaf 
 * The second section (C:\zleaf\zLeaf-2.0.1.exe) specifies the path to the program to be executed on the client.
 * The third section (/server 192.168.0.1 /langauge en) specifies an addition information that must be passed to the program upon execution.
 
-	* _Note 1:_ The server must have port 2600 open in order for the server to be able to communicate with the clients.  
-	* _Note 2:_ A link to the LabRemote server application can be placed on the desktop of the server to make it easier for experimenters to start it.
-	* _Note 3:_ The Z-Tree program must be running on the server before z-Leaf clients can connect to it.
+4. Create a shortcut to the __C:\LabRemote\Remote-Server.jar__ on to the desktop for easy execution of the application remote server.
+
+* _Note 1:_ The server must have port 2600 open in order for the server to be able to communicate with the clients.  
+	* _Note 2:_ The Z-Tree program must be running on the server before z-Leaf clients can connect to it.
 
 
 Installation: Linux and OS X
