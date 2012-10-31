@@ -7,10 +7,10 @@ Requirement
 ------------------
 Java 1.6
 
-Windows Installation
+Installation: Windows
 ------------------
 1. Create the "LabRemote" folder on the C drive of the server (C:\LabRemote).
-1. Download the [Server](https://github.com/downloads/aaruff/AppRemoteServer/Remote-Server.zip) app and unzip it in the C:\LabRemote directory.
+2. Download the [Server](https://github.com/downloads/aaruff/AppRemoteServer/Remote-Server.zip) app and unzip it in the C:\LabRemote directory.
 3. Add the program names, path, and arguments to the "application_info.txt" configuration file. 
 The above file will be used by the server to locate the program to execute on the client computers. 
 
@@ -24,13 +24,39 @@ The above file will be used by the server to locate the program to execute on th
 zLeaf-3.1.1, C:\zleaf\zLeaf-3.1.1.exe, /server 192.168.0.1 /language en,`
 
 The above configuration file specifies the location and arguments for two zLeaf programs.
-The first portion (ZLeaf-2.0.1) contains the name to be displayed for selection in the server program.
-The second portion (C:\zleaf\zLeaf-2.0.1.exe) specifies the path to the program to be executed on the client.
-The third portion (/server 192.168.0.1 /langauge en) specifies an addition information that must be passed to the program upon execution.
 
-* Note 1: The server must have port 2600 open in order for the server to be able to communicate with the clients.  
-* Note 2: A link to the LabRemote server application can be placed on the desktop of the server to make it easier for experimenters to start it.
-* Note 3: The Z-Tree program must be running on the server before z-Leaf clients can connect to it.
+* The first section (ZLeaf-2.0.1) contains the name to be displayed for selection in the server program.
+* The second section (C:\zleaf\zLeaf-2.0.1.exe) specifies the path to the program to be executed on the client.
+* The third section (/server 192.168.0.1 /langauge en) specifies an addition information that must be passed to the program upon execution.
+
+	* _Note 1:_ The server must have port 2600 open in order for the server to be able to communicate with the clients.  
+	* _Note 2:_ A link to the LabRemote server application can be placed on the desktop of the server to make it easier for experimenters to start it.
+	* _Note 3:_ The Z-Tree program must be running on the server before z-Leaf clients can connect to it.
+
+
+Installation: Linux and OS X
+----------------------------
+1. Create the "LabRemote" directory in the users home directory.
+	* On OS X: /Users/<user>/LabRemote
+	* On Linux /home/<user>/LabRemote
+2. Download the [Server](https://github.com/downloads/aaruff/AppRemoteServer/Remote-Server.zip) app and unzip into the newly created LabRemote Directory.
+3. Add the program names, path, and arguments to the "application_info.txt" configuration file. 
+The above file will be used by the server to locate the program to execute on the client computers.
+
+**The format for the application_info.txt file is as follows:**
+
+`<program name>, <path to the program to execute>, <command line arguments>,`
+
+**For Example:**
+
+`zLeaf-2.0.1, /usr/bin/wine, /home/subject/z-leafs/zLeaf-2.0.1.exe /server 192.168.0.1 /language en,`
+
+The above configuration file specifies the location and arguments for one zLeaf program, which is executed on a linux client using [wine](http://www.winehq.org/).
+
+* The first section (ZLeaf-2.0.1) contains the name to be displayed for selection in the server program.
+* The second section (/usr/bin/wine) is the path to the Wine program that will be used to run the z-leaf program.
+* The third section (/home/subject/z-leafs/zLeaf-2.0.1.exe /server 192.168.0.1 /language en) contains the path the the z-Tree program wine will execute and it's arguments.
+
 
 
 License
