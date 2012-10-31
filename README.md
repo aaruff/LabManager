@@ -25,14 +25,14 @@ zLeaf-3.1.1, C:\zleaf\zLeaf-3.1.1.exe, /server 192.168.0.1 /language en,`
 
 The above configuration file specifies the location and arguments for two zLeaf programs.
 
-* The first section (ZLeaf-2.0.1) contains the name to be displayed for selection in the server program.
-* The second section (C:\zleaf\zLeaf-2.0.1.exe) specifies the path to the program to be executed on the client.
-* The third section (/server 192.168.0.1 /langauge en) specifies an addition information that must be passed to the program upon execution.
+	* The first section (ZLeaf-2.0.1) contains the name to be displayed for selection in the server program.
+	* The second section (C:\zleaf\zLeaf-2.0.1.exe) specifies the path to the program to be executed on the client.
+	* The third section (/server 192.168.0.1 /langauge en) specifies an addition information that must be passed to the program upon execution.
 
 4. Create a shortcut to the __C:\LabRemote\Remote-Server.jar__ on to the desktop for easy execution of the application remote server.
 
-* _Note 1:_ The server must have port 2600 open in order for the server to be able to communicate with the clients.  
-	* _Note 2:_ The Z-Tree program must be running on the server before z-Leaf clients can connect to it.
+__Note 1:__ The server must have port 2600 open in order for the server to be able to communicate with the clients.  
+__Note 2:__ The Z-Tree program must be running on the server before z-Leaf clients can connect to it.
 
 
 Installation: Linux and OS X
