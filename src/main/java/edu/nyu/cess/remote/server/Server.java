@@ -1,21 +1,13 @@
 package edu.nyu.cess.remote.server;
 
+import edu.nyu.cess.remote.common.app.*;
+
+import javax.swing.*;
 import java.io.File;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.HashMap;
-
-import javax.swing.SwingUtilities;
-
-import edu.nyu.cess.remote.common.app.ApplicationInfo;
-import edu.nyu.cess.remote.common.app.ExecutionRequest;
-import edu.nyu.cess.remote.common.app.StartedState;
-import edu.nyu.cess.remote.common.app.State;
-import edu.nyu.cess.remote.common.app.StopedState;
 
 public class Server implements ClientProxyObserver {
 
-	// TODO: after texting set protected fields to private
 
 	private final ClientProxy clientProxy;
 
@@ -23,7 +15,6 @@ public class Server implements ClientProxyObserver {
 
 	protected final ServerView view;
 
-	private ApplicationInfo applicationInfo;
 
 	protected String applicationNames[];
 
@@ -49,7 +40,7 @@ public class Server implements ClientProxyObserver {
 	 * handles network communication between the server and clients.
 	 */
 	public void init() {
-		applicationInfo = new ApplicationInfo();
+		ApplicationInfo applicationInfo = new ApplicationInfo();
 		applicationInfo.readFromFile(new File("application_info.txt"));
 
 		applicationNames = applicationInfo.getApplicationNames();
@@ -149,24 +140,6 @@ public class Server implements ClientProxyObserver {
 		ExecutionRequest executionRequest = new ExecutionRequest("", "", "", new StopedState());
 
 		clientProxy.stopApplicationOnClient(executionRequest, ipAddress);
-	}
-
-	/**
-	 * Retrieves the servers IP Address
-	 *
-	 * @return The Servers IP Address
-	 */
-	public String getServerIPAddress() {
-		String ipAddress = "";
-
-		try {
-			ipAddress = InetAddress.getLocalHost().getHostAddress();
-		}
-		catch (UnknownHostException e) {
-			System.out.println("Unable to get server IP Address");
-		}
-
-		return ipAddress;
 	}
 
 	/**
