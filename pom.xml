@@ -27,7 +27,7 @@
   	</dependencies>
   </dependencyManagement>
 
-  <name>CESS Application Remote Client</name>
+  <name>Lab Remote Client</name>
   <organization>
   	<name>The Center for Experimental Social Science</name>
   	<url>http://cess.nyu.edu</url>
