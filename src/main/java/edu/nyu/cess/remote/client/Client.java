@@ -32,6 +32,9 @@ public class Client implements ApplicationObserver, ServerProxyObserver {
 		serverProxy = null;
 	}
 
+	/**
+	 * Reads in the configuration file, and attempts to connect to the server.
+	 */
 	public void initServerConnection() {
 		serverProxy = new ServerProxy(new File("server_location.txt"));
 		serverProxy.addServerProxyObserver(this);
