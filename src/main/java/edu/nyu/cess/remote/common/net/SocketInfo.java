@@ -1,10 +1,8 @@
 package edu.nyu.cess.remote.common.net;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
  * The <code>NetworkContactInfo</code> stores the necessary network contact
@@ -14,36 +12,9 @@ import java.io.IOException;
  * @author Anwar A. Ruff
  */
 public class SocketInfo {
-	private String IPAddress;
-	private int portNumber;
-
-	public SocketInfo() {
-		IPAddress = null;
-		portNumber = 0;
-	}
-
-	/**
-	 * Initializes the port number
-	 * 
-	 * @param portNumber
-	 *            port number
-	 */
-	public SocketInfo(int portNumber) {
-		this.portNumber = portNumber;
-	}
-
-	/**
-	 * Initializes both the port number and IP Address
-	 * 
-	 * @param IPAddress
-	 *            IP Address
-	 * @param portNumber
-	 *            Port number
-	 */
-	public SocketInfo(String IPAddress, int portNumber) {
-		this.IPAddress = IPAddress;
-		this.portNumber = portNumber;
-	}
+	private String IPAddress = null;
+	private int portNumber = 0;
+	private String hostName = null;
 
 	/**
 	 * Sets the IP Address
@@ -92,22 +63,26 @@ public class SocketInfo {
 	 *         null if the file reading process or data validation failed.
 	 */
 	public boolean readFromFile(File file) {
-		String[] socketInfo = null, octets = null;
-		Boolean validIPAddress = true, validPortNumber = true, exceptionError = false, result = false;
-		final int IP_ADDRESS = 0, PORT_NUMBER = 1;
+		String[] socketInfo = null;
+		Boolean validIPAddress = true;
+        Boolean validPortNumber = true;
+        Boolean exceptionError = false;
+        Boolean result = false;
+
+		final int IP_ADDRESS = 0;
+        final int PORT_NUMBER = 1;
+        final int HOST_NAME = 2;
 		int tempPortNumber = 0;
 
 		try {
 			BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+            socketInfo = (bufferedReader.readLine()).split(",");
+            bufferedReader.close();
 
 			System.out.println("Reading network file information from: " + file.getAbsolutePath());
-
-			socketInfo = (bufferedReader.readLine()).split(",");
-
-			bufferedReader.close();
 		} catch (FileNotFoundException ex) {
-			System.err.println("File not found." + ex.getMessage());
 			exceptionError = true;
+            System.err.println("File not found." + ex.getMessage());
 			System.exit(1);
 		} catch (IOException ex) {
 			exceptionError = true;
@@ -115,11 +90,23 @@ public class SocketInfo {
 			System.exit(1);
 		}
 
+        if (socketInfo.length == 3) {
+            hostName = socketInfo[HOST_NAME];
+        }
+        else {
+            try {
+                hostName = InetAddress.getLocalHost().getHostName();
+            } catch (UnknownHostException e) {
+                System.err.println("Failed to determine host name.");
+                System.exit(1);
+            }
+        }
+
 		// If socketInfo consists of an IP Address and a Port Number
 		if (socketInfo.length == 2) {
 
 			// 4 octets in an IP Address
-			octets = socketInfo[IP_ADDRESS].split(".");
+			String[] octets = socketInfo[IP_ADDRESS].split(".");
 			if (octets.length == 4) {
 
 				// check the range of each octet
