@@ -1,6 +1,6 @@
 package edu.nyu.cess.remote.client;
 
-import java.io.File;
+import java.io.IOException;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -12,6 +12,7 @@ import edu.nyu.cess.remote.common.app.ExecutionRequest;
 import edu.nyu.cess.remote.common.app.StartedState;
 import edu.nyu.cess.remote.common.app.State;
 import edu.nyu.cess.remote.common.app.StopedState;
+import edu.nyu.cess.remote.common.net.HostConfigurationInfo;
 
 /**
  * The {@link Client} essentially manages local application execution requests
@@ -36,7 +37,15 @@ public class Client implements ApplicationObserver, ServerProxyObserver {
 	 * Reads in the configuration file, and attempts to connect to the server.
 	 */
 	public void initServerConnection() {
-		serverProxy = new ServerProxy(new File("server_location.txt"));
+        HostConfigurationInfo configInfo;
+		try {
+			configInfo = ConfigFileReader.readHostConfigFile("config.properties");
+		} catch (Exception e) {
+			System.exit(1);
+			return;
+		}
+
+		serverProxy = new ServerProxy(configInfo);
 		serverProxy.addServerProxyObserver(this);
 		serverProxy.establishPersistentServerConnection();
 	}
