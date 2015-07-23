@@ -3,18 +3,11 @@
  */
 package edu.nyu.cess.remote.client;
 
-import java.io.File;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-
 import edu.nyu.cess.remote.common.app.ExecutionRequest;
 import edu.nyu.cess.remote.common.app.State;
-import edu.nyu.cess.remote.common.net.ClientNetworkInterface;
-import edu.nyu.cess.remote.common.net.ClientNetworkInterfaceObserver;
-import edu.nyu.cess.remote.common.net.DataPacket;
-import edu.nyu.cess.remote.common.net.PacketType;
-import edu.nyu.cess.remote.common.net.SocketInfo;
+import edu.nyu.cess.remote.common.net.*;
+
+import java.util.ArrayList;
 
 /**
  * @author Anwar A. Ruff 
@@ -27,11 +20,8 @@ public class ServerProxy implements ClientNetworkInterfaceObserver, ServerProxyO
 
 	private final int POLL_INTERVAL = 2000; // miliseconds
 
-	public ServerProxy(File serverLocation) {
-		SocketInfo socketInfo = new SocketInfo();
-		socketInfo.readFromFile(serverLocation);
-
-		networkInterface = new ClientNetworkInterface(socketInfo);
+	public ServerProxy(HostConfigurationInfo hostConfig) {
+		networkInterface = new ClientNetworkInterface(hostConfig);
 		networkInterface.addClientNetworkInterfaceObserver(this);
 
 	}
