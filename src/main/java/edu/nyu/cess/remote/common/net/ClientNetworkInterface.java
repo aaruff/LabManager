@@ -25,9 +25,10 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 	private NetworkInterface networkInterface;
 
 	private String localIPAddress;
-	private String remoteIPAddress;
+	private String serverIp;
+	private String localHostName;
 
-	private int remotePortNumber;
+	private int serverPortNumber;
 
 	private ObjectInputStream objectInputStream;
 	private ObjectOutputStream objectOutputStream;
@@ -35,9 +36,10 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 	public ClientNetworkInterface() {
 	}
 
-	public ClientNetworkInterface(SocketInfo networkContactInfo) {
-		remoteIPAddress = networkContactInfo.getIPAddress();
-		remotePortNumber = networkContactInfo.getPortNumber();
+	public ClientNetworkInterface(HostConfigurationInfo hostConfig) {
+		serverIp = hostConfig.getServerIp();
+		serverPortNumber = hostConfig.getServerPortNumber();
+		localHostName = hostConfig.getLocalHostName();
 	}
 
 	/**
@@ -107,7 +109,7 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 	public Socket getServerSocketConnection() {
 		socket = null;
 		try {
-			socket = new Socket(remoteIPAddress, remotePortNumber);
+			socket = new Socket(serverIp, serverPortNumber);
 
 			System.out.println("Network connection established...");
 
@@ -115,7 +117,7 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 			System.out.println("Network Connection Error: No Known Host...");
 
 		} catch (ConnectException ex) {
-			System.out.println("Network Connection Error: connection to server " + remoteIPAddress + " failed.");
+			System.out.println("Network Connection Error: connection to server " + serverIp + " failed.");
 
 		} catch (IOException ex) {
 			System.out.println("IO Exception occured...");
@@ -139,7 +141,7 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 		while (socket == null) {
 			try {
 				Thread.sleep(pollInterval);
-				System.out.println("Attempting to connect to server: " + remoteIPAddress);
+				System.out.println("Attempting to connect to server: " + serverIp);
 				socket = getServerSocketConnection();
 			} catch (InterruptedException e) {
 				System.out.println("Thread sleep interruped...");
@@ -158,14 +160,7 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 	}
 	
 	private String getLocalHostName() {
-		String hostName;
-		try {
-			hostName = InetAddress.getLocalHost().getHostName();
-		} catch (UnknownHostException e) {
-			hostName = "";
-		}
-		
-		return hostName;
+		return localHostName;
 	}
 	
 	private String getLocalIPAddress() {
@@ -196,9 +191,9 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 		localIPAddress = socket.getLocalAddress().getHostAddress();
 		startNetworkInterfaceMonitor();
 
-		System.out.println("Waiting for message from " + remoteIPAddress);
+		System.out.println("Waiting for message from " + serverIp);
 
-		notifyNetworkStatusChanged(remoteIPAddress, true);
+		notifyNetworkStatusChanged(serverIp, true);
 
 		while ((dataPacket = readDataPacket()) != null) {
 			notifyNetworkPacketReceived(dataPacket);
@@ -221,7 +216,7 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 			}
 		}
 
-		notifyNetworkStatusChanged(remoteIPAddress, false);
+		notifyNetworkStatusChanged(serverIp, false);
 
 	}
 
@@ -335,7 +330,7 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 
 	public synchronized void notifyNetworkPacketReceived(DataPacket packet) {
 		for (ClientNetworkInterfaceObserver observer : observers) {
-			observer.updateNetworkPacketReceived(packet, remoteIPAddress);
+			observer.updateNetworkPacketReceived(packet, serverIp);
 		}
 	}
 
