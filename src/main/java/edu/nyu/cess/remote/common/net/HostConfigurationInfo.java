@@ -5,34 +5,51 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 /**
- * The <code>NetworkContactInfo</code> stores the necessary network contact
+ * The <code>HostConfigurationInfo</code> stores the necessary network contact
  * information needed to open a socket with a remote network node. Specifically,
  * an IP Address (version 4), and Port number.
  * 
  * @author Anwar A. Ruff
  */
-public class SocketInfo {
-	private String IPAddress = null;
-	private int portNumber = 0;
-	private String hostName = null;
+public class HostConfigurationInfo
+{
+	private String ip;
+	private int port;
+	private String hostname;
+
+    public HostConfigurationInfo(String ip, int port, String hostname)
+    {
+        this.ip = ip;
+        this.port = port;
+        this.hostname = hostname;
+    }
 
 	/**
 	 * Sets the IP Address
 	 * 
-	 * @param IPAddress
+	 * @param ip
 	 *            IP Address
 	 */
-	public void setIPAddress(String IPAddress) {
-		this.IPAddress = IPAddress;
+	public void setIPAddress(String ip) {
+		this.ip = ip;
 	}
+
+    /**
+     * Sets the Host Name.
+     * @param hostname
+     */
+    public void setHostName(String hostname)
+    {
+        this.hostname = hostname;
+    }
 
 	/**
 	 * Sets the Port Number
 	 * 
-	 * @param portNumber
+	 * @param port
 	 */
-	public void setPortNumber(int portNumber) {
-		this.portNumber = portNumber;
+	public void setPortNumber(int port) {
+		this.port = port;
 	}
 
 	/**
@@ -40,17 +57,26 @@ public class SocketInfo {
 	 * 
 	 * @return IP Address
 	 */
-	public String getIPAddress() {
-		return IPAddress;
+	public String getServerIp() {
+		return ip;
 	}
+
+    /**
+     * Returns the host name.
+     * @return Host name
+     */
+    public String getLocalHostName()
+    {
+        return hostname;
+    }
 
 	/**
 	 * Returns a Port Number
 	 * 
 	 * @return Port Number
 	 */
-	public int getPortNumber() {
-		return portNumber;
+	public int getServerPortNumber() {
+		return port;
 	}
 
 	/**
@@ -91,11 +117,11 @@ public class SocketInfo {
 		}
 
         if (socketInfo.length == 3) {
-            hostName = socketInfo[HOST_NAME];
+            hostname = socketInfo[HOST_NAME];
         }
         else {
             try {
-                hostName = InetAddress.getLocalHost().getHostName();
+                hostname = InetAddress.getLocalHost().getHostName();
             } catch (UnknownHostException e) {
                 System.err.println("Failed to determine host name.");
                 System.exit(1);
@@ -133,8 +159,8 @@ public class SocketInfo {
 			System.out.println("IP Address: " + socketInfo[IP_ADDRESS]);
 			System.out.println("Port Number: " + tempPortNumber);
 
-			this.IPAddress = socketInfo[IP_ADDRESS];
-			this.portNumber = tempPortNumber;
+			this.ip = socketInfo[IP_ADDRESS];
+			this.port = tempPortNumber;
 			result = true;
 		}
 
