@@ -7,7 +7,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 import edu.nyu.cess.remote.common.net.ClientNetworkInterfaceObserver;
-import edu.nyu.cess.remote.common.net.SocketInfo;
+import edu.nyu.cess.remote.common.net.HostConfigurationInfo;
 
 public class ServerNetworkInterface {
 
@@ -26,8 +26,8 @@ public class ServerNetworkInterface {
 		localPortNumber = portNumber;
 	}
 
-	public ServerNetworkInterface(SocketInfo networkContactInfo) {
-		localPortNumber = networkContactInfo.getPortNumber();
+	public ServerNetworkInterface(HostConfigurationInfo networkContactInfo) {
+		localPortNumber = networkContactInfo.getServerPortNumber();
 	}
 
 	/**
