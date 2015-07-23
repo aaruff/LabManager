@@ -1,8 +1,15 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>edu.nyu.cess.remote.client</groupId>
-  <artifactId>AppRemoteClient</artifactId>
-  <version>1.0-SNAPSHOT</version>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+      <modelVersion>4.0.0</modelVersion>
+      <groupId>edu.nyu.cess.remote.client</groupId>
+      <artifactId>LabRemoteClient</artifactId>
+      <version>1.0-SNAPSHOT</version>
+
+    <name>AppRemoteClient</name>
+    <organization>
+        <name>The Center for Experimental Social Science</name>
+        <url>http://cess.nyu.edu</url>
+    </organization>
 
   <dependencies>
   	<dependency>
@@ -13,7 +20,7 @@
   	<dependency>
   		<groupId>log4j</groupId>
   		<artifactId>log4j</artifactId>
-  		<version>1.2.8</version>
+  		<version>1.2.17</version>
   	</dependency>
   </dependencies>
   
@@ -27,37 +34,16 @@
   	</dependencies>
   </dependencyManagement>
 
-  <name>Lab Remote Client</name>
-  <organization>
-  	<name>The Center for Experimental Social Science</name>
-  	<url>http://cess.nyu.edu</url>
-  </organization>
 
  <build>
 	 <sourceDirectory>src/main/java</sourceDirectory>
-     <resources>
-	     <resource>
-		     <directory>src/main/java/resource</directory>
-		     <excludes>
-		         <exclude>**/*.java</exclude>
-		     </excludes>
-	     </resource>
-	     <resource>
-		     <directory>${basedir}/src/main/resource/logging</directory>
-		     <includes>
-			     <include>log4j.xml</include>
-		     </includes>
-	     </resource>
-   	</resources>
-   	
     <plugins>
-    
 	    <plugin>
 	        <artifactId>maven-compiler-plugin</artifactId>
 	        <version>2.3.2</version>
 	        <configuration>
-	          <source>1.6</source>
-	          <target>1.6</target>
+	          <source>1.7</source>
+	          <target>1.7</target>
 	        </configuration>
 	    </plugin>
 	    
