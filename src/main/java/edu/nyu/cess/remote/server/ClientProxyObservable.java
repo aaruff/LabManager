@@ -16,7 +16,7 @@ public interface ClientProxyObservable {
 
 	public void notifyApplicationStateReceived(State applicationState, String ipAddress);
 
-	public void notifyNetworkClientAdded(String ipAddress);
+	public void notifyNewClientConnectionEstablished(String ipAddress);
 
 	public void notifyNetworkStatusChange(String ipAddress, boolean isConnected);
 	
