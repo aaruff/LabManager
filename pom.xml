@@ -2,7 +2,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
       <modelVersion>4.0.0</modelVersion>
       <groupId>edu.nyu.cess.remote.client</groupId>
-      <artifactId>LabRemoteClient</artifactId>
+      <artifactId>AppRemoteClient</artifactId>
       <version>1.0-SNAPSHOT</version>
 
     <name>AppRemoteClient</name>
@@ -37,6 +37,14 @@
 
  <build>
 	 <sourceDirectory>src/main/java</sourceDirectory>
+	 <resources>
+	 <resource>
+		 <directory>src/main/resources</directory>
+		 <excludes>
+			 <exclude>config.properties</exclude>
+		 </excludes>
+	 </resource>
+	 </resources>
     <plugins>
 	    <plugin>
 	        <artifactId>maven-compiler-plugin</artifactId>
@@ -65,32 +73,64 @@
 	          </archive>
 	        </configuration>
         </plugin>
-        
+
         <plugin>
-			<groupId>org.apache.maven.plugins</groupId>
-			<artifactId>maven-shade-plugin</artifactId>
-	      	<version>2.0</version>
-			<executions>
-				<execution>
-					<phase>package</phase>
-					<goals>
-						<goal>shade</goal>
-					</goals>
-				</execution>
-			</executions>
-			<configuration>
-				<finalName>uber-${project.artifactId}-${project.version}</finalName>
-			</configuration>
-		</plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <version>2.1</version>
+            <executions>
+                <execution>
+                    <id>production</id>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>shade</goal>
+                    </goals>
+                    <configuration>
+                        <outputFile>target/uber-${project.artifactId}-${project.version}.jar</outputFile>
+                        <transformers>
+                            <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <manifestEntries>
+                                    <Main-Class>edu.nyu.cess.remote.client.ClientInitializer</Main-Class>
+                                </manifestEntries>
+                            </transformer>
+                        </transformers>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+
+        <plugin>
+            <groupId>com.akathist.maven.plugins.launch4j</groupId>
+            <artifactId>launch4j-maven-plugin</artifactId>
+            <version>1.6</version>
+            <executions>
+                <execution>
+                    <id>l4j-clui</id>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>launch4j</goal>
+                    </goals>
+                    <configuration>
+                        <headerType>console</headerType>
+                        <outfile>target/client.exe</outfile>
+                        <jar>target/uber-${project.artifactId}-${project.version}.jar</jar>
+                        <errTitle>AppRemoteClient</errTitle>
+                        <stayAlive>true</stayAlive>
+                        <chdir></chdir>
+                        <classPath>
+                            <mainClass>edu.nyu.cess.remote.client.ClientInitializer</mainClass>
+                            <preCp>%EXEDIR%\config\</preCp>
+                            <addDependencies>true</addDependencies>
+                        </classPath>
+                        <jre>
+                            <minVersion>1.7.0</minVersion>
+                        </jre>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+
       </plugins>
   </build>
-  
-  <properties>
-    <project.build.sourceEncoding>
-    UTF-8
-    </project.build.sourceEncoding>
-    <project.reporting.outputEncoding>
-    UTF-8
-    </project.reporting.outputEncoding>
-  </properties>
 </project>
