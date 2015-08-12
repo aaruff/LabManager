@@ -3,17 +3,13 @@
  */
 package edu.nyu.cess.remote.server;
 
+import edu.nyu.cess.remote.common.app.ExecutionRequest;
+import edu.nyu.cess.remote.common.app.State;
+import edu.nyu.cess.remote.common.net.*;
+
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
-
-import edu.nyu.cess.remote.common.app.ExecutionRequest;
-import edu.nyu.cess.remote.common.app.State;
-import edu.nyu.cess.remote.common.net.ClientNetworkInterfaceObserver;
-import edu.nyu.cess.remote.common.net.DataPacket;
-import edu.nyu.cess.remote.common.net.HostInfo;
-import edu.nyu.cess.remote.common.net.LiteClientNetworkInterface;
-import edu.nyu.cess.remote.common.net.PacketType;
 
 /**
  * The Class ClientProxy.
@@ -56,9 +52,10 @@ public class ClientProxy implements ClientNetworkInterfaceObserver, ClientProxyO
 
 				clientNetworkInterface.setSocket(clientSocket);
 				clientNetworkInterface.addClientNetworkInterfaceObserver(this);
+
 				clientNetworkInterfaces.put(clientNetworkInterface.getRemoteIPAddress(), clientNetworkInterface);
 
-				notifyNetworkClientAdded(clientNetworkInterface.getRemoteIPAddress());
+				notifyNewClientConnectionEstablished(clientNetworkInterface.getRemoteIPAddress());
 
 				clientNetworkInterface.startThreadedInboundCommunicationMonitor();
 			}
@@ -131,7 +128,7 @@ public class ClientProxy implements ClientNetworkInterfaceObserver, ClientProxyO
 		}
 	}
 
-	public void notifyNetworkClientAdded(String ipAddress) {
+	public void notifyNewClientConnectionEstablished(String ipAddress) {
 		for (ClientProxyObserver observer : observers) {
 			observer.updateNewClientConnected(ipAddress);
 		}
