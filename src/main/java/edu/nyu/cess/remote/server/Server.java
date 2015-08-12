@@ -75,7 +75,7 @@ public class Server implements ClientProxyObserver {
 	 * established.
 	 */
 	public void updateNewClientConnected(String ipAddress) {
-		liteClients.put(ipAddress, new LiteClient(ipAddress));
+		liteClients.put(new LiteClient(ipAddress));
 		System.out.println("liteClient " + ipAddress + " was added to liteClients");
 	}
 
