@@ -4,16 +4,16 @@
 package edu.nyu.cess.remote.server;
 
 /**
- * @author akira
- *
+ * @author aruff
  */
-public interface LiteClientsObserver {
+public interface LiteClientsObserver
+{
 
-	public void updateLiteClientAdded(String ipAddress);
+	void updateLiteClientAdded(String ipAddress);
 
-	public void updateLiteClientRemoved(String ipAddress);
+	void updateLiteClientRemoved(String ipAddress);
 
-	public void updateLiteClientStateChanged(LiteClient liteClient);
+	void updateLiteClientStateChanged(LiteClient liteClient);
 	
-	public void updateLiteClientHostNameChanged(LiteClient liteClient);
+	void updateLiteClientHostNameChanged(LiteClient liteClient);
 }
