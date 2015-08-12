@@ -5,11 +5,8 @@ package edu.nyu.cess.remote.server;
 
 import edu.nyu.cess.remote.common.app.State;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -17,29 +14,18 @@ import java.util.Map;
  */
 public class LiteClients implements LiteClientsObservable {
 
-	HashMap<String, LiteClient> liteClients = new HashMap<String, LiteClient>();
-	ArrayList<LiteClientsObserver> observers = new ArrayList<LiteClientsObserver>();
+	ArrayList<LiteClient> liteClients = new ArrayList<>();
+	ArrayList<LiteClientsObserver> observers = new ArrayList<>();
 
 	public LiteClients() {}
 
-	public LiteClient put(String ipAddress, LiteClient liteClient) {
-		String hostName;
-		try {
-			InetAddress addr = InetAddress.getByName(ipAddress);
-			hostName = addr.getHostName();
-			if (hostName.isEmpty()) {
-				hostName = ipAddress;
-			}
-		} 
-		catch (UnknownHostException e) {
-			hostName = ipAddress;
-		}
-		liteClient.setHostName(hostName);
-
-		LiteClient tempLiteClient = liteClients.put(ipAddress, liteClient);
-		notifyClientAdded(ipAddress);
-
-		return tempLiteClient;
+    /**
+     * Adds a lite client to the clients collection.
+     * @param liteClient LiteClient
+     */
+	public void put(LiteClient liteClient) {
+		liteClients.add(liteClient);
+		notifyClientAdded(liteClient.getIPAddress());
 	}
 
 	public void updateState(State applicationState, String ipAddress) {
