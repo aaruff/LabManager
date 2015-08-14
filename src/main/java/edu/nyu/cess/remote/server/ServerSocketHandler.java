@@ -4,67 +4,15 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 
-import edu.nyu.cess.remote.common.net.ClientNetworkInterfaceObserver;
-import edu.nyu.cess.remote.common.net.HostConfigurationInfo;
-
-public class ServerNetworkInterface {
-
-	ArrayList<ClientNetworkInterfaceObserver> observers = new ArrayList<ClientNetworkInterfaceObserver>();
-
+public class ServerSocketHandler
+{
 	private ServerSocket serverSocket;
-
-	private String localHostName;
-	private String localIPAddress;
 
 	private int localPortNumber;
 
-	public ServerNetworkInterface() {}
-
-	public ServerNetworkInterface(int portNumber) {
+	public ServerSocketHandler(int portNumber) {
 		localPortNumber = portNumber;
-	}
-
-	public ServerNetworkInterface(HostConfigurationInfo networkContactInfo) {
-		localPortNumber = networkContactInfo.getServerPortNumber();
-	}
-
-	/**
-	 * Returns the network nodes socket mapped to the remote IP Address
-	 * (remoteIPAddress).
-	 *
-	 * @return network nodes socket
-	 */
-	public ServerSocket getSocket() {
-		return serverSocket;
-	}
-
-	/**
-	 * Returns the network nodes local host name.
-	 *
-	 * @return local host name
-	 */
-	public String getLocalHostName() {
-		return localHostName;
-	}
-
-	/**
-	 * Returns this local network nodes IP Address.
-	 *
-	 * @return local nodes IP Address
-	 */
-	public String getLocalIPAddress() {
-		return localIPAddress;
-	}
-
-	/**
-	 * Returns the remote port number the socket will be bound to.
-	 *
-	 * @return remote port number
-	 */
-	public int getRemotePortNumber() {
-		return localPortNumber;
 	}
 
 	/**
