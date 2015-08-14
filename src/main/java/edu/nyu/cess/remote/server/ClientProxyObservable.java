@@ -8,18 +8,17 @@ import edu.nyu.cess.remote.common.app.State;
 /**
  * @author Anwar A. Ruff 
  */
-public interface ClientProxyObservable {
+public interface ClientProxyObservable
+{
+    boolean addObserver(ClientProxyObserver clientProxyObserver);
 
-	public boolean addObserver(ClientProxyObserver clientProxyObserver);
+    boolean deleteObserver(ClientProxyObserver clientProxyObserver);
 
-	public boolean deleteObserver(ClientProxyObserver clientProxyObserver);
+    void notifyApplicationStateReceived(State applicationState, String ipAddress);
 
-	public void notifyApplicationStateReceived(State applicationState, String ipAddress);
+    void notifyNewClientConnectionEstablished(String ipAddress);
 
-	public void notifyNewClientConnectionEstablished(String ipAddress);
+    void notifyNetworkStatusChange(String ipAddress, boolean isConnected);
 
-	public void notifyNetworkStatusChange(String ipAddress, boolean isConnected);
-	
-	public void notifyClientHostNameUpdate(String hostName, String ipAddress);
-
+    void notifyClientHostNameUpdate(String hostName, String ipAddress);
 }
