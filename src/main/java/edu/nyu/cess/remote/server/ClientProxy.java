@@ -48,7 +48,7 @@ public class ClientProxy implements ClientNetworkInterfaceObserver
 
 				clientNetworkInterfaces.put(clientNetworkInterface.getRemoteIPAddress(), clientNetworkInterface);
 
-                server.addClientProxy(clientNetworkInterface.getRemoteIPAddress());
+                server.addClient(clientNetworkInterface.getRemoteIPAddress());
 
 				clientNetworkInterface.startThreadedInboundCommunicationMonitor();
 			}

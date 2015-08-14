@@ -67,7 +67,7 @@ public class Server
      * Adds a client proxy with the provided ip address to the servers collection of active clients.
      * @param ipAddress
      */
-	public void addClientProxy(String ipAddress) {
+	public void addClient(String ipAddress) {
 		liteClients.put(new LiteClient(ipAddress));
         logger.debug("liteClient " + ipAddress + " was added to liteClients");
 	}
