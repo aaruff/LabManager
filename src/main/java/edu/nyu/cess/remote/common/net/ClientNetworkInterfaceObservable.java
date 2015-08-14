@@ -2,7 +2,7 @@ package edu.nyu.cess.remote.common.net;
 
 public interface ClientNetworkInterfaceObservable
 {
-    boolean addClientNetworkInterfaceObserver(ClientNetworkInterfaceObserver networkObserver);
+    boolean addObserver(ClientNetworkInterfaceObserver networkObserver);
 
     void notifyNetworkPacketReceived(DataPacket dataPacket);
 

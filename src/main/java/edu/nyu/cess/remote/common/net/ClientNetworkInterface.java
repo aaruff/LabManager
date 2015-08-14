@@ -33,7 +33,8 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 	private ObjectInputStream objectInputStream;
 	private ObjectOutputStream objectOutputStream;
 
-	public ClientNetworkInterface(HostConfigurationInfo hostConfig) {
+	public ClientNetworkInterface(HostConfigurationInfo hostConfig)
+	{
 		serverIp = hostConfig.getServerIp();
 		serverPortNumber = hostConfig.getServerPortNumber();
 		localHostName = hostConfig.getLocalHostName();
@@ -317,7 +318,7 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 		}
 	}
 
-	public boolean addClientNetworkInterfaceObserver(ClientNetworkInterfaceObserver networkObserver) {
+	public boolean addObserver(ClientNetworkInterfaceObserver networkObserver) {
 		return observers.add(networkObserver);
 	}
 
