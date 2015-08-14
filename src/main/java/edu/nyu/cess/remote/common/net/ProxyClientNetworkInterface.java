@@ -7,7 +7,7 @@ import java.io.StreamCorruptedException;
 import java.net.Socket;
 import java.util.ArrayList;
 
-public class LiteClientNetworkInterface implements ClientNetworkInterfaceObservable {
+public class ProxyClientNetworkInterface implements ClientNetworkInterfaceObservable {
 
 	ArrayList<ClientNetworkInterfaceObserver> observers = new ArrayList<ClientNetworkInterfaceObserver>();
 
@@ -21,22 +21,25 @@ public class LiteClientNetworkInterface implements ClientNetworkInterfaceObserva
 	private ObjectInputStream objectInputStream;
 	private ObjectOutputStream objectOutputStream;
 
-	public LiteClientNetworkInterface() {
-	}
-
-	public boolean setSocket(Socket sock) {
-		boolean result = false;
-
+    /**
+     * Sets the socket, if a non-null connected socket is provided, and returns true, otherwise false is returned.
+     *
+     * @param sock Socket
+     * @return boolean
+     */
+	public boolean setSocket(Socket sock)
+	{
 		if (sock != null && sock.isConnected()) {
 			this.socket = sock;
 			remoteIPAddress = this.socket.getInetAddress().getHostAddress();
-			result = true;
+			return true;
 		}
 
-		return result;
+		return false;
 	}
 
-	private boolean initializeObjectInputStream() {
+	private boolean initializeObjectInputStream()
+    {
 		boolean result = false;
 
 		if (socket != null) {
@@ -53,7 +56,8 @@ public class LiteClientNetworkInterface implements ClientNetworkInterfaceObserva
 		return result;
 	}
 
-	private boolean initializeObjectOutputStream() {
+	private boolean initializeObjectOutputStream()
+    {
 		boolean result = false;
 
 		if (socket != null) {
@@ -67,7 +71,8 @@ public class LiteClientNetworkInterface implements ClientNetworkInterfaceObserva
 		return result;
 	}
 
-	private DataPacket readDataPacket() {
+	private DataPacket readDataPacket()
+    {
 		DataPacket dataPacket = null;
 		boolean streamInitialized = true;
 
@@ -96,7 +101,8 @@ public class LiteClientNetworkInterface implements ClientNetworkInterfaceObserva
 
 	}
 
-	public boolean writeDataPacket(DataPacket packet) {
+	public boolean writeDataPacket(DataPacket packet)
+    {
 		boolean streamInitialized = false;
 
 		if (socket != null) {
@@ -121,15 +127,18 @@ public class LiteClientNetworkInterface implements ClientNetworkInterfaceObserva
 		return streamInitialized;
 	}
 
-	public String getRemoteIPAddress() {
+	public String getRemoteIPAddress()
+    {
 		return remoteIPAddress;
 	}
 
-	public boolean isConnected() {
+	public boolean isConnected()
+    {
 		return (socket != null) ? socket.isConnected() : false;
 	}
 
-	public void close() {
+	public void close()
+    {
 		if (socket != null) {
 			try {
 				socket.close();
@@ -181,27 +190,27 @@ public class LiteClientNetworkInterface implements ClientNetworkInterfaceObserva
 		}
 	}
 
-	public boolean addClientNetworkInterfaceObserver(ClientNetworkInterfaceObserver networkObserver) {
+	public boolean addClientNetworkInterfaceObserver(ClientNetworkInterfaceObserver networkObserver)
+    {
 		return observers.add(networkObserver);
 	}
 
-	public boolean deleteClientNetworkInterfaceObserver(ClientNetworkInterfaceObserver networkObserver) {
-		return observers.remove(networkObserver);
-	}
-
-	public void notifyNetworkStatusChanged(String ipAddress, boolean isConnected) {
+	public void notifyNetworkStatusChanged(String ipAddress, boolean isConnected)
+    {
 		for (ClientNetworkInterfaceObserver observer : observers) {
 			observer.updateNetworkConnectionStateChanged(ipAddress, isConnected);
 		}
 	}
 
-	public void notifyNetworkPacketReceived(DataPacket dataPacket) {
+	public void notifyNetworkPacketReceived(DataPacket dataPacket)
+    {
 		for (ClientNetworkInterfaceObserver observer : observers) {
 			observer.updateNetworkPacketReceived(dataPacket, remoteIPAddress);
 		}
 	}
 
-	public void startThreadedInboundCommunicationMonitor() {
+	public void startThreadedInboundCommunicationMonitor()
+    {
 
 		inboundCommunicationThread = new Thread(new InboundCommunicationListener());
 		inboundCommunicationThread.setName("Inbound communication thread");
@@ -210,7 +219,8 @@ public class LiteClientNetworkInterface implements ClientNetworkInterfaceObserva
 		startNetworkInterfaceMonitor();
 	}
 
-	public void startNetworkInterfaceMonitor() {
+	public void startNetworkInterfaceMonitor()
+    {
 		networkInterfaceMonitorThread = new Thread(new NetworkStreamMonitor());
 		networkInterfaceMonitorThread.setName("Network Interface Monitor");
 		networkInterfaceMonitorThread.start();
@@ -223,8 +233,8 @@ public class LiteClientNetworkInterface implements ClientNetworkInterfaceObserva
 	 * still established. The termination of this tread is used as a flag to signal
 	 * that the connection between the server and the client has been broken.
 	 */
-	private class NetworkStreamMonitor implements Runnable {
-
+	private class NetworkStreamMonitor implements Runnable
+    {
 		public void run() {
 			boolean interfaceState = true;
 			DataPacket packet = new DataPacket(PacketType.SOCKET_TEST, null);
@@ -244,10 +254,10 @@ public class LiteClientNetworkInterface implements ClientNetworkInterfaceObserva
 		}
 	}
 
-	private class InboundCommunicationListener implements Runnable {
-
+	private class InboundCommunicationListener implements Runnable
+    {
 		public void run() {
-			DataPacket dataPacket = null;
+			DataPacket dataPacket;
 
 			notifyNetworkStatusChanged(remoteIPAddress, true);
 
