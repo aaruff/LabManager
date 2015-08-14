@@ -8,37 +8,34 @@ import edu.nyu.cess.remote.common.app.State;
 import edu.nyu.cess.remote.common.net.*;
 
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
  * The Class ClientProxy.
  */
-public class ClientProxy implements ClientNetworkInterfaceObserver, ClientProxyObservable {
-
-	private ServerNetworkInterface serverNetworkInterface;
-
-	private final int PORT_NUMBER = 2600;
-
-	/** Used to contact ClientProxyObservers when client data is recieved. */
-	ArrayList<ClientProxyObserver> observers = new ArrayList<ClientProxyObserver>();
+public class ClientProxy implements ClientNetworkInterfaceObserver
+{
+    private Server server;
 
 	/** The client network interfaces used to communicate with clients. */
 	HashMap<String, LiteClientNetworkInterface> clientNetworkInterfaces = new HashMap<String, LiteClientNetworkInterface>();
 
-	public ClientProxy() {
+	public ClientProxy(Server server)
+    {
+        this.server = server;
 	}
 
 	/**
 	 * init() blocks until a socket connections requests is received from a remote clients.
 	 * Upon each socket connection request the following steps occur:
-	 * 		1. A  LiteClientNetworkInterface is created for management of the socket connection.
 	 * 		2. The LiteClientNetworkInterface is added to a collection clientNetworkInterfaces.
 	 * 		3. The ClientProxyObserver is notified that I new socket connection has been made.
 	 * 		4. The ClientNetworkInterface starts a network communication monitoring thread.
 	 */
-	public void connectionRequestHandler() {
-		serverNetworkInterface = new ServerNetworkInterface(PORT_NUMBER);
+	public void connectionRequestHandler()
+    {
+        int PORT_NUMBER = 2600;
+        ServerNetworkInterface serverNetworkInterface = new ServerNetworkInterface(PORT_NUMBER);
 		serverNetworkInterface.initializeServerSocketConnection();
 
 		while (true) {
@@ -47,6 +44,7 @@ public class ClientProxy implements ClientNetworkInterfaceObserver, ClientProxyO
 			
 			String IPAddress = clientSocket.getInetAddress().getHostAddress();
 			if (IPAddress != null && !IPAddress.isEmpty() && clientNetworkInterfaces.get(IPAddress) == null) {
+                // Create a LiteClientNetworkInterface to manage the socket connection.
 				LiteClientNetworkInterface clientNetworkInterface = new LiteClientNetworkInterface();
 				System.out.println("Client Connected: " + clientNetworkInterface.getRemoteIPAddress());
 
@@ -55,7 +53,7 @@ public class ClientProxy implements ClientNetworkInterfaceObserver, ClientProxyO
 
 				clientNetworkInterfaces.put(clientNetworkInterface.getRemoteIPAddress(), clientNetworkInterface);
 
-				notifyNewClientConnectionEstablished(clientNetworkInterface.getRemoteIPAddress());
+                server.updateNewClientConnected(clientNetworkInterface.getRemoteIPAddress());
 
 				clientNetworkInterface.startThreadedInboundCommunicationMonitor();
 			}
@@ -72,15 +70,15 @@ public class ClientProxy implements ClientNetworkInterfaceObserver, ClientProxyO
 		case APPLICATION_STATE_CHAGE:
 			State appState = (State) dataPacket.getPayload();
 			if (appState != null && appState instanceof State) {
-				notifyApplicationStateReceived(appState, ipAddress);
-			} 
+                server.updateApplicationStateChanged(ipAddress, appState);
+			}
 			break;
 		case HOST_INFO:
 			HostInfo hostInfo = (HostInfo) dataPacket.getPayload();
 			String hostName = hostInfo.getHostName();
 			
 			if(hostName != null && !hostName.isEmpty()) {
-				notifyClientHostNameUpdate(hostName, ipAddress);
+                server.updateClientHostNameUpdate(hostName, ipAddress);
 			}
 			break;
 		case MESSAGE:
@@ -105,39 +103,7 @@ public class ClientProxy implements ClientNetworkInterfaceObserver, ClientProxyO
 			clientNetworkInterfaces.remove(ipAddress);
 		}
 
-		notifyNetworkStatusChange(ipAddress, isConnected);
-	}
-
-	public boolean addObserver(ClientProxyObserver clientProxyObserver) {
-		return observers.add(clientProxyObserver);
-	}
-
-	public boolean deleteObserver(ClientProxyObserver clientProxyObserver) {
-		return observers.remove(clientProxyObserver);
-	}
-
-	public void notifyApplicationStateReceived(State applicationState, String ipAddress) {
-		for (ClientProxyObserver clientProxyObserver : observers) {
-			clientProxyObserver.updateApplicationStateChanged(ipAddress, applicationState);
-		}
-	}
-	
-	public void notifyClientHostNameUpdate(String hostName, String ipAddress) {
-		for (ClientProxyObserver clientProxyObserver : observers) {
-			clientProxyObserver.updateClientHostNameUpdate(hostName, ipAddress);
-		}
-	}
-
-	public void notifyNewClientConnectionEstablished(String ipAddress) {
-		for (ClientProxyObserver observer : observers) {
-			observer.updateNewClientConnected(ipAddress);
-		}
-	}
-
-	public void notifyNetworkStatusChange(String ipAddress, boolean isConnected) {
-		for (ClientProxyObserver observer : observers) {
-			observer.updateClientConnectionStateChanged(ipAddress, isConnected);
-		}
+        server.updateClientConnectionStateChanged(ipAddress, isConnected);
 	}
 
 	public void startApplicationOnClient(ExecutionRequest applicationExecutionRequest, String ipAddress) {

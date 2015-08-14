@@ -29,9 +29,7 @@ public class Server implements ClientProxyObserver {
 		liteClients = new LiteClients();
 
 		view = new ServerView(this);
-
-		clientProxy = new ClientProxy();
-		clientProxy.addObserver(this);
+		clientProxy = new ClientProxy(this);
 	}
 
 	/**
