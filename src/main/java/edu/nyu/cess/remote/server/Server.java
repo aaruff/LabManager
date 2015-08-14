@@ -32,7 +32,8 @@ public class Server
 	 * observer list, invoking the UI, and initializing the clientProxy which
 	 * handles network communication between the server and clients.
 	 */
-	public void init() {
+	public void init()
+    {
 		ApplicationInfo applicationInfo = new ApplicationInfo();
 		applicationInfo.readFromFile(new File("application_info.txt"));
 
@@ -48,17 +49,19 @@ public class Server
 			}
 		});
 
-		clientProxy.connectionRequestHandler();
+		clientProxy.clientNetworkRegistrationHandler();
 	}
 
-	public void startApplicationInRange(String applicationSelected, String clientLowerBound, String clientUpperBound) {
+	public void startApplicationInRange(String applicationSelected, String clientLowerBound, String clientUpperBound)
+    {
 
 		Thread startApplicationInRange = new Thread(new StartApplicationInRangeRunnable(applicationSelected,
 				clientLowerBound, clientUpperBound));
 		startApplicationInRange.start();
 	}
 
-	public void stopApplicationInRange(String clientLowerBound, String clientUpperBound) {
+	public void stopApplicationInRange(String clientLowerBound, String clientUpperBound)
+    {
 		Thread stopApplicationInRange = new Thread(new StopApplicationInRangeRunnable(clientLowerBound, clientUpperBound));
 		stopApplicationInRange.start();
 	}
@@ -67,7 +70,8 @@ public class Server
      * Adds a client proxy with the provided ip address to the servers collection of active clients.
      * @param ipAddress
      */
-	public void addClient(String ipAddress) {
+	public void addClient(String ipAddress)
+    {
 		liteClients.put(new LiteClient(ipAddress));
         logger.debug("liteClient " + ipAddress + " was added to liteClients");
 	}
@@ -76,24 +80,22 @@ public class Server
 	 * Called by the {@link ClientProxy} when applicationState update has been
 	 * received from a client.
 	 */
-	public void updateApplicationStateChanged(String ipAddress, State applicationState) {
+	public void updateClientState(String ipAddress, State applicationState)
+    {
 		liteClients.updateState(applicationState, ipAddress);
 	}
 
 	/**
-	 * Called by the {@link ClientProxy} when a clients network status has
-	 * changed.
+     * Removes the client with the corresponding IP address.
 	 */
-	public void updateClientConnectionStateChanged(String ipAddress, boolean isConnected) {
-		if (isConnected == false) {
-            logger.debug(ipAddress + " has disconnected, and has been removed from the client list");
-			liteClients.remove(ipAddress);
-		}
+	public void removeClient(String ipAddress)
+    {
+        logger.debug(ipAddress + " has disconnected, and has been removed from the client list");
+        liteClients.remove(ipAddress);
 	}
 
-
-
-	public synchronized void messageClient(String message, String ipAddress) {
+	public synchronized void messageClient(String message, String ipAddress)
+    {
 		clientProxy.sendMessageToClient(message, ipAddress);
 	}
 	
@@ -109,7 +111,8 @@ public class Server
 	 *            The IP Address of the client receiving the application
 	 *            execution request
 	 */
-	public synchronized void startApplication(String applicationName, String ipAddress) {
+	public synchronized void startApplication(String applicationName, String ipAddress)
+    {
 		StartedState startState = new StartedState();
 		
 		if (applicationName == null || applicationName.isEmpty()) {
@@ -129,7 +132,8 @@ public class Server
 	 * @param ipAddress
 	 *            IP Address of the client running the application
 	 */
-	public synchronized void stopApplication(String ipAddress) {
+	public synchronized void stopApplication(String ipAddress)
+    {
 		ExecutionRequest executionRequest = new ExecutionRequest("", "", "", new StopedState());
 
 		clientProxy.stopApplicationOnClient(executionRequest, ipAddress);
@@ -141,7 +145,8 @@ public class Server
 	 *
 	 * @return Strings containing all supported application names.
 	 */
-	public String[] getApplicationNames() {
+	public String[] getApplicationNames()
+    {
 		String empty[] = new String[0];
 		return (applicationNames == null) ? empty : applicationNames;
 	}
@@ -152,11 +157,13 @@ public class Server
 	 *
 	 * @return
 	 */
-	public LiteClients getLiteClients() {
+	public LiteClients getLiteClients()
+    {
 		return liteClients;
 	}
 	
-	public synchronized void messageClientInRange(String message, String lowerBoundHostName, String upperBoundHostName) {
+	public synchronized void messageClientInRange(String message, String lowerBoundHostName, String upperBoundHostName)
+    {
 		if (lowerBoundHostName.isEmpty() || upperBoundHostName.isEmpty()) {
 			return; // Error: Host range not set
 		}
@@ -179,7 +186,8 @@ public class Server
 	 * @author Anwar A. Ruff
 	 *
 	 */
-	private class StartApplicationInRangeRunnable implements Runnable {
+	private class StartApplicationInRangeRunnable implements Runnable
+    {
 		private final String applicationSelected;
 		private final String clientLowerBound;
 		private final String clientUpperBound;
@@ -214,7 +222,8 @@ public class Server
 		}
 	}
 	
-	private class StopApplicationInRangeRunnable implements Runnable {
+	private class StopApplicationInRangeRunnable implements Runnable
+    {
 		private final String clientLowerBound;
 		private final String clientUpperBound;
 
