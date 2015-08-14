@@ -22,7 +22,7 @@ public class ServerProxy implements ClientNetworkInterfaceObserver, ServerProxyO
 
 	public ServerProxy(HostConfigurationInfo hostConfig) {
 		networkInterface = new ClientNetworkInterface(hostConfig);
-		networkInterface.addClientNetworkInterfaceObserver(this);
+		networkInterface.addObserver(this);
 
 	}
 
