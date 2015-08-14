@@ -1,13 +1,10 @@
 package edu.nyu.cess.remote.common.net;
 
-public interface ClientNetworkInterfaceObservable {
+public interface ClientNetworkInterfaceObservable
+{
+    boolean addClientNetworkInterfaceObserver(ClientNetworkInterfaceObserver networkObserver);
 
-	public boolean addClientNetworkInterfaceObserver(ClientNetworkInterfaceObserver networkObserver);
+    void notifyNetworkPacketReceived(DataPacket dataPacket);
 
-	public boolean deleteClientNetworkInterfaceObserver(ClientNetworkInterfaceObserver networkObserver);
-
-	public void notifyNetworkPacketReceived(DataPacket dataPacket);
-
-	public void notifyNetworkStatusChanged(String ipAddress, boolean isConnected);
-
+    void notifyNetworkStatusChanged(String ipAddress, boolean isConnected);
 }
