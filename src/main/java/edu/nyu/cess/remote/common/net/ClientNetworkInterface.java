@@ -322,10 +322,6 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 		return observers.add(networkObserver);
 	}
 
-	public boolean deleteClientNetworkInterfaceObserver(ClientNetworkInterfaceObserver networkObserver) {
-		return observers.remove(networkObserver);
-	}
-
 	public synchronized void notifyNetworkPacketReceived(DataPacket packet) {
 		for (ClientNetworkInterfaceObserver observer : observers) {
 			observer.updateNetworkPacketReceived(packet, serverIp);
