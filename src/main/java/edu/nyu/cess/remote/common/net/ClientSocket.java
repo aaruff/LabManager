@@ -7,7 +7,8 @@ import java.io.StreamCorruptedException;
 import java.net.Socket;
 import java.util.ArrayList;
 
-public class ProxyClientNetworkInterface implements ClientNetworkInterfaceObservable {
+public class ClientSocket implements ClientNetworkInterfaceObservable
+{
 
 	ArrayList<ClientNetworkInterfaceObserver> observers = new ArrayList<ClientNetworkInterfaceObserver>();
 
@@ -21,85 +22,11 @@ public class ProxyClientNetworkInterface implements ClientNetworkInterfaceObserv
 	private ObjectInputStream objectInputStream;
 	private ObjectOutputStream objectOutputStream;
 
-    /**
-     * Sets the socket, if a non-null connected socket is provided, and returns true, otherwise false is returned.
-     *
-     * @param sock Socket
-     * @return boolean
-     */
-	public boolean setSocket(Socket sock)
-	{
-		if (sock != null && sock.isConnected()) {
-			this.socket = sock;
-			remoteIPAddress = this.socket.getInetAddress().getHostAddress();
-			return true;
-		}
-
-		return false;
-	}
-
-	private boolean initializeObjectInputStream()
+    public ClientSocket(Socket socket)
     {
-		boolean result = false;
-
-		if (socket != null) {
-			if (socket.isConnected()) {
-				try {
-					objectInputStream = new ObjectInputStream(socket.getInputStream());
-					result = true;
-				} catch (IOException ex) {
-					objectInputStream = null;
-					result = false;
-				}
-			}
-		}
-		return result;
-	}
-
-	private boolean initializeObjectOutputStream()
-    {
-		boolean result = false;
-
-		if (socket != null) {
-			try {
-				objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
-				result = true;
-			} catch (IOException ex) {
-				System.out.println("Error occured retrieving ObjectOutputStream.");
-			}
-		}
-		return result;
-	}
-
-	private DataPacket readDataPacket()
-    {
-		DataPacket dataPacket = null;
-		boolean streamInitialized = true;
-
-		if (socket.isConnected()) {
-
-			if (objectInputStream == null) {
-				streamInitialized = initializeObjectInputStream();
-			}
-
-			if (objectInputStream != null && streamInitialized) {
-				try {
-					Object object = objectInputStream.readObject();
-					dataPacket = (DataPacket) object;
-				} catch (ClassNotFoundException ex) {
-					System.out.println("The Serialized Object Not Found");
-					dataPacket = null;
-				} catch (StreamCorruptedException ex) {
-					dataPacket = null;
-				} catch (IOException ex) {
-					dataPacket = null;
-				}
-			}
-		}
-
-		return dataPacket;
-
-	}
+        this.socket = socket;
+        remoteIPAddress = this.socket.getInetAddress().getHostAddress();
+    }
 
 	public boolean writeDataPacket(DataPacket packet)
     {
@@ -125,16 +52,6 @@ public class ProxyClientNetworkInterface implements ClientNetworkInterfaceObserv
 		}
 
 		return streamInitialized;
-	}
-
-	public String getRemoteIPAddress()
-    {
-		return remoteIPAddress;
-	}
-
-	public boolean isConnected()
-    {
-		return (socket != null) ? socket.isConnected() : false;
 	}
 
 	public void close()
@@ -190,7 +107,7 @@ public class ProxyClientNetworkInterface implements ClientNetworkInterfaceObserv
 		}
 	}
 
-	public boolean addClientNetworkInterfaceObserver(ClientNetworkInterfaceObserver networkObserver)
+	public boolean addObserver(ClientNetworkInterfaceObserver networkObserver)
     {
 		return observers.add(networkObserver);
 	}
@@ -226,6 +143,69 @@ public class ProxyClientNetworkInterface implements ClientNetworkInterfaceObserv
 		networkInterfaceMonitorThread.start();
 
 	}
+
+    private boolean initializeObjectOutputStream()
+    {
+        boolean result = false;
+
+        if (socket != null) {
+            try {
+                objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+                result = true;
+            } catch (IOException ex) {
+                System.out.println("Error occured retrieving ObjectOutputStream.");
+            }
+        }
+        return result;
+    }
+
+    private DataPacket readDataPacket()
+    {
+        DataPacket dataPacket = null;
+        boolean streamInitialized = true;
+
+        if (socket.isConnected()) {
+
+            if (objectInputStream == null) {
+                streamInitialized = initializeObjectInputStream();
+            }
+
+            if (objectInputStream != null && streamInitialized) {
+                try {
+                    Object object = objectInputStream.readObject();
+                    dataPacket = (DataPacket) object;
+                } catch (ClassNotFoundException ex) {
+                    System.out.println("The Serialized Object Not Found");
+                    dataPacket = null;
+                } catch (StreamCorruptedException ex) {
+                    dataPacket = null;
+                } catch (IOException ex) {
+                    dataPacket = null;
+                }
+            }
+        }
+
+        return dataPacket;
+
+    }
+
+    private boolean initializeObjectInputStream()
+    {
+        boolean result = false;
+
+        if (socket != null) {
+            if (socket.isConnected()) {
+                try {
+                    objectInputStream = new ObjectInputStream(socket.getInputStream());
+                    result = true;
+                } catch (IOException ex) {
+                    objectInputStream = null;
+                    result = false;
+                }
+            }
+        }
+        return result;
+    }
 
 	/**
 	 * The network stream monitor thread is used to periodically (every 40 seconds)
