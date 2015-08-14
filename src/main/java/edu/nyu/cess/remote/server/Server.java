@@ -1,6 +1,7 @@
 package edu.nyu.cess.remote.server;
 
 import edu.nyu.cess.remote.common.app.*;
+import org.apache.log4j.Logger;
 
 import javax.swing.*;
 import java.io.File;
@@ -8,6 +9,7 @@ import java.util.HashMap;
 
 public class Server
 {
+    final static Logger logger = Logger.getLogger(Server.class);
 
 	private final ClientProxy clientProxy;
 
@@ -67,7 +69,7 @@ public class Server
      */
 	public void addClientProxy(String ipAddress) {
 		liteClients.put(new LiteClient(ipAddress));
-		System.out.println("liteClient " + ipAddress + " was added to liteClients");
+        logger.debug("liteClient " + ipAddress + " was added to liteClients");
 	}
 
 	/**
@@ -84,7 +86,7 @@ public class Server
 	 */
 	public void updateClientConnectionStateChanged(String ipAddress, boolean isConnected) {
 		if (isConnected == false) {
-			System.out.println(ipAddress + " has disconnected, and has been removed from the client list");
+            logger.debug(ipAddress + " has disconnected, and has been removed from the client list");
 			liteClients.remove(ipAddress);
 		}
 	}
@@ -111,7 +113,7 @@ public class Server
 		StartedState startState = new StartedState();
 		
 		if (applicationName == null || applicationName.isEmpty()) {
-			System.out.println("Error: No application selected");
+            logger.error("No application selected");
 			return;
 		}
 		HashMap<String, String> appInfo = applicationsInfo.get(applicationName);
