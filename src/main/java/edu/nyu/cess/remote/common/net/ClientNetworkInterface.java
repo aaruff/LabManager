@@ -33,9 +33,6 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 	private ObjectInputStream objectInputStream;
 	private ObjectOutputStream objectOutputStream;
 
-	public ClientNetworkInterface() {
-	}
-
 	public ClientNetworkInterface(HostConfigurationInfo hostConfig) {
 		serverIp = hostConfig.getServerIp();
 		serverPortNumber = hostConfig.getServerPortNumber();
