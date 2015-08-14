@@ -49,7 +49,7 @@ public class Server
 			}
 		});
 
-		clientProxy.clientNetworkRegistrationHandler();
+		clientProxy.clientRegistrationHandler();
 	}
 
 	public void startApplicationInRange(String applicationSelected, String clientLowerBound, String clientUpperBound)
