@@ -6,28 +6,20 @@ import javax.swing.*;
 import java.io.File;
 import java.util.HashMap;
 
-public class Server implements ClientProxyObserver {
-
-
+public class Server implements ClientProxyObserver
+{
 	private final ClientProxy clientProxy;
 
-	protected final LiteClients liteClients;
+	protected final LiteClients liteClients = new LiteClients();
 
 	protected final ServerView view;
-
 
 	protected String applicationNames[];
 
 	private HashMap<String, HashMap<String, String>> applicationsInfo;
 
-	/**
-	 * The Server constructor initializes instance variables. Adds itself as a
-	 * clientProxy observer -- for monitoring network activity, and adds
-	 * relevant application information to the applicationInfo HashMap.
-	 */
-	public Server() {
-		liteClients = new LiteClients();
-
+	public Server()
+	{
 		view = new ServerView(this);
 		clientProxy = new ClientProxy(this);
 	}
