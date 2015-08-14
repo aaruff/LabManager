@@ -14,7 +14,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 
-public class ClientNetworkInterface implements ClientNetworkInterfaceObservable {
+public class CommunicationNetworkInterface implements ClientNetworkInterfaceObservable {
 
 	ArrayList<ClientNetworkInterfaceObserver> observers = new ArrayList<ClientNetworkInterfaceObserver>();
 
@@ -33,7 +33,7 @@ public class ClientNetworkInterface implements ClientNetworkInterfaceObservable 
 	private ObjectInputStream objectInputStream;
 	private ObjectOutputStream objectOutputStream;
 
-	public ClientNetworkInterface(HostConfigurationInfo hostConfig)
+	public CommunicationNetworkInterface(HostConfigurationInfo hostConfig)
 	{
 		serverIp = hostConfig.getServerIp();
 		serverPortNumber = hostConfig.getServerPortNumber();
