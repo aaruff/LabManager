@@ -6,6 +6,7 @@ package edu.nyu.cess.remote.server;
 import edu.nyu.cess.remote.common.app.ExecutionRequest;
 import edu.nyu.cess.remote.common.app.State;
 import edu.nyu.cess.remote.common.net.*;
+import org.apache.log4j.Logger;
 
 import java.net.Socket;
 import java.util.HashMap;
@@ -15,6 +16,8 @@ import java.util.HashMap;
  */
 public class ClientProxy implements ClientNetworkInterfaceObserver
 {
+    final static Logger logger = Logger.getLogger(ClientProxy.class);
+
     private Server server;
 
 	/** The client network interfaces used to communicate with clients. */
@@ -25,13 +28,6 @@ public class ClientProxy implements ClientNetworkInterfaceObserver
         this.server = server;
 	}
 
-	/**
-	 * init() blocks until a socket connections requests is received from a remote clients.
-	 * Upon each socket connection request the following steps occur:
-	 * 		2. The LiteClientNetworkInterface is added to a collection clientNetworkInterfaces.
-	 * 		3. The ClientProxyObserver is notified that I new socket connection has been made.
-	 * 		4. The ClientNetworkInterface starts a network communication monitoring thread.
-	 */
 	public void connectionRequestHandler()
     {
         int PORT_NUMBER = 2600;
@@ -46,7 +42,7 @@ public class ClientProxy implements ClientNetworkInterfaceObserver
 			if (IPAddress != null && !IPAddress.isEmpty() && clientNetworkInterfaces.get(IPAddress) == null) {
                 // Create a LiteClientNetworkInterface to manage the socket connection.
 				LiteClientNetworkInterface clientNetworkInterface = new LiteClientNetworkInterface();
-				System.out.println("Client Connected: " + clientNetworkInterface.getRemoteIPAddress());
+                logger.debug("Client Connected: " + clientNetworkInterface.getRemoteIPAddress());
 
 				clientNetworkInterface.setSocket(clientSocket);
 				clientNetworkInterface.addClientNetworkInterfaceObserver(this);
@@ -60,9 +56,10 @@ public class ClientProxy implements ClientNetworkInterfaceObserver
 		}
 	}
 
-	public void updateNetworkPacketReceived(DataPacket dataPacket, String ipAddress) {
-		System.out.println("Packet received from client " + ipAddress);
-		
+	public void updateNetworkPacketReceived(DataPacket dataPacket, String ipAddress)
+    {
+        logger.debug("Packet received from client " + ipAddress);
+
 		switch(dataPacket.getPacketType()) {
 		case APPLICATION_EXECUTION_REQUEST:
 			// Not supported by the server
@@ -93,10 +90,9 @@ public class ClientProxy implements ClientNetworkInterfaceObserver
 		}
 	}
 
-	public void updateNetworkConnectionStateChanged(String ipAddress, boolean isConnected) {
-
-		System.out.println("Client " + ipAddress + " has "
-				+ ((isConnected) ? " connected to the server" : " disconnected"));
+	public void updateNetworkConnectionStateChanged(String ipAddress, boolean isConnected)
+    {
+        logger.debug("Client " + ipAddress + " has " + ((isConnected) ? " connected to the server" : " disconnected"));
 
 		if (!isConnected) {
 			clientNetworkInterfaces.get(ipAddress).close();
