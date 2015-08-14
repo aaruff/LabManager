@@ -42,14 +42,13 @@ public class ClientProxy implements ClientNetworkInterfaceObserver
 			if (IPAddress != null && !IPAddress.isEmpty() && clientNetworkInterfaces.get(IPAddress) == null) {
                 // Create a LiteClientNetworkInterface to manage the socket connection.
 				LiteClientNetworkInterface clientNetworkInterface = new LiteClientNetworkInterface();
-                logger.debug("Client Connected: " + clientNetworkInterface.getRemoteIPAddress());
-
 				clientNetworkInterface.setSocket(clientSocket);
 				clientNetworkInterface.addClientNetworkInterfaceObserver(this);
+                logger.debug("Client Connected: " + clientNetworkInterface.getRemoteIPAddress());
 
 				clientNetworkInterfaces.put(clientNetworkInterface.getRemoteIPAddress(), clientNetworkInterface);
 
-                server.updateNewClientConnected(clientNetworkInterface.getRemoteIPAddress());
+                server.addClientProxy(clientNetworkInterface.getRemoteIPAddress());
 
 				clientNetworkInterface.startThreadedInboundCommunicationMonitor();
 			}

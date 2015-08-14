@@ -6,8 +6,9 @@ import javax.swing.*;
 import java.io.File;
 import java.util.HashMap;
 
-public class Server implements ClientProxyObserver
+public class Server
 {
+
 	private final ClientProxy clientProxy;
 
 	protected final LiteClients liteClients = new LiteClients();
@@ -59,12 +60,12 @@ public class Server implements ClientProxyObserver
 		Thread stopApplicationInRange = new Thread(new StopApplicationInRangeRunnable(clientLowerBound, clientUpperBound));
 		stopApplicationInRange.start();
 	}
-	
-	/**
-	 * Called by the {@link ClientProxy} when a new client connection is
-	 * established.
-	 */
-	public void updateNewClientConnected(String ipAddress) {
+
+    /**
+     * Adds a client proxy with the provided ip address to the servers collection of active clients.
+     * @param ipAddress
+     */
+	public void addClientProxy(String ipAddress) {
 		liteClients.put(new LiteClient(ipAddress));
 		System.out.println("liteClient " + ipAddress + " was added to liteClients");
 	}
