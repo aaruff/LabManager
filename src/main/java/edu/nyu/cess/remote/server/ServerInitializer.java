@@ -9,8 +9,8 @@ package edu.nyu.cess.remote.server;
 public class ServerInitializer {
 
 	public static void main(String[] args) {
-		Server server = new Server();
-		server.init();
+		BotMaster botMaster = new BotMaster();
+		botMaster.init();
 	}
 
 }

@@ -14,7 +14,7 @@ public interface LiteClientsObservable {
 
 	/**
 	 * This method is called when a {@link LiteClient} is added
-	 * to the {@link LiteClients} collection.
+	 * to the {@link RobotPool} collection.
 	 * @param ipAddress the key used to add the LiteClient
 	 */
 	public void notifyClientAdded(String ipAddress);
@@ -22,7 +22,7 @@ public interface LiteClientsObservable {
 	public void notifyClientRemoved(String ipAddress);
 
 	public void notifyClientStateChanged(String ipAddress);
-	
+
 	public void notifyClientHostNameChanged(String ipAddress);
 
 }
