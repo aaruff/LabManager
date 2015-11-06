@@ -3,6 +3,7 @@
  */
 package edu.nyu.cess.remote.client;
 
+import edu.nyu.cess.remote.common.config.HostConfigInterface;
 import edu.nyu.cess.remote.common.app.ExecutionRequest;
 import edu.nyu.cess.remote.common.app.State;
 import edu.nyu.cess.remote.common.net.*;
@@ -10,20 +11,19 @@ import edu.nyu.cess.remote.common.net.*;
 import java.util.ArrayList;
 
 /**
- * @author Anwar A. Ruff 
+ * @author Anwar A. Ruff
  */
-public class ServerProxy implements ClientNetworkInterfaceObserver, ServerProxyObservable {
+public class ServerProxy implements PortWatcher, ServerProxyObservable {
 
 	private final ArrayList<ServerProxyObserver> observers = new ArrayList<ServerProxyObserver>();
 
-	private static ClientNetworkInterface networkInterface;
+	private static CommunicationNetworkInterface networkInterface;
 
-	private final int POLL_INTERVAL = 2000; // miliseconds
+	private final int POLL_INTERVAL = 2000; // milliseconds
 
-	public ServerProxy(HostConfigurationInfo hostConfig) {
-		networkInterface = new ClientNetworkInterface(hostConfig);
+	public ServerProxy(HostConfigInterface hostConfig) {
+		networkInterface = new CommunicationNetworkInterface(hostConfig);
 		networkInterface.addObserver(this);
-
 	}
 
 	public void establishPersistentServerConnection() {
@@ -38,7 +38,7 @@ public class ServerProxy implements ClientNetworkInterfaceObserver, ServerProxyO
 			System.out.println("attempting to reconnect to server...");
 		}
 	}
-	
+
 	public void sendServerApplicationState(State state) {
 		DataPacket dataPacket = new DataPacket(PacketType.APPLICATION_STATE_CHAGE, state);
 		networkInterface.writeDataPacket(dataPacket);
@@ -70,14 +70,14 @@ public class ServerProxy implements ClientNetworkInterfaceObserver, ServerProxyO
 		}
 	}
 
-	public void updateNetworkPacketReceived(DataPacket dataPacket, String ipAddress) {
+	public void processDataPacket(DataPacket dataPacket, String ipAddress) {
 		System.out.println("Network Packet Received.");
-		
+
 		PacketType dataPacketType = dataPacket.getPacketType();
 		if (!(dataPacketType instanceof PacketType)) {
 			return;
 		}
-		
+
 		switch(dataPacket.getPacketType()) {
 		case APPLICATION_EXECUTION_REQUEST:
 			ExecutionRequest execRequest = (ExecutionRequest) dataPacket.getPayload();
@@ -105,7 +105,7 @@ public class ServerProxy implements ClientNetworkInterfaceObserver, ServerProxyO
 		}
 	}
 
-	public void updateNetworkConnectionStateChanged(String ipAddress, boolean isConnected) {
+	public void processStateChange(String ipAddress, boolean isConnected) {
 		notifyObserverNetworkStateChanged(isConnected);
 	}
 
