@@ -1,22 +1,16 @@
 package edu.nyu.cess.remote.common.net;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.io.StreamCorruptedException;
-import java.net.ConnectException;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
+import edu.nyu.cess.remote.common.config.HostConfigInterface;
+
+import java.io.*;
+import java.net.*;
 import java.net.Socket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 
-public class CommunicationNetworkInterface implements ClientNetworkInterfaceObservable {
+public class CommunicationNetworkInterface
+{
 
-	ArrayList<ClientNetworkInterfaceObserver> observers = new ArrayList<ClientNetworkInterfaceObserver>();
+	ArrayList<PortWatcher> observers = new ArrayList<PortWatcher>();
 
 	private Socket socket;
 
@@ -33,11 +27,11 @@ public class CommunicationNetworkInterface implements ClientNetworkInterfaceObse
 	private ObjectInputStream objectInputStream;
 	private ObjectOutputStream objectOutputStream;
 
-	public CommunicationNetworkInterface(HostConfigurationInfo hostConfig)
+	public CommunicationNetworkInterface(HostConfigInterface hostConfig)
 	{
-		serverIp = hostConfig.getServerIp();
-		serverPortNumber = hostConfig.getServerPortNumber();
-		localHostName = hostConfig.getLocalHostName();
+		serverIp = hostConfig.getIpAddress();
+		serverPortNumber = Integer.parseInt(hostConfig.getPort());
+		localHostName = hostConfig.getHostName();
 	}
 
 	/**
@@ -61,7 +55,7 @@ public class CommunicationNetworkInterface implements ClientNetworkInterfaceObse
 				result = false;
 			}
 		}
-		
+
 		return result;
 	}
 
@@ -156,11 +150,11 @@ public class CommunicationNetworkInterface implements ClientNetworkInterfaceObse
 		networkInterfaceMonitorThread.start();
 
 	}
-	
+
 	private String getLocalHostName() {
 		return localHostName;
 	}
-	
+
 	private String getLocalIPAddress() {
 		String ip;
 		try {
@@ -174,27 +168,27 @@ public class CommunicationNetworkInterface implements ClientNetworkInterfaceObse
 
 	/**
 	 * This function reads data packets and passes read {@link DataPacket}s to
-	 * {@link ClientNetworkInterfaceObserver}s.
+	 * {@link PortWatcher}s.
 	 */
 	public void handleInboundPacketRequests() {
 		HostInfo hostInfo = new HostInfo();
 		hostInfo.setHostName(getLocalHostName());
 		hostInfo.setIPAddress(getLocalIPAddress());
-		
+
 		DataPacket dataPacket = new DataPacket(PacketType.HOST_INFO, hostInfo);
 		writeDataPacket(dataPacket);
-		
+
 		dataPacket = null;
-	
+
 		localIPAddress = socket.getLocalAddress().getHostAddress();
 		startNetworkInterfaceMonitor();
 
 		System.out.println("Waiting for message from " + serverIp);
 
-		notifyNetworkStatusChanged(serverIp, true);
+		tellPortWatcherConnectionChanged(serverIp, true);
 
 		while ((dataPacket = readDataPacket()) != null) {
-			notifyNetworkPacketReceived(dataPacket);
+			tellPortWatcherPacketReceived(dataPacket);
 		}
 
 		if (objectOutputStream != null) {
@@ -214,7 +208,7 @@ public class CommunicationNetworkInterface implements ClientNetworkInterfaceObse
 			}
 		}
 
-		notifyNetworkStatusChanged(serverIp, false);
+		tellPortWatcherConnectionChanged(serverIp, false);
 
 	}
 
@@ -318,19 +312,19 @@ public class CommunicationNetworkInterface implements ClientNetworkInterfaceObse
 		}
 	}
 
-	public boolean addObserver(ClientNetworkInterfaceObserver networkObserver) {
+	public boolean addObserver(PortWatcher networkObserver) {
 		return observers.add(networkObserver);
 	}
 
-	public synchronized void notifyNetworkPacketReceived(DataPacket packet) {
-		for (ClientNetworkInterfaceObserver observer : observers) {
-			observer.updateNetworkPacketReceived(packet, serverIp);
+	public synchronized void tellPortWatcherPacketReceived(DataPacket packet) {
+		for (PortWatcher observer : observers) {
+			observer.processDataPacket(packet, serverIp);
 		}
 	}
 
-	public synchronized void notifyNetworkStatusChanged(String ipAddress, boolean isConnected) {
-		for (ClientNetworkInterfaceObserver observer : observers) {
-			observer.updateNetworkConnectionStateChanged(ipAddress, isConnected);
+	public synchronized void tellPortWatcherConnectionChanged(String ipAddress, boolean isConnected) {
+		for (PortWatcher observer : observers) {
+			observer.processStateChange(ipAddress, isConnected);
 		}
 
 	}
