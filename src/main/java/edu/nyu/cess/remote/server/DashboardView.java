@@ -18,9 +18,9 @@ import java.util.HashMap;
 ;
 
 /**
- * @author Anwar A. Ruff 
+ * @author Anwar A. Ruff
  */
-public class ServerView extends JFrame implements ActionListener, LiteClientsObserver {
+public class DashboardView extends JFrame implements ActionListener, LiteClientsObserver {
 
 	private static final long serialVersionUID = 1L;
 
@@ -56,11 +56,11 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 	JRadioButton singleRadioButton;
 	JRadioButton rangeRadioButton;
 
-	private final Server server;
+	private final BotMaster botMaster;
 
-	public ServerView(Server server) {
+	public DashboardView(BotMaster botMaster) {
 		super("CESS Application Remote");
-		this.server = server;
+		this.botMaster = botMaster;
 	}
 
 	/**
@@ -88,7 +88,7 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 		 * Clients Panel
 		 */
 		TitledBorder titledBorder = BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),
-				"Connections: " + server.getLiteClients().size());
+				"Connections: " + botMaster.getRobotPool().size());
 		clientPanel.setBorder(titledBorder);
 		//clientPanel.setBorder(new TitledBorder("Computers Connected: " + server.getLiteClients().size()));
 		clientPanel.setBackground(Color.white);
@@ -111,7 +111,7 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 
 		JLabel applicationLabel = new JLabel("Select a Program: ");
 
-		clientApplicationsComboBox = new JComboBox(server.getApplicationNames());
+		clientApplicationsComboBox = new JComboBox(botMaster.getApplicationNames());
 
 		JPanel programSelectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		programSelectionPanel.setBackground(Color.white);
@@ -300,17 +300,17 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 
 	/**
 	 * This method is called when a {@link LiteClient} is added to the
-	 * {@link LiteClients} collection.
+	 * {@link RobotPool} collection.
 	 */
 	public void updateLiteClientAdded(String ipAddress) {
-		LiteClients liteClients = server.getLiteClients();
-		LiteClient liteClient = liteClients.getLiteClientByIPAddress(ipAddress);
+		RobotPool robotPool = botMaster.getRobotPool();
+		LiteClient liteClient = robotPool.getLiteClientByIPAddress(ipAddress);
 		SwingUtilities.invokeLater(new AddClientRunnable(ipAddress, liteClient));
 	}
 
 	/**
 	 * This method is called when a {@link LiteClient} is removed from the
-	 * {@link LiteClients} collection.
+	 * {@link RobotPool} collection.
 	 */
 	public void updateLiteClientRemoved(String ipAddress) {
 		SwingUtilities.invokeLater(new RemoveClientRunnable(ipAddress));
@@ -318,13 +318,13 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 
 	/**
 	 * This method is called when a {@link LiteClient}s state, in the
-	 * {@link LiteClients} collection, has been updated (not necessarily
+	 * {@link RobotPool} collection, has been updated (not necessarily
 	 * changed).
 	 */
 	public void updateLiteClientStateChanged(LiteClient liteClient) {
 		SwingUtilities.invokeLater(new UpdateClient(liteClient));
 	}
-	
+
 	public void updateLiteClientHostNameChanged(LiteClient liteClient) {
 		System.out.println("Hostname chaged to:" + liteClient.getHostName() + "\n");
 		SwingUtilities.invokeLater(new UpdateClient(liteClient));
@@ -391,7 +391,7 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 				    private final GradientPaint upperGradient = new GradientPaint(
 				            0, 0, lighterColor,
 				            0, gradientSize, darkerColor);
-				    
+
 				@Override
 			    public void paintComponent(Graphics g) {
 
@@ -454,23 +454,23 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 			panel.add(buttonPanel);
 
 			liteClientPanels.put(ipAddress, panel);
-			
+
 			clientPanel.removeAll();
-			
-			LiteClient[] sortedClients = server.getLiteClients().getSortedLiteClients();
+
+			LiteClient[] sortedClients = botMaster.getRobotPool().getSortedLiteClients();
 			String[] clientHostNames = new String[sortedClients.length];
 			for (int i = 0; i < sortedClients.length; ++i) {
 				clientHostNames[i] = sortedClients[i].getHostName();
 				clientPanel.add(liteClientPanels.get(sortedClients[i].getIPAddress()));
 			}
-			
+
 			TitledBorder titledBorder = BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),
 					"Connections: " + sortedClients.length);
 			clientPanel.setBorder(titledBorder);
 
 			clientsLowerBoundComboBox = new JComboBox(clientHostNames);
 			clientsUpperBoundComboBox = new JComboBox(clientHostNames);
-			
+
 			setApplicationRangePanel(clientsLowerBoundComboBox, clientsUpperBoundComboBox);
 			setMessagePanel(new JComboBox(clientHostNames));
 			setMessageRangePanel(new JComboBox(clientHostNames), new JComboBox(clientHostNames));
@@ -503,14 +503,14 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 
 			clientPanel.remove(liteClientPanels.get(ipAddress));
 			liteClientPanels.remove(ipAddress);
-			
+
 			clientDescriptionLabels.remove(ipAddress);
 			applicationStateLabels.remove(ipAddress);
 
 			clientStartButtons.remove(ipAddress);
 			clientStopButtons.remove(ipAddress);
 
-			LiteClient[] sortedClients = server.getLiteClients().getSortedLiteClients();
+			LiteClient[] sortedClients = botMaster.getRobotPool().getSortedLiteClients();
 			String[] clientHostNames = new String[sortedClients.length];
 			for (int i = 0; i < sortedClients.length; ++i) {
 				clientHostNames[i] = sortedClients[i].getHostName();
@@ -553,10 +553,10 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 	private class MessageClientsInRangeListener implements ActionListener {
 
 		public void actionPerformed(ActionEvent e) {
-			LiteClients liteClients = server.getLiteClients();
+			RobotPool robotPool = botMaster.getRobotPool();
 			String message = messageTextField.getText();
 			messageTextField.setText("");
-			
+
 			if (message.isEmpty()) {
 				messageJLabel.setText("Messaging Error: No text entered");
 				return;
@@ -564,15 +564,15 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 
 			if (singleRadioButton.isSelected()) {
 				String hostNameSelected = (String) connectedComputersComboBox.getSelectedItem();
-				
+
 				if (hostNameSelected.isEmpty()) {
 					messageJLabel.setText("Messaging Error: A computer was not selected.");
 					return;
 				}
-				server.messageClient(message, liteClients.getLiteClientByHostName(hostNameSelected).getIPAddress());
+				botMaster.messageClient(message, robotPool.getLiteClientByHostName(hostNameSelected).getIPAddress());
 			}
 			else {
-				server.messageClientInRange(message,
+				botMaster.messageClientInRange(message,
 						(String) clientsMessageLowerBound.getSelectedItem(), (String) clientsMessageUpperBound.getSelectedItem());
 			}
 		}
@@ -583,7 +583,7 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 		public void actionPerformed(ActionEvent e) {
 			String clientLowerBound = (String) clientsLowerBoundComboBox.getSelectedItem();
 			String clientUpperBound = (String) clientsUpperBoundComboBox.getSelectedItem();
-			server.stopApplicationInRange(clientLowerBound, clientUpperBound);
+			botMaster.stopAppInRange(clientLowerBound, clientUpperBound);
 		}
 	}
 
@@ -594,7 +594,7 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 			String clientLowerBound = (String) clientsLowerBoundComboBox.getSelectedItem();
 			String clientUpperBound = (String) clientsUpperBoundComboBox.getSelectedItem();
 
-			server.startApplicationInRange(applicationSelected, clientLowerBound, clientUpperBound);
+			botMaster.startAppInRange(applicationSelected, clientLowerBound, clientUpperBound);
 
 		}
 	}
@@ -611,11 +611,11 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 
 			System.out.println(ipAddress + " Start button selected");
 
-			LiteClients liteClients = server.getLiteClients();
-			LiteClient liteClient = liteClients.getLiteClientByIPAddress(ipAddress);
+			RobotPool robotPool = botMaster.getRobotPool();
+			LiteClient liteClient = robotPool.getLiteClientByIPAddress(ipAddress);
 			liteClient.setApplicationName(applicationSelected);
 
-			server.startApplication(applicationSelected, ipAddress);
+			botMaster.startApplication(applicationSelected, ipAddress);
 		}
 
 	}
@@ -629,7 +629,7 @@ public class ServerView extends JFrame implements ActionListener, LiteClientsObs
 
 		public void actionPerformed(ActionEvent e) {
 			System.out.println(ipAddress + " Stop button selected");
-			server.stopApplication(ipAddress);
+			botMaster.stopApplication(ipAddress);
 		}
 
 	}

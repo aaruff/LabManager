@@ -7,28 +7,28 @@ import javax.swing.*;
 import java.io.File;
 import java.util.HashMap;
 
-public class Server
+public class BotMaster
 {
-    final static Logger logger = Logger.getLogger(Server.class);
+    final static Logger logger = Logger.getLogger(BotMaster.class);
 
-	private final ClientProxy clientProxy;
+	private final Port port;
 
-	protected final LiteClients liteClients = new LiteClients();
+	protected final RobotPool robotPool = new RobotPool();
 
-	protected final ServerView view;
+	protected final DashboardView dashboardView;
 
 	protected String applicationNames[];
 
 	private HashMap<String, HashMap<String, String>> applicationsInfo;
 
-	public Server()
+	public BotMaster()
 	{
-		view = new ServerView(this);
-		clientProxy = new ClientProxy(this);
+		dashboardView = new DashboardView(this);
+		port = new Port(this);
 	}
 
 	/**
-	 * Initializes the Server by adding itself to the {@link LiteClients}
+	 * Initializes the Server by adding itself to the {@link RobotPool}
 	 * observer list, invoking the UI, and initializing the clientProxy which
 	 * handles network communication between the server and clients.
 	 */
@@ -40,49 +40,46 @@ public class Server
 		applicationNames = applicationInfo.getApplicationNames();
 		applicationsInfo = applicationInfo.getAllApplicationsInformation();
 
-		liteClients.addObserver(view);
+		robotPool.addObserver(dashboardView);
 
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				view.buildGUI();
-				view.setVisible(true);
+				dashboardView.buildGUI();
+				dashboardView.setVisible(true);
 			}
 		});
 
-		clientProxy.clientRegistrationHandler();
+		port.listen(2600);
 	}
 
-	public void startApplicationInRange(String applicationSelected, String clientLowerBound, String clientUpperBound)
+	public void startAppInRange(String app, String start, String end)
     {
-
-		Thread startApplicationInRange = new Thread(new StartApplicationInRangeRunnable(applicationSelected,
-				clientLowerBound, clientUpperBound));
-		startApplicationInRange.start();
+		Thread startInRange = new Thread(new StartAppInRangeRunnable(app, start, end));
+		startInRange.start();
 	}
 
-	public void stopApplicationInRange(String clientLowerBound, String clientUpperBound)
+	public void stopAppInRange(String start, String end)
     {
-		Thread stopApplicationInRange = new Thread(new StopApplicationInRangeRunnable(clientLowerBound, clientUpperBound));
-		stopApplicationInRange.start();
+		Thread stopInRange = new Thread(new StopAppInRangeRunnable(start, end));
+		stopInRange.start();
 	}
 
     /**
      * Adds a client proxy with the provided ip address to the servers collection of active clients.
      * @param ipAddress
      */
-	public void addClient(String ipAddress)
+	public void addBot(String ipAddress)
     {
-		liteClients.put(new LiteClient(ipAddress));
-        logger.debug("liteClient " + ipAddress + " was added to liteClients");
+		robotPool.put(new LiteClient(ipAddress));
 	}
 
 	/**
-	 * Called by the {@link ClientProxy} when applicationState update has been
+	 * Called by the {@link Port} when applicationState update has been
 	 * received from a client.
 	 */
 	public void updateClientState(String ipAddress, State applicationState)
     {
-		liteClients.updateState(applicationState, ipAddress);
+		robotPool.updateState(applicationState, ipAddress);
 	}
 
 	/**
@@ -91,14 +88,14 @@ public class Server
 	public void removeClient(String ipAddress)
     {
         logger.debug(ipAddress + " has disconnected, and has been removed from the client list");
-        liteClients.remove(ipAddress);
+        robotPool.remove(ipAddress);
 	}
 
 	public synchronized void messageClient(String message, String ipAddress)
     {
-		clientProxy.sendMessageToClient(message, ipAddress);
+		port.sendMessageToClient(message, ipAddress);
 	}
-	
+
 	/**
 	 * Prepares an {@link ExecutionRequest}, which contains the information
 	 * needed to execute the chosen application on the client, and passes it to
@@ -114,7 +111,7 @@ public class Server
 	public synchronized void startApplication(String applicationName, String ipAddress)
     {
 		StartedState startState = new StartedState();
-		
+
 		if (applicationName == null || applicationName.isEmpty()) {
             logger.error("No application selected");
 			return;
@@ -122,7 +119,7 @@ public class Server
 		HashMap<String, String> appInfo = applicationsInfo.get(applicationName);
 		ExecutionRequest executionRequest = new ExecutionRequest(appInfo.get("file_name"), appInfo.get("path"), appInfo
 				.get("args"), startState);
-		clientProxy.startApplicationOnClient(executionRequest, ipAddress);
+		port.startApplicationOnClient(executionRequest, ipAddress);
 	}
 
 	/**
@@ -136,7 +133,7 @@ public class Server
     {
 		ExecutionRequest executionRequest = new ExecutionRequest("", "", "", new StopedState());
 
-		clientProxy.stopApplicationOnClient(executionRequest, ipAddress);
+		port.stopApplicationOnClient(executionRequest, ipAddress);
 	}
 
 	/**
@@ -152,29 +149,29 @@ public class Server
 	}
 
 	/**
-	 * Returns a {@link LiteClients} which contains a collection of
+	 * Returns a {@link RobotPool} which contains a collection of
 	 * {@link LiteClient} objects.
 	 *
 	 * @return
 	 */
-	public LiteClients getLiteClients()
+	public RobotPool getRobotPool()
     {
-		return liteClients;
+		return robotPool;
 	}
-	
+
 	public synchronized void messageClientInRange(String message, String lowerBoundHostName, String upperBoundHostName)
     {
 		if (lowerBoundHostName.isEmpty() || upperBoundHostName.isEmpty()) {
 			return; // Error: Host range not set
 		}
-		
-		LiteClient[] sortedLiteClients = this.liteClients.getSortedLiteClients(); 
+
+		LiteClient[] sortedLiteClients = this.robotPool.getSortedLiteClients();
 		if (sortedLiteClients.length == 0) {
-			return; // Error: No clients connected 
+			return; // Error: No clients connected
 		}
-		
+
 		for (int i = 0; i < sortedLiteClients.length; ++i) {
-			if (sortedLiteClients[i].getHostName().compareTo(lowerBoundHostName) >= 0 
+			if (sortedLiteClients[i].getHostName().compareTo(lowerBoundHostName) >= 0
 					&& sortedLiteClients[i].getHostName().compareTo(upperBoundHostName) <= 0) {
 				messageClient(message, sortedLiteClients[i].getIPAddress());
 			}
@@ -182,17 +179,17 @@ public class Server
 	}
 
 	/**
-	 * Thread request application execution on a remote client 
+	 * Thread request application execution on a remote client
 	 * @author Anwar A. Ruff
 	 *
 	 */
-	private class StartApplicationInRangeRunnable implements Runnable
+	private class StartAppInRangeRunnable implements Runnable
     {
 		private final String applicationSelected;
 		private final String clientLowerBound;
 		private final String clientUpperBound;
 
-		public StartApplicationInRangeRunnable(String applicationSelected, String clientLowerBound,	String clientUpperBound) {
+		public StartAppInRangeRunnable(String applicationSelected, String clientLowerBound, String clientUpperBound) {
 			this.applicationSelected = applicationSelected;
 			this.clientLowerBound = clientLowerBound;
 			this.clientUpperBound = clientUpperBound;
@@ -202,14 +199,14 @@ public class Server
 			if (clientLowerBound.isEmpty() || clientUpperBound.isEmpty()) {
 				return; // Error: Host range not set
 			}
-			
-			LiteClient[] sortedLiteClients = liteClients.getSortedLiteClients(); 
+
+			LiteClient[] sortedLiteClients = robotPool.getSortedLiteClients();
 			if (sortedLiteClients.length == 0) {
-				return; // Error: No clients connected 
+				return; // Error: No clients connected
 			}
-			
+
 			for (int i = 0; i < sortedLiteClients.length; ++i) {
-				if (sortedLiteClients[i].getHostName().compareTo(clientLowerBound) >= 0 
+				if (sortedLiteClients[i].getHostName().compareTo(clientLowerBound) >= 0
 						&& sortedLiteClients[i].getHostName().compareTo(clientUpperBound) <= 0) {
 						startApplication(applicationSelected, sortedLiteClients[i].getIPAddress());
 						sortedLiteClients[i].setApplicationName(applicationSelected);
@@ -221,13 +218,13 @@ public class Server
 			}
 		}
 	}
-	
-	private class StopApplicationInRangeRunnable implements Runnable
+
+	private class StopAppInRangeRunnable implements Runnable
     {
 		private final String clientLowerBound;
 		private final String clientUpperBound;
 
-		public StopApplicationInRangeRunnable(String clientLowerBound,	String clientUpperBound) {
+		public StopAppInRangeRunnable(String clientLowerBound, String clientUpperBound) {
 			this.clientLowerBound = clientLowerBound;
 			this.clientUpperBound = clientUpperBound;
 		}
@@ -236,17 +233,17 @@ public class Server
 			if (clientLowerBound.isEmpty() || clientUpperBound.isEmpty()) {
 				return; // Error: Host range not set
 			}
-			
-			LiteClient[] sortedLiteClients = liteClients.getSortedLiteClients(); 
+
+			LiteClient[] sortedLiteClients = robotPool.getSortedLiteClients();
 			if (sortedLiteClients.length == 0) {
-				return; // Error: No clients connected 
+				return; // Error: No clients connected
 			}
-			
+
 			for (int i = 0; i < sortedLiteClients.length; ++i) {
-				if (sortedLiteClients[i].getHostName().compareTo(clientLowerBound) >= 0 
+				if (sortedLiteClients[i].getHostName().compareTo(clientLowerBound) >= 0
 						&& sortedLiteClients[i].getHostName().compareTo(clientUpperBound) <= 0) {
 						stopApplication(sortedLiteClients[i].getIPAddress());
-						// Todo: clear old program name 
+						// Todo: clear old program name
 						//sortedLiteClients[i].setApplicationName(applicationSelected);
 				}
 				try {
@@ -256,10 +253,10 @@ public class Server
 			}
 		}
 	}
-	
+
 
 	public void updateClientHostNameUpdate(String hostName, String ipAddress) {
-		liteClients.updateHostName(hostName, ipAddress);
+		robotPool.updateHostName(hostName, ipAddress);
 	}
 
 }

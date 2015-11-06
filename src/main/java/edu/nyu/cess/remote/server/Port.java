@@ -8,53 +8,45 @@ import edu.nyu.cess.remote.common.app.State;
 import edu.nyu.cess.remote.common.net.*;
 import org.apache.log4j.Logger;
 
-import java.net.Socket;
 import java.util.HashMap;
 
 /**
  * The Class ClientProxy.
  */
-public class ClientProxy implements ClientNetworkInterfaceObserver
+public class Port implements PortWatcher
 {
-    final static Logger logger = Logger.getLogger(ClientProxy.class);
+    final static Logger logger = Logger.getLogger(Port.class);
 
-    private Server server;
+    private BotMaster botMaster;
 
-	/** The client network interfaces used to communicate with clients. */
-	HashMap<String, ClientSocket> clientSockets = new HashMap<String, ClientSocket>();
+	private HashMap<String, Socket> sockets = new HashMap<String, Socket>();
 
-	public ClientProxy(Server server)
+	public Port(BotMaster botMaster)
     {
-        this.server = server;
+        this.botMaster = botMaster;
 	}
 
-	public void clientRegistrationHandler()
+	public void listen(int port)
     {
-        int PORT_NUMBER = 2600;
-        ServerSocketHandler serverSocketHandler = new ServerSocketHandler(PORT_NUMBER);
-		serverSocketHandler.initializeServerSocketConnection();
+        NetworkPort networkPort = new NetworkPort(port, this);
+		networkPort.initialize();
 
 		while (true) {
 			// Blocking function call continues upon incoming connection requests.
-			Socket requestSocket = serverSocketHandler.waitForIncomingConnection();
-            if (requestSocket == null) continue;
-
-			String ip = requestSocket.getInetAddress().getHostAddress();
-            if (ip == null || ip.isEmpty()) continue;
+            Socket socket = networkPort.listenForConnections();
 
             // Ignore connections that have already been established.
-            if ( clientSockets.containsKey(ip)) continue;
+            if (sockets.containsKey(socket.getIP())) {
+                continue;
+            }
 
-            clientSockets.put(ip, new ClientSocket(requestSocket));
-            clientSockets.get(ip).addObserver(this);
-            server.addClient(ip);
-
-            logger.debug("Client Connected: " + ip);
-            clientSockets.get(ip).startThreadedInboundCommunicationMonitor();
+            sockets.put(socket.getIP(), socket);
+            botMaster.addBot(socket.getIP());
+            socket.startThreadedInboundCommunicationMonitor();
 		}
 	}
 
-	public void updateNetworkPacketReceived(DataPacket dataPacket, String ipAddress)
+	public void processDataPacket(DataPacket dataPacket, String ipAddress)
     {
         logger.debug("Packet received from client " + ipAddress);
 
@@ -65,7 +57,7 @@ public class ClientProxy implements ClientNetworkInterfaceObserver
 		case APPLICATION_STATE_CHAGE:
 			State appState = (State) dataPacket.getPayload();
 			if (appState != null && appState instanceof State) {
-                server.updateClientState(ipAddress, appState);
+                botMaster.updateClientState(ipAddress, appState);
 			}
 			break;
 		case HOST_INFO:
@@ -73,7 +65,7 @@ public class ClientProxy implements ClientNetworkInterfaceObserver
 			String hostName = hostInfo.getHostName();
 			
 			if(hostName != null && !hostName.isEmpty()) {
-                server.updateClientHostNameUpdate(hostName, ipAddress);
+                botMaster.updateClientHostNameUpdate(hostName, ipAddress);
 			}
 			break;
 		case MESSAGE:
@@ -88,30 +80,30 @@ public class ClientProxy implements ClientNetworkInterfaceObserver
 		}
 	}
 
-	public void updateNetworkConnectionStateChanged(String ipAddress, boolean isConnected)
+	public void processStateChange(String ipAddress, boolean isConnected)
     {
         logger.debug("Client " + ipAddress + " has " + ((isConnected) ? " connected to the server" : " disconnected"));
         if (isConnected) {
             return;
         }
 
-        clientSockets.get(ipAddress).close();
-        clientSockets.remove(ipAddress);
-        server.removeClient(ipAddress);
+        sockets.get(ipAddress).close();
+        sockets.remove(ipAddress);
+        botMaster.removeClient(ipAddress);
 	}
 
 	public void startApplicationOnClient(ExecutionRequest applicationExecutionRequest, String ipAddress) {
 		DataPacket dataPacket = new DataPacket(PacketType.APPLICATION_EXECUTION_REQUEST, applicationExecutionRequest);
-		clientSockets.get(ipAddress).writeDataPacket(dataPacket);
+		sockets.get(ipAddress).writeDataPacket(dataPacket);
 	}
 
 	public void stopApplicationOnClient(ExecutionRequest stopExecutionRequest, String ipAddress) {
 		DataPacket dataPacket = new DataPacket(PacketType.APPLICATION_EXECUTION_REQUEST, stopExecutionRequest);
-		clientSockets.get(ipAddress).writeDataPacket(dataPacket);
+		sockets.get(ipAddress).writeDataPacket(dataPacket);
 	}
 
 	public void sendMessageToClient(String message, String ipAddress) {
 		DataPacket dataPacket = new DataPacket(PacketType.MESSAGE, message);
-		clientSockets.get(ipAddress).writeDataPacket(dataPacket);
+		sockets.get(ipAddress).writeDataPacket(dataPacket);
 	}
 }
