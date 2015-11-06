@@ -4,15 +4,12 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.StreamCorruptedException;
-import java.net.Socket;
-import java.util.ArrayList;
 
-public class ClientSocket implements ClientNetworkInterfaceObservable
+public class Socket
 {
+	private java.net.Socket socket;
 
-	ArrayList<ClientNetworkInterfaceObserver> observers = new ArrayList<ClientNetworkInterfaceObserver>();
-
-	private Socket socket;
+    private PortWatcher portWatcher;
 
 	private Thread inboundCommunicationThread;
 	private Thread networkInterfaceMonitorThread;
@@ -22,10 +19,21 @@ public class ClientSocket implements ClientNetworkInterfaceObservable
 	private ObjectInputStream objectInputStream;
 	private ObjectOutputStream objectOutputStream;
 
-    public ClientSocket(Socket socket)
+    public Socket(java.net.Socket socket, PortWatcher portWatcher)
     {
         this.socket = socket;
+        this.portWatcher = portWatcher;
         remoteIPAddress = this.socket.getInetAddress().getHostAddress();
+    }
+
+    /**
+     * Returns the ip address associated with this socket.
+     *
+     * @return String IP address
+     */
+    public String getIP()
+    {
+        return remoteIPAddress;
     }
 
 	public boolean writeDataPacket(DataPacket packet)
@@ -107,42 +115,17 @@ public class ClientSocket implements ClientNetworkInterfaceObservable
 		}
 	}
 
-	public boolean addObserver(ClientNetworkInterfaceObserver networkObserver)
-    {
-		return observers.add(networkObserver);
-	}
-
-	public void notifyNetworkStatusChanged(String ipAddress, boolean isConnected)
-    {
-		for (ClientNetworkInterfaceObserver observer : observers) {
-			observer.updateNetworkConnectionStateChanged(ipAddress, isConnected);
-		}
-	}
-
-	public void notifyNetworkPacketReceived(DataPacket dataPacket)
-    {
-		for (ClientNetworkInterfaceObserver observer : observers) {
-			observer.updateNetworkPacketReceived(dataPacket, remoteIPAddress);
-		}
-	}
-
 	public void startThreadedInboundCommunicationMonitor()
     {
-
 		inboundCommunicationThread = new Thread(new InboundCommunicationListener());
 		inboundCommunicationThread.setName("Inbound communication thread");
 		inboundCommunicationThread.start();
 
-		startNetworkInterfaceMonitor();
+        networkInterfaceMonitorThread = new Thread(new NetworkStreamMonitor());
+        networkInterfaceMonitorThread.setName("Network Interface Monitor");
+        networkInterfaceMonitorThread.start();
 	}
 
-	public void startNetworkInterfaceMonitor()
-    {
-		networkInterfaceMonitorThread = new Thread(new NetworkStreamMonitor());
-		networkInterfaceMonitorThread.setName("Network Interface Monitor");
-		networkInterfaceMonitorThread.start();
-
-	}
 
     private boolean initializeObjectOutputStream()
     {
@@ -239,15 +222,15 @@ public class ClientSocket implements ClientNetworkInterfaceObservable
 		public void run() {
 			DataPacket dataPacket;
 
-			notifyNetworkStatusChanged(remoteIPAddress, true);
+            portWatcher.processStateChange(remoteIPAddress, true);
 
 			System.out.println("Waiting for message from Client " + remoteIPAddress);
 			while ((dataPacket = readDataPacket()) != null) {
 				System.out.println("Data Packet Received");
-				notifyNetworkPacketReceived(dataPacket);
+                portWatcher.processDataPacket(dataPacket, remoteIPAddress);
 			}
 
-			notifyNetworkStatusChanged(remoteIPAddress, false);
+            portWatcher.processStateChange(remoteIPAddress, false);
 
 			System.out.println("Client " + remoteIPAddress + " connection closed...");
 		}
