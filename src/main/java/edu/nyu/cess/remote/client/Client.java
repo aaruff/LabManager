@@ -1,22 +1,13 @@
 package edu.nyu.cess.remote.client;
 
-import java.io.IOException;
+import edu.nyu.cess.remote.common.app.*;
+import edu.nyu.cess.remote.common.config.HostConfigInterface;
 
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-
-import edu.nyu.cess.remote.common.app.Application;
-import edu.nyu.cess.remote.common.app.ApplicationObserver;
-import edu.nyu.cess.remote.common.app.ExecutionRequest;
-import edu.nyu.cess.remote.common.app.StartedState;
-import edu.nyu.cess.remote.common.app.State;
-import edu.nyu.cess.remote.common.app.StopedState;
-import edu.nyu.cess.remote.common.net.HostConfigurationInfo;
+import javax.swing.*;
 
 /**
- * The {@link Client} essentially manages local application execution requests
- * on behalf of the {@link Server}. The client receives status updates from both
+ * The Client essentially manages local application execution requests
+ * on behalf of the Server. The client receives status updates from both
  * the Application and the ServerProxy, which manages communication with the
  * Server.
  *
@@ -28,24 +19,11 @@ public class Client implements ApplicationObserver, ServerProxyObserver {
 
 	private ServerProxy serverProxy;
 
-	public Client() {
-		application = null;
-		serverProxy = null;
-	}
-
 	/**
-	 * Reads in the configuration file, and attempts to connect to the server.
+	 * Attempts to connect to the server with the corresponding host config parameters.
 	 */
-	public void initServerConnection() {
-        HostConfigurationInfo configInfo;
-		try {
-			configInfo = ConfigFileReader.readHostConfigFile("config.properties");
-		} catch (Exception e) {
-			System.exit(1);
-			return;
-		}
-
-		serverProxy = new ServerProxy(configInfo);
+	public void initServerConnection(HostConfigInterface hostConfig) {
+		serverProxy = new ServerProxy(hostConfig);
 		serverProxy.addServerProxyObserver(this);
 		serverProxy.establishPersistentServerConnection();
 	}
@@ -58,7 +36,7 @@ public class Client implements ApplicationObserver, ServerProxyObserver {
 			System.out.println("Sending Started State");
 		}
 		else if (applicationState instanceof StopedState) {
-			System.out.println("Sending Stoped State");
+			System.out.println("Sending Stopped State");
 		}
 	}
 
