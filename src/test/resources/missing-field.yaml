@@ -1,0 +1,7 @@
+---
+name: 'App One'
+path: 'C:\\foo\bar\one.exe'
+---
+name: 'App Two'
+path: 'C:\\foo\bar\two.exe'
+options: '--b'
