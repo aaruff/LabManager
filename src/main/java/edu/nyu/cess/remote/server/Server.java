@@ -1,46 +1,45 @@
 package edu.nyu.cess.remote.server;
 
-import edu.nyu.cess.remote.common.app.*;
+import edu.nyu.cess.remote.common.app.ExeRequestMessage;
+import edu.nyu.cess.remote.common.app.StartedState;
+import edu.nyu.cess.remote.common.app.State;
+import edu.nyu.cess.remote.common.app.StopedState;
+import edu.nyu.cess.remote.server.app.profile.AppProfile;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
-import java.io.File;
-import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
-public class BotMaster
+public class Server
 {
-    final static Logger logger = Logger.getLogger(BotMaster.class);
+    final static Logger logger = Logger.getLogger(Server.class);
 
 	private final Port port;
 
-	protected final RobotPool robotPool = new RobotPool();
-
 	protected final DashboardView dashboardView;
 
-	protected String applicationNames[];
+	private Map<String, AppProfile> appProfileMap;
 
-	private HashMap<String, HashMap<String, String>> applicationsInfo;
+	private ClientPool clientPool;
 
-	public BotMaster()
+	public Server(ClientPool clientPool, Map<String, AppProfile> appProfileMap)
 	{
+		this.clientPool = clientPool;
+		this.appProfileMap = appProfileMap;
+
 		dashboardView = new DashboardView(this);
 		port = new Port(this);
 	}
 
 	/**
-	 * Initializes the Server by adding itself to the {@link RobotPool}
+	 * Initializes the Server by adding itself to the {@link ClientPool}
 	 * observer list, invoking the UI, and initializing the clientProxy which
 	 * handles network communication between the server and clients.
-	 */
+     */
 	public void init()
     {
-		ApplicationInfo applicationInfo = new ApplicationInfo();
-		applicationInfo.readFromFile(new File("application_info.txt"));
-
-		applicationNames = applicationInfo.getApplicationNames();
-		applicationsInfo = applicationInfo.getAllApplicationsInformation();
-
-		robotPool.addObserver(dashboardView);
+		clientPool.addObserver(dashboardView);
 
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
@@ -70,7 +69,7 @@ public class BotMaster
      */
 	public void addBot(String ipAddress)
     {
-		robotPool.put(new LiteClient(ipAddress));
+		clientPool.put(new LiteClient(ipAddress));
 	}
 
 	/**
@@ -79,7 +78,7 @@ public class BotMaster
 	 */
 	public void updateClientState(String ipAddress, State applicationState)
     {
-		robotPool.updateState(applicationState, ipAddress);
+		clientPool.updateState(applicationState, ipAddress);
 	}
 
 	/**
@@ -88,7 +87,7 @@ public class BotMaster
 	public void removeClient(String ipAddress)
     {
         logger.debug(ipAddress + " has disconnected, and has been removed from the client list");
-        robotPool.remove(ipAddress);
+        clientPool.remove(ipAddress);
 	}
 
 	public synchronized void messageClient(String message, String ipAddress)
@@ -97,30 +96,27 @@ public class BotMaster
 	}
 
 	/**
-	 * Prepares an {@link ExecutionRequest}, which contains the information
+	 * Prepares an {@link ExeRequestMessage}, which contains the information
 	 * needed to execute the chosen application on the client, and passes it to
 	 * the clientProxy which will handle sending it over the network to the
 	 * appropriate client.
 	 *
-	 * @param applicationName
+	 * @param appName
 	 *            The name of the application to be executed
 	 * @param ipAddress
 	 *            The IP Address of the client receiving the application
 	 *            execution request
 	 */
-	public synchronized void startApplication(String applicationName, String ipAddress)
+	public synchronized void startApplication(String appName, String ipAddress)
     {
 		StartedState startState = new StartedState();
 
-		if (applicationName == null || applicationName.isEmpty()) {
-            logger.error("No application selected");
-			return;
-		}
-		HashMap<String, String> appInfo = applicationsInfo.get(applicationName);
-		ExecutionRequest executionRequest = new ExecutionRequest(appInfo.get("file_name"), appInfo.get("path"), appInfo
-				.get("args"), startState);
-		port.startApplicationOnClient(executionRequest, ipAddress);
+		AppProfile appProfile = appProfileMap.get(appName);
+		ExeRequestMessage exeRequestMessage = new ExeRequestMessage(
+				appProfile.getName(), appProfile.getPath(), appProfile.getOptions(), startState);
+		port.startApplicationOnClient(exeRequestMessage, ipAddress);
 	}
+
 
 	/**
 	 * Request a client at ipAddress to stop the previously executed
@@ -131,10 +127,11 @@ public class BotMaster
 	 */
 	public synchronized void stopApplication(String ipAddress)
     {
-		ExecutionRequest executionRequest = new ExecutionRequest("", "", "", new StopedState());
+		ExeRequestMessage exeRequestMessage = new ExeRequestMessage("", "", "", new StopedState());
 
-		port.stopApplicationOnClient(executionRequest, ipAddress);
+		port.stopApplicationOnClient(exeRequestMessage, ipAddress);
 	}
+
 
 	/**
 	 * Returns an array of strings containing the names of all of the supported
@@ -144,19 +141,20 @@ public class BotMaster
 	 */
 	public String[] getApplicationNames()
     {
-		String empty[] = new String[0];
-		return (applicationNames == null) ? empty : applicationNames;
+		Set<String> names = appProfileMap.keySet();
+		return names.toArray(new String[names.size()]);
 	}
 
+
 	/**
-	 * Returns a {@link RobotPool} which contains a collection of
+	 * Returns a {@link ClientPool} which contains a collection of
 	 * {@link LiteClient} objects.
 	 *
 	 * @return
 	 */
-	public RobotPool getRobotPool()
+	public ClientPool getClientPool()
     {
-		return robotPool;
+		return clientPool;
 	}
 
 	public synchronized void messageClientInRange(String message, String lowerBoundHostName, String upperBoundHostName)
@@ -165,7 +163,7 @@ public class BotMaster
 			return; // Error: Host range not set
 		}
 
-		LiteClient[] sortedLiteClients = this.robotPool.getSortedLiteClients();
+		LiteClient[] sortedLiteClients = this.clientPool.getSortedLiteClients();
 		if (sortedLiteClients.length == 0) {
 			return; // Error: No clients connected
 		}
@@ -177,6 +175,7 @@ public class BotMaster
 			}
 		}
 	}
+
 
 	/**
 	 * Thread request application execution on a remote client
@@ -200,7 +199,7 @@ public class BotMaster
 				return; // Error: Host range not set
 			}
 
-			LiteClient[] sortedLiteClients = robotPool.getSortedLiteClients();
+			LiteClient[] sortedLiteClients = clientPool.getSortedLiteClients();
 			if (sortedLiteClients.length == 0) {
 				return; // Error: No clients connected
 			}
@@ -219,6 +218,7 @@ public class BotMaster
 		}
 	}
 
+
 	private class StopAppInRangeRunnable implements Runnable
     {
 		private final String clientLowerBound;
@@ -234,7 +234,7 @@ public class BotMaster
 				return; // Error: Host range not set
 			}
 
-			LiteClient[] sortedLiteClients = robotPool.getSortedLiteClients();
+			LiteClient[] sortedLiteClients = clientPool.getSortedLiteClients();
 			if (sortedLiteClients.length == 0) {
 				return; // Error: No clients connected
 			}
@@ -256,7 +256,7 @@ public class BotMaster
 
 
 	public void updateClientHostNameUpdate(String hostName, String ipAddress) {
-		robotPool.updateHostName(hostName, ipAddress);
+		clientPool.updateHostName(hostName, ipAddress);
 	}
 
 }
