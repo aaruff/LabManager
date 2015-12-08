@@ -56,11 +56,11 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 	JRadioButton singleRadioButton;
 	JRadioButton rangeRadioButton;
 
-	private final BotMaster botMaster;
+	private final Server server;
 
-	public DashboardView(BotMaster botMaster) {
+	public DashboardView(Server server) {
 		super("CESS Application Remote");
-		this.botMaster = botMaster;
+		this.server = server;
 	}
 
 	/**
@@ -88,7 +88,7 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 		 * Clients Panel
 		 */
 		TitledBorder titledBorder = BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),
-				"Connections: " + botMaster.getRobotPool().size());
+				"Connections: " + server.getClientPool().size());
 		clientPanel.setBorder(titledBorder);
 		//clientPanel.setBorder(new TitledBorder("Computers Connected: " + server.getLiteClients().size()));
 		clientPanel.setBackground(Color.white);
@@ -111,7 +111,7 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 
 		JLabel applicationLabel = new JLabel("Select a Program: ");
 
-		clientApplicationsComboBox = new JComboBox(botMaster.getApplicationNames());
+		clientApplicationsComboBox = new JComboBox(server.getApplicationNames());
 
 		JPanel programSelectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		programSelectionPanel.setBackground(Color.white);
@@ -300,17 +300,17 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 
 	/**
 	 * This method is called when a {@link LiteClient} is added to the
-	 * {@link RobotPool} collection.
+	 * {@link ClientPool} collection.
 	 */
 	public void updateLiteClientAdded(String ipAddress) {
-		RobotPool robotPool = botMaster.getRobotPool();
-		LiteClient liteClient = robotPool.getLiteClientByIPAddress(ipAddress);
+		ClientPool clientPool = server.getClientPool();
+		LiteClient liteClient = clientPool.getClientByIpAddress(ipAddress);
 		SwingUtilities.invokeLater(new AddClientRunnable(ipAddress, liteClient));
 	}
 
 	/**
 	 * This method is called when a {@link LiteClient} is removed from the
-	 * {@link RobotPool} collection.
+	 * {@link ClientPool} collection.
 	 */
 	public void updateLiteClientRemoved(String ipAddress) {
 		SwingUtilities.invokeLater(new RemoveClientRunnable(ipAddress));
@@ -318,7 +318,7 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 
 	/**
 	 * This method is called when a {@link LiteClient}s state, in the
-	 * {@link RobotPool} collection, has been updated (not necessarily
+	 * {@link ClientPool} collection, has been updated (not necessarily
 	 * changed).
 	 */
 	public void updateLiteClientStateChanged(LiteClient liteClient) {
@@ -457,7 +457,7 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 
 			clientPanel.removeAll();
 
-			LiteClient[] sortedClients = botMaster.getRobotPool().getSortedLiteClients();
+			LiteClient[] sortedClients = server.getClientPool().getSortedLiteClients();
 			String[] clientHostNames = new String[sortedClients.length];
 			for (int i = 0; i < sortedClients.length; ++i) {
 				clientHostNames[i] = sortedClients[i].getHostName();
@@ -510,7 +510,7 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 			clientStartButtons.remove(ipAddress);
 			clientStopButtons.remove(ipAddress);
 
-			LiteClient[] sortedClients = botMaster.getRobotPool().getSortedLiteClients();
+			LiteClient[] sortedClients = server.getClientPool().getSortedLiteClients();
 			String[] clientHostNames = new String[sortedClients.length];
 			for (int i = 0; i < sortedClients.length; ++i) {
 				clientHostNames[i] = sortedClients[i].getHostName();
@@ -553,7 +553,7 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 	private class MessageClientsInRangeListener implements ActionListener {
 
 		public void actionPerformed(ActionEvent e) {
-			RobotPool robotPool = botMaster.getRobotPool();
+			ClientPool clientPool = server.getClientPool();
 			String message = messageTextField.getText();
 			messageTextField.setText("");
 
@@ -569,10 +569,10 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 					messageJLabel.setText("Messaging Error: A computer was not selected.");
 					return;
 				}
-				botMaster.messageClient(message, robotPool.getLiteClientByHostName(hostNameSelected).getIPAddress());
+				server.messageClient(message, clientPool.getLiteClientByHostName(hostNameSelected).getIPAddress());
 			}
 			else {
-				botMaster.messageClientInRange(message,
+				server.messageClientInRange(message,
 						(String) clientsMessageLowerBound.getSelectedItem(), (String) clientsMessageUpperBound.getSelectedItem());
 			}
 		}
@@ -583,7 +583,7 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 		public void actionPerformed(ActionEvent e) {
 			String clientLowerBound = (String) clientsLowerBoundComboBox.getSelectedItem();
 			String clientUpperBound = (String) clientsUpperBoundComboBox.getSelectedItem();
-			botMaster.stopAppInRange(clientLowerBound, clientUpperBound);
+			server.stopAppInRange(clientLowerBound, clientUpperBound);
 		}
 	}
 
@@ -594,7 +594,7 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 			String clientLowerBound = (String) clientsLowerBoundComboBox.getSelectedItem();
 			String clientUpperBound = (String) clientsUpperBoundComboBox.getSelectedItem();
 
-			botMaster.startAppInRange(applicationSelected, clientLowerBound, clientUpperBound);
+			server.startAppInRange(applicationSelected, clientLowerBound, clientUpperBound);
 
 		}
 	}
@@ -611,11 +611,11 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 
 			System.out.println(ipAddress + " Start button selected");
 
-			RobotPool robotPool = botMaster.getRobotPool();
-			LiteClient liteClient = robotPool.getLiteClientByIPAddress(ipAddress);
+			ClientPool clientPool = server.getClientPool();
+			LiteClient liteClient = clientPool.getClientByIpAddress(ipAddress);
 			liteClient.setApplicationName(applicationSelected);
 
-			botMaster.startApplication(applicationSelected, ipAddress);
+			server.startApplication(applicationSelected, ipAddress);
 		}
 
 	}
@@ -629,7 +629,7 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 
 		public void actionPerformed(ActionEvent e) {
 			System.out.println(ipAddress + " Stop button selected");
-			botMaster.stopApplication(ipAddress);
+			server.stopApplication(ipAddress);
 		}
 
 	}
