@@ -5,16 +5,14 @@ package edu.nyu.cess.remote.server;
 
 import edu.nyu.cess.remote.common.app.State;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Anwar A. Ruff
  */
-public class RobotPool implements LiteClientsObservable {
-
-	ArrayList<LiteClient> liteClients = new ArrayList<>();
+public class ClientPool implements LiteClientsObservable
+{
+	List<LiteClient> clients = new ArrayList<>();
 	ArrayList<LiteClientsObserver> observers = new ArrayList<>();
 
     /**
@@ -23,46 +21,45 @@ public class RobotPool implements LiteClientsObservable {
      * @param liteClient LiteClient
      */
 	public void put(LiteClient liteClient) {
-		liteClients.add(liteClient);
+		clients.add(liteClient);
 
         // Notify observers that a lite client has been added
 		notifyClientAdded(liteClient.getIPAddress());
 	}
 
 	public void updateState(State applicationState, String ipAddress) {
-		LiteClient liteClient = liteClients.get(ipAddress);
+		LiteClient liteClient = clients.get(ipAddress);
 		liteClient.setApplicationState(applicationState);
 
 		notifyClientStateChanged(ipAddress);
 	}
 
 	public void updateHostName(String hostName, String ipAddress) {
-		liteClients.get(ipAddress).setHostName(hostName);
+		clients.get(ipAddress).setHostName(hostName);
 
 		notifyClientHostNameChanged(ipAddress);
 	}
 
 	public LiteClient remove(String ipAddress) {
-		LiteClient liteClient = liteClients.get(ipAddress);
-		liteClients.remove(ipAddress);
+		LiteClient liteClient = clients.get(ipAddress);
+		clients.remove(ipAddress);
 
 		notifyClientRemoved(ipAddress);
 		return liteClient;
 	}
 
-	public LiteClient getLiteClientByIPAddress(String ipAddress) {
-        for (LiteClient client: liteClients) {
+	public LiteClient getClientByIpAddress(String ipAddress) throws LiteClientNotFoundException {
+        for (LiteClient client: clients) {
             if (client.getIPAddress().equals(ipAddress)) {
                 return client;
             }
         }
 
-        throw
-		return liteClients.get(ipAddress);
+		throw new LiteClientNotFoundException("Client: " + ipAddress + " not found.");
 	}
 
 	public LiteClient getLiteClientByHostName(String hostName) {
-		for (LiteClient c : this.liteClients.values()) {
+		for (LiteClient c : this.clients.values()) {
 			if (hostName.equals(c.getHostName())) {
 				return c;
 			}
@@ -72,8 +69,8 @@ public class RobotPool implements LiteClientsObservable {
 	}
 
 	public LiteClient[] getSortedLiteClients() {
-		Map<String, LiteClient> clients = this.liteClients;
-		String clientKeys[] = new String[this.liteClients.size()];
+		Map<String, LiteClient> clients = this.clients;
+		String clientKeys[] = new String[this.clients.size()];
 		int i = 0;
 		for (String key : clients.keySet()) {
 			clientKeys[i++] = key;
@@ -82,9 +79,9 @@ public class RobotPool implements LiteClientsObservable {
 		Arrays.sort(clientKeys);
 
 		i = 0;
-		LiteClient[] sortedClients = new LiteClient[this.liteClients.size()];
+		LiteClient[] sortedClients = new LiteClient[this.clients.size()];
 		for (String key : clientKeys) {
-			sortedClients[i++] = this.liteClients.get(key);
+			sortedClients[i++] = this.clients.get(key);
 		}
 
 		return sortedClients;
@@ -104,18 +101,18 @@ public class RobotPool implements LiteClientsObservable {
 
 	public void notifyClientStateChanged(String ipAddress) {
 		for (LiteClientsObserver observer : observers) {
-			observer.updateLiteClientStateChanged(this.liteClients.get(ipAddress));
+			observer.updateLiteClientStateChanged(this.clients.get(ipAddress));
 		}
 	}
 
 	public void notifyClientHostNameChanged(String ipAddress) {
 		for (LiteClientsObserver observer : observers) {
-			observer.updateLiteClientHostNameChanged(this.liteClients.get(ipAddress));
+			observer.updateLiteClientHostNameChanged(this.clients.get(ipAddress));
 		}
 	}
 
 	public int size() {
-		return this.liteClients.size();
+		return this.clients.size();
 	}
 
 	public void addObserver(LiteClientsObserver observer) {
