@@ -3,7 +3,7 @@
  */
 package edu.nyu.cess.remote.server;
 
-import edu.nyu.cess.remote.common.app.ExecutionRequest;
+import edu.nyu.cess.remote.common.app.ExeRequestMessage;
 import edu.nyu.cess.remote.common.app.State;
 import edu.nyu.cess.remote.common.net.*;
 import org.apache.log4j.Logger;
@@ -17,13 +17,13 @@ public class Port implements PortWatcher
 {
     final static Logger logger = Logger.getLogger(Port.class);
 
-    private BotMaster botMaster;
+    private Server server;
 
 	private HashMap<String, Socket> sockets = new HashMap<String, Socket>();
 
-	public Port(BotMaster botMaster)
+	public Port(Server server)
     {
-        this.botMaster = botMaster;
+        this.server = server;
 	}
 
 	public void listen(int port)
@@ -41,7 +41,7 @@ public class Port implements PortWatcher
             }
 
             sockets.put(socket.getIP(), socket);
-            botMaster.addBot(socket.getIP());
+            server.addBot(socket.getIP());
             socket.startThreadedInboundCommunicationMonitor();
 		}
 	}
@@ -57,15 +57,15 @@ public class Port implements PortWatcher
 		case APPLICATION_STATE_CHAGE:
 			State appState = (State) dataPacket.getPayload();
 			if (appState != null && appState instanceof State) {
-                botMaster.updateClientState(ipAddress, appState);
+                server.updateClientState(ipAddress, appState);
 			}
 			break;
 		case HOST_INFO:
 			HostInfo hostInfo = (HostInfo) dataPacket.getPayload();
 			String hostName = hostInfo.getHostName();
-			
+
 			if(hostName != null && !hostName.isEmpty()) {
-                botMaster.updateClientHostNameUpdate(hostName, ipAddress);
+                server.updateClientHostNameUpdate(hostName, ipAddress);
 			}
 			break;
 		case MESSAGE:
@@ -89,16 +89,16 @@ public class Port implements PortWatcher
 
         sockets.get(ipAddress).close();
         sockets.remove(ipAddress);
-        botMaster.removeClient(ipAddress);
+        server.removeClient(ipAddress);
 	}
 
-	public void startApplicationOnClient(ExecutionRequest applicationExecutionRequest, String ipAddress) {
-		DataPacket dataPacket = new DataPacket(PacketType.APPLICATION_EXECUTION_REQUEST, applicationExecutionRequest);
+	public void startApplicationOnClient(ExeRequestMessage applicationExeRequestMessage, String ipAddress) {
+		DataPacket dataPacket = new DataPacket(PacketType.APPLICATION_EXECUTION_REQUEST, applicationExeRequestMessage);
 		sockets.get(ipAddress).writeDataPacket(dataPacket);
 	}
 
-	public void stopApplicationOnClient(ExecutionRequest stopExecutionRequest, String ipAddress) {
-		DataPacket dataPacket = new DataPacket(PacketType.APPLICATION_EXECUTION_REQUEST, stopExecutionRequest);
+	public void stopApplicationOnClient(ExeRequestMessage stopExeRequestMessage, String ipAddress) {
+		DataPacket dataPacket = new DataPacket(PacketType.APPLICATION_EXECUTION_REQUEST, stopExeRequestMessage);
 		sockets.get(ipAddress).writeDataPacket(dataPacket);
 	}
 
