@@ -69,7 +69,7 @@ public class Server
      */
 	public void addBot(String ipAddress)
     {
-		clientPool.put(new LiteClient(ipAddress));
+		clientPool.addClient(new LiteClient(ipAddress));
 	}
 
 	/**
@@ -78,7 +78,7 @@ public class Server
 	 */
 	public void updateClientState(String ipAddress, State applicationState)
     {
-		clientPool.updateState(applicationState, ipAddress);
+		clientPool.updateClientState(applicationState, ipAddress);
 	}
 
 	/**
@@ -87,7 +87,7 @@ public class Server
 	public void removeClient(String ipAddress)
     {
         logger.debug(ipAddress + " has disconnected, and has been removed from the client list");
-        clientPool.remove(ipAddress);
+        clientPool.popByIpAddress(ipAddress);
 	}
 
 	public synchronized void messageClient(String message, String ipAddress)
