@@ -304,7 +304,7 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 	 */
 	public void updateLiteClientAdded(String ipAddress) {
 		ClientPool clientPool = server.getClientPool();
-		LiteClient liteClient = clientPool.getClientByIpAddress(ipAddress);
+		LiteClient liteClient = clientPool.getByIp(ipAddress);
 		SwingUtilities.invokeLater(new AddClientRunnable(ipAddress, liteClient));
 	}
 
@@ -569,7 +569,7 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 					messageJLabel.setText("Messaging Error: A computer was not selected.");
 					return;
 				}
-				server.messageClient(message, clientPool.getLiteClientByHostName(hostNameSelected).getIPAddress());
+				server.messageClient(message, clientPool.getByHostname(hostNameSelected).getIPAddress());
 			}
 			else {
 				server.messageClientInRange(message,
@@ -612,7 +612,7 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 			System.out.println(ipAddress + " Start button selected");
 
 			ClientPool clientPool = server.getClientPool();
-			LiteClient liteClient = clientPool.getClientByIpAddress(ipAddress);
+			LiteClient liteClient = clientPool.getByIp(ipAddress);
 			liteClient.setApplicationName(applicationSelected);
 
 			server.startApplication(applicationSelected, ipAddress);
