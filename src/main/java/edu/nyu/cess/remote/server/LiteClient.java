@@ -4,6 +4,8 @@ import edu.nyu.cess.remote.common.app.StartedState;
 import edu.nyu.cess.remote.common.app.State;
 import edu.nyu.cess.remote.common.app.StopedState;
 
+import java.util.Comparator;
+
 public class LiteClient implements Comparable<LiteClient>
 {
 	private String ipAddress;
@@ -76,4 +78,31 @@ public class LiteClient implements Comparable<LiteClient>
 
         return hostName.compareTo(liteClient.getHostName());
 	}
+
+	public static Comparator<LiteClient> SortByHostname = new Comparator<LiteClient>()
+	{
+		@Override
+		public int compare(LiteClient c1, LiteClient c2)
+		{
+			// Case 1: C1 is null
+			if (c1 == null) {
+				if (c2 == null) {
+					return 0;
+				}
+				// C2 is not null, so C1 is less
+				else {
+					return -1;
+				}
+			}
+			// Case 2: C1 is not null
+			else {
+				if (c2 == null) {
+					return 1;
+				}
+				else {
+					return c1.getHostName().compareTo(c2.getHostName());
+				}
+			}
+		}
+	};
 }
