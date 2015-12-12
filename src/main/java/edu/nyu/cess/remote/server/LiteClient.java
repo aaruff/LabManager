@@ -3,6 +3,7 @@ package edu.nyu.cess.remote.server;
 import edu.nyu.cess.remote.common.app.StartedState;
 import edu.nyu.cess.remote.common.app.State;
 import edu.nyu.cess.remote.common.app.StopedState;
+import edu.nyu.cess.remote.server.ui.NullComparator;
 
 import java.util.Comparator;
 
@@ -13,6 +14,9 @@ public class LiteClient implements Comparable<LiteClient>
 
 	private State applicationState;
 	private String applicationName;
+
+	public static final SortByHostname SORT_BY_HOSTNAME = new SortByHostname();
+	public static final SortByIp SORT_BY_IP = new SortByIp();
 
     /**
      * Sets the IP Address and the hostname to the IP Address.
@@ -26,18 +30,24 @@ public class LiteClient implements Comparable<LiteClient>
 		applicationState = new StopedState();
 	}
 
+	/**
+	 * Sets the client's application state.
+	 *
+	 * @param applicationState the application state
+     */
 	public void setApplicationState(State applicationState) {
 		this.applicationState = applicationState;
-	}
-
-	public State getApplicationState() {
-		return this.applicationState;
 	}
 
 	public String getIPAddress() {
 		return this.ipAddress;
 	}
 
+	/**
+	 * Returns true if the application is running, otherwise false is returned.
+	 *
+	 * @return the applications state
+     */
 	public boolean isApplicationRunning() {
 		boolean applicationRunning = false;
 		if (applicationState instanceof StartedState) {
@@ -46,63 +56,98 @@ public class LiteClient implements Comparable<LiteClient>
 		return applicationRunning;
 	}
 
+	/**
+	 * Returns the client's host name.
+	 *
+	 * @return the host name
+     */
 	public String getHostName() {
 		return hostName;
 	}
 
+	/**
+	 * Sets the client's host name.
+	 *
+	 * @param hostName the clients host name
+     */
 	public void setHostName(String hostName) {
         this.hostName = hostName;
 	}
 
+	/**
+	 * Sets the client's application state.
+	 *
+	 * @param applicationName the client's application name
+     */
 	public void setApplicationName(String applicationName) {
 		this.applicationName = applicationName;
 	}
 
+	/**
+	 * Returns the current application name if set, otherwise null is returned.
+	 *
+	 * @return the current application name
+     */
 	public String getApplicationName() {
 		return applicationName;
 	}
 
-    @Override
-	public int compareTo(LiteClient liteClient)
+	/**
+	 * Compares this client's hostname to the client parameter, based upon the lexical ordering of the hostname.
+	 * Note: A client having a null name, is considered less than one that doesn't. Two null clients are considered
+	 * equal.
+	 *
+	 * @param client the client being compared to.
+	 * @return the comparison result: 0 if equal, -1 if less, or 1 if greater
+     */
+	@Override public int compareTo(LiteClient client)
 	{
-        if (liteClient == null) return 1;
-
-        if (liteClient.getHostName() == null) {
-            if (hostName == null) {
-                return 0;
-            }
-            else {
-                return 1;
-            }
+        if (client.getHostName() == null) {
+			return NullComparator.compareNullString(getHostName(), client.getHostName());
         }
 
-        return hostName.compareTo(liteClient.getHostName());
+        return hostName.compareTo(client.getHostName());
 	}
 
-	public static Comparator<LiteClient> SortByHostname = new Comparator<LiteClient>()
+	/**
+	 * Provides the sort by host name method.
+	 */
+	public static class SortByHostname implements Comparator<LiteClient>
 	{
-		@Override
-		public int compare(LiteClient c1, LiteClient c2)
+		/**
+		 * Compares one client to another by their host name.
+		 * @param c1 client one
+		 * @param c2 client two
+         * @return returns 1 if greater, -1 if less, 0 if equal
+         */
+		@Override public int compare(LiteClient c1, LiteClient c2)
 		{
-			// Case 1: C1 is null
-			if (c1 == null) {
-				if (c2 == null) {
-					return 0;
-				}
-				// C2 is not null, so C1 is less
-				else {
-					return -1;
-				}
+			if (c1.getHostName() == null || c2.getHostName() == null) {
+				NullComparator.compareNullString(c1.getHostName(), c2.getHostName());
 			}
-			// Case 2: C1 is not null
-			else {
-				if (c2 == null) {
-					return 1;
-				}
-				else {
-					return c1.getHostName().compareTo(c2.getHostName());
-				}
-			}
+
+            return c1.getHostName().compareTo(c2.getHostName());
 		}
-	};
+	}
+
+	/**
+	 * Provides the sort by IP address method.
+	 */
+	public static class SortByIp implements Comparator<LiteClient>
+	{
+		/**
+		 * Compares one client to another by their IP address.
+		 * @param c1 client one
+		 * @param c2 client two
+		 * @return returns 1 if greater, -1 if less, 0 if equal
+         */
+		@Override public int compare(LiteClient c1, LiteClient c2)
+		{
+			if (c1.getIPAddress() == null || c2.getIPAddress() == null) {
+				NullComparator.compareNullString(c1.getIPAddress(), c2.getIPAddress());
+			}
+
+            return c1.getIPAddress().compareTo(c2.getIPAddress());
+		}
+	}
 }
