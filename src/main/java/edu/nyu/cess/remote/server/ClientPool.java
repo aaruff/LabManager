@@ -4,87 +4,135 @@
 package edu.nyu.cess.remote.server;
 
 import edu.nyu.cess.remote.common.app.State;
+import org.apache.log4j.Logger;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author Anwar A. Ruff
  */
 public class ClientPool implements LiteClientsObservable
 {
+	final static Logger logger = Logger.getLogger(Server.class);
+
 	List<LiteClient> clients = new ArrayList<>();
 	ArrayList<LiteClientsObserver> observers = new ArrayList<>();
 
+	/**
+	 * Returns the client specified by its IP address.
+	 *
+	 * @param ipAddress
+	 * @return
+	 * @throws LiteClientNotFoundException
+     */
+	public LiteClient getByIp(String ipAddress) throws LiteClientNotFoundException
+	{
+		for (LiteClient client : clients) {
+			if (client.getIPAddress().equals(ipAddress)) {
+				return client;
+			}
+		}
+
+		throw new LiteClientNotFoundException("Client: " + ipAddress + " not found.");
+	}
+
+	/**
+	 * Returns the client specified by its hostname.
+	 *
+	 * @param hostname
+	 * @return
+	 * @throws LiteClientNotFoundException
+     */
+	public LiteClient getByHostname(String hostname) throws LiteClientNotFoundException
+	{
+		for (LiteClient client : clients) {
+			if (client.getHostName().equals(hostname)) {
+				return client;
+			}
+		}
+
+		throw new LiteClientNotFoundException("Client not found with hostname: " + hostname + ".");
+	}
+
     /**
-     * Adds a lite client to this collection.
+     * Notify observers that a client has been added.
      *
      * @param liteClient LiteClient
      */
-	public void put(LiteClient liteClient) {
+	public void addClient(LiteClient liteClient) {
 		clients.add(liteClient);
 
         // Notify observers that a lite client has been added
 		notifyClientAdded(liteClient.getIPAddress());
 	}
 
-	public void updateState(State applicationState, String ipAddress) {
-		LiteClient liteClient = clients.get(ipAddress);
-		liteClient.setApplicationState(applicationState);
-
-		notifyClientStateChanged(ipAddress);
+	/**
+	 * Notify observers of a state change.
+	 *
+	 * @param state
+	 * @param ipAddress
+     */
+	public boolean updateClientState(State state, String ipAddress)
+	{
+		try {
+			LiteClient client = getByIp(ipAddress);
+			client.setApplicationState(state);
+			notifyClientStateChanged(ipAddress);
+			return true;
+		}
+		catch (LiteClientNotFoundException e) {
+			logger.error("Failed to find client.", e);
+			return false;
+		}
 	}
 
-	public void updateHostName(String hostName, String ipAddress) {
-		clients.get(ipAddress).setHostName(hostName);
-
-		notifyClientHostNameChanged(ipAddress);
+	/**
+	 * Updates the client host name, specified by the IP address.
+	 *
+	 * @param hostName
+	 * @param ipAddress
+     */
+	public boolean updateHostName(String hostName, String ipAddress) throws LiteClientNotFoundException
+	{
+		try {
+			LiteClient client = getByIp(ipAddress);
+			client.setHostName(hostName);
+			notifyClientHostNameChanged(ipAddress);
+			return true;
+		}
+		catch (LiteClientNotFoundException e) {
+			logger.error("Failed to find client.", e);
+			return false;
+		}
 	}
 
-	public LiteClient remove(String ipAddress) {
-		LiteClient liteClient = clients.get(ipAddress);
+	/**
+	 * Removes, and returns the specified client.
+	 *
+	 * @param ipAddress
+	 * @return
+     */
+	public LiteClient popByIpAddress(String ipAddress) throws LiteClientNotFoundException
+	{
+		LiteClient liteClient = getByIp(ipAddress);
 		clients.remove(ipAddress);
 
 		notifyClientRemoved(ipAddress);
 		return liteClient;
 	}
 
-	public LiteClient getClientByIpAddress(String ipAddress) throws LiteClientNotFoundException {
-        for (LiteClient client: clients) {
-            if (client.getIPAddress().equals(ipAddress)) {
-                return client;
-            }
-        }
+	/**
+	 * Reg
+	 * @return
+     */
+	public List<LiteClient> sort(Comparator<LiteClient> comparator) {
+		List<LiteClient> clientsList = new ArrayList<>(clients);
 
-		throw new LiteClientNotFoundException("Client: " + ipAddress + " not found.");
-	}
-
-	public LiteClient getLiteClientByHostName(String hostName) {
-		for (LiteClient c : this.clients.values()) {
-			if (hostName.equals(c.getHostName())) {
-				return c;
-			}
-		}
-
-		return null;
-	}
-
-	public LiteClient[] getSortedLiteClients() {
-		Map<String, LiteClient> clients = this.clients;
-		String clientKeys[] = new String[this.clients.size()];
-		int i = 0;
-		for (String key : clients.keySet()) {
-			clientKeys[i++] = key;
-		}
-
-		Arrays.sort(clientKeys);
-
-		i = 0;
-		LiteClient[] sortedClients = new LiteClient[this.clients.size()];
-		for (String key : clientKeys) {
-			sortedClients[i++] = this.clients.get(key);
-		}
-
-		return sortedClients;
+		Collections.sort(clientsList, comparator);
+		return clientsList;
 	}
 
 	public void notifyClientAdded(String ipAddress) {
@@ -101,13 +149,23 @@ public class ClientPool implements LiteClientsObservable
 
 	public void notifyClientStateChanged(String ipAddress) {
 		for (LiteClientsObserver observer : observers) {
-			observer.updateLiteClientStateChanged(this.clients.get(ipAddress));
+			try {
+				observer.updateLiteClientStateChanged(getByIp(ipAddress));
+			}
+			catch (LiteClientNotFoundException e) {
+				logger.error("Client not found", e);
+			}
 		}
 	}
 
 	public void notifyClientHostNameChanged(String ipAddress) {
 		for (LiteClientsObserver observer : observers) {
-			observer.updateLiteClientHostNameChanged(this.clients.get(ipAddress));
+			try {
+				observer.updateLiteClientHostNameChanged(getByIp(ipAddress));
+			}
+			catch (LiteClientNotFoundException e) {
+				logger.error("Client not found", e);
+			}
 		}
 	}
 
