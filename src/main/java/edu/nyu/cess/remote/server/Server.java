@@ -8,6 +8,7 @@ import edu.nyu.cess.remote.server.app.profile.AppProfile;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -87,7 +88,12 @@ public class Server
 	public void removeClient(String ipAddress)
     {
         logger.debug(ipAddress + " has disconnected, and has been removed from the client list");
-        clientPool.popByIpAddress(ipAddress);
+		try {
+			clientPool.popByIpAddress(ipAddress);
+		}
+		catch(LiteClientNotFoundException e) {
+			logger.error("Client not found.", e);
+		}
 	}
 
 	public synchronized void messageClient(String message, String ipAddress)
@@ -163,7 +169,7 @@ public class Server
 			return; // Error: Host range not set
 		}
 
-		LiteClient[] sortedLiteClients = this.clientPool.getSortedLiteClients();
+		List<LiteClient> sortedLiteClients = clientPool.sort(LiteClient.SORT_BY_HOSTNAME);
 		if (sortedLiteClients.length == 0) {
 			return; // Error: No clients connected
 		}
