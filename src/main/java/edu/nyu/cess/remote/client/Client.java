@@ -1,7 +1,7 @@
 package edu.nyu.cess.remote.client;
 
+import edu.nyu.cess.remote.client.config.HostConfigInterface;
 import edu.nyu.cess.remote.common.app.*;
-import edu.nyu.cess.remote.common.config.HostConfigInterface;
 
 import javax.swing.*;
 
@@ -15,19 +15,24 @@ import javax.swing.*;
  */
 public class Client implements ApplicationObserver, ServerProxyObserver {
 
-	private Application application;
+	private App app;
 
 	private ServerProxy serverProxy;
 
 	/**
-	 * Attempts to connect to the server with the corresponding host config parameters.
-	 */
+	 * Initialize the client
+	 * @param hostConfig host config file
+     */
 	public void initServerConnection(HostConfigInterface hostConfig) {
 		serverProxy = new ServerProxy(hostConfig);
 		serverProxy.addServerProxyObserver(this);
 		serverProxy.establishPersistentServerConnection();
 	}
 
+	/**
+	 * Updates the application state
+	 * @param applicationState update the application state
+     */
 	public void applicationUpdate(State applicationState) {
 
 		serverProxy.sendServerApplicationState(applicationState);
@@ -40,7 +45,11 @@ public class Client implements ApplicationObserver, ServerProxyObserver {
 		}
 	}
 
-	public void updateServerExecutionRequestReceived(ExecutionRequest exeReq) {
+	/**
+	 * Update the server with the execution request received.
+	 * @param exeReq the application execution request
+     */
+	public void updateServerExecutionRequestReceived(ExeRequestMessage exeReq) {
 
 		State requestedApplicationState = exeReq.getApplicationState();
 		System.out.println("Application execution request received from the server.");
@@ -48,48 +57,59 @@ public class Client implements ApplicationObserver, ServerProxyObserver {
 		// If a request to start an application has been made...
 		if (requestedApplicationState instanceof StartedState) {
 
-			if (application == null) {
-				application = new Application(exeReq.getName(), exeReq.getPath(), exeReq.getArgs());
-				application.addObserver(this);
-				application.changeState(requestedApplicationState);
+			if (app == null) {
+				app = new App(exeReq.getName(), exeReq.getPath(), exeReq.getArgs());
+				app.addObserver(this);
+				app.changeState(requestedApplicationState);
 			}
-			else if (application.isStopped()) {
-				application = new Application(exeReq.getName(), exeReq.getPath(), exeReq.getArgs());
-				application.addObserver(this);
-				application.changeState(requestedApplicationState);
+			else if (app.isStopped()) {
+				app = new App(exeReq.getName(), exeReq.getPath(), exeReq.getArgs());
+				app.addObserver(this);
+				app.changeState(requestedApplicationState);
 			}
-			else if (application.isStarted()) {
+			else if (app.isStarted()) {
 				applicationUpdate(requestedApplicationState);
 			}
 		}
 		else if (requestedApplicationState instanceof StopedState) {
 
-			if (application == null) {
+			if (app == null) {
 				applicationUpdate(requestedApplicationState);
 			}
-			else if (application.isStarted()) {
-				application.changeState(requestedApplicationState);
+			else if (app.isStarted()) {
+				app.changeState(requestedApplicationState);
 			}
-			else if (application.isStopped()) {
+			else if (app.isStopped()) {
 				applicationUpdate(requestedApplicationState);
 			}
 
 		}
 	}
 
+	/**
+	 * Update the observers with the clients connection status.
+	 * @param isConnected the connection status
+     */
 	public void updateNetworkStateChanged(boolean isConnected) {
-		if (isConnected && application != null) {
-			if (application.isStarted()) {
+		if (isConnected && app != null) {
+			if (app.isStarted()) {
 				System.out.println("notifying server of applications prior state (StartedState).");
 				applicationUpdate(new StartedState());
 			}
 		}
 	}
 
+	/**
+	 * Passes and invokes the MessageRunnable with the message string.
+	 * @param message message status string
+     */
 	public void updateServerMessageReceived(String message) {
 		SwingUtilities.invokeLater(new MessageRunnable(message));
 	}
 
+	/**
+	 * The message runnable class used to display messages sent from the server.
+	 */
 	private class MessageRunnable implements Runnable {
 		String message;
 
