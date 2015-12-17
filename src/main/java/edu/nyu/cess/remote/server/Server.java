@@ -66,7 +66,7 @@ public class Server
 
     /**
      * Adds a client proxy with the provided ip address to the servers collection of active clients.
-     * @param ipAddress
+     * @param ipAddress The clients IP address
      */
 	public void addBot(String ipAddress)
     {
@@ -156,7 +156,7 @@ public class Server
 	 * Returns a {@link ClientPool} which contains a collection of
 	 * {@link LiteClient} objects.
 	 *
-	 * @return
+	 * @return returns the client collection
 	 */
 	public ClientPool getClientPool()
     {
@@ -166,19 +166,13 @@ public class Server
 	public synchronized void messageClientInRange(String message, String lowerBoundHostName, String upperBoundHostName)
     {
 		if (lowerBoundHostName.isEmpty() || upperBoundHostName.isEmpty()) {
+			logger.error("Either lower or upper bound is empty.");
 			return; // Error: Host range not set
 		}
 
 		List<LiteClient> sortedLiteClients = clientPool.sort(LiteClient.SORT_BY_HOSTNAME);
-		if (sortedLiteClients.length == 0) {
-			return; // Error: No clients connected
-		}
-
-		for (int i = 0; i < sortedLiteClients.length; ++i) {
-			if (sortedLiteClients[i].getHostName().compareTo(lowerBoundHostName) >= 0
-					&& sortedLiteClients[i].getHostName().compareTo(upperBoundHostName) <= 0) {
-				messageClient(message, sortedLiteClients[i].getIPAddress());
-			}
+		for (LiteClient client : sortedLiteClients) {
+			messageClient(message, client.getIPAddress());
 		}
 	}
 
@@ -191,31 +185,33 @@ public class Server
 	private class StartAppInRangeRunnable implements Runnable
     {
 		private final String applicationSelected;
-		private final String clientLowerBound;
-		private final String clientUpperBound;
+		private final String lowerHostname;
+		private final String upperHostname;
 
-		public StartAppInRangeRunnable(String applicationSelected, String clientLowerBound, String clientUpperBound) {
+		public StartAppInRangeRunnable(String applicationSelected, String lowerHostname, String upperHostname) {
 			this.applicationSelected = applicationSelected;
-			this.clientLowerBound = clientLowerBound;
-			this.clientUpperBound = clientUpperBound;
+			this.lowerHostname = lowerHostname;
+			this.upperHostname = upperHostname;
 		}
 
 		public void run() {
-			if (clientLowerBound.isEmpty() || clientUpperBound.isEmpty()) {
+			if (lowerHostname.isEmpty() || upperHostname.isEmpty()) {
+				logger.error("Either lower or upper bound is empty.");
 				return; // Error: Host range not set
 			}
 
-			LiteClient[] sortedLiteClients = clientPool.getSortedLiteClients();
-			if (sortedLiteClients.length == 0) {
-				return; // Error: No clients connected
-			}
+			List<LiteClient> sortedLiteClients = clientPool.sort(LiteClient.SORT_BY_HOSTNAME);
 
-			for (int i = 0; i < sortedLiteClients.length; ++i) {
-				if (sortedLiteClients[i].getHostName().compareTo(clientLowerBound) >= 0
-						&& sortedLiteClients[i].getHostName().compareTo(clientUpperBound) <= 0) {
-						startApplication(applicationSelected, sortedLiteClients[i].getIPAddress());
-						sortedLiteClients[i].setApplicationName(applicationSelected);
+			for (LiteClient client : sortedLiteClients) {
+				String hostName = client.getHostName();
+				if (hostName.compareTo(lowerHostname) >= 0 && hostName.compareTo(upperHostname) <= 0) {
+					startApplication(applicationSelected, client.getIPAddress());
+					client.setApplicationName(applicationSelected);
 				}
+				/*
+				 * Sleep the thread to allow for the network communication to finish, before attempting to contact
+				 * the next client.
+				 */
 				try {
 					Thread.sleep(200);
 				}
@@ -227,31 +223,31 @@ public class Server
 
 	private class StopAppInRangeRunnable implements Runnable
     {
-		private final String clientLowerBound;
-		private final String clientUpperBound;
+		private final String lowerHostname;
+		private final String upperHostname;
 
-		public StopAppInRangeRunnable(String clientLowerBound, String clientUpperBound) {
-			this.clientLowerBound = clientLowerBound;
-			this.clientUpperBound = clientUpperBound;
+		public StopAppInRangeRunnable(String lowerHostname, String upperHostname) {
+			this.lowerHostname = lowerHostname;
+			this.upperHostname = upperHostname;
 		}
 
 		public void run() {
-			if (clientLowerBound.isEmpty() || clientUpperBound.isEmpty()) {
+			if (lowerHostname.isEmpty() || upperHostname.isEmpty()) {
 				return; // Error: Host range not set
 			}
 
-			LiteClient[] sortedLiteClients = clientPool.getSortedLiteClients();
-			if (sortedLiteClients.length == 0) {
-				return; // Error: No clients connected
-			}
-
-			for (int i = 0; i < sortedLiteClients.length; ++i) {
-				if (sortedLiteClients[i].getHostName().compareTo(clientLowerBound) >= 0
-						&& sortedLiteClients[i].getHostName().compareTo(clientUpperBound) <= 0) {
-						stopApplication(sortedLiteClients[i].getIPAddress());
-						// Todo: clear old program name
-						//sortedLiteClients[i].setApplicationName(applicationSelected);
+			List<LiteClient> sortedLiteClients = clientPool.sort(LiteClient.SORT_BY_HOSTNAME);
+			for (LiteClient client : sortedLiteClients) {
+				String hostName = client.getHostName();
+				if (hostName.compareTo(lowerHostname) >= 0 && hostName.compareTo(upperHostname) <= 0) {
+					stopApplication(client.getIPAddress());
+					// Todo: clear old program name
+					//sortedLiteClients[i].setApplicationName(applicationSelected);
 				}
+				/*
+				 * Sleep the thread to allow for the network communication to finish, before attempting to contact
+				 * the next client.
+				 */
 				try {
 					Thread.sleep(200);
 				}
@@ -262,7 +258,12 @@ public class Server
 
 
 	public void updateClientHostNameUpdate(String hostName, String ipAddress) {
-		clientPool.updateHostName(hostName, ipAddress);
+		try {
+			LiteClient client = clientPool.getByIp(ipAddress);
+			client.setHostName(hostName);
+		}
+		catch (LiteClientNotFoundException e) {
+			logger.error("Client not found", e);
+		}
 	}
-
 }
