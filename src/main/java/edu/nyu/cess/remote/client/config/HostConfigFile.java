@@ -1,8 +1,6 @@
 package edu.nyu.cess.remote.client.config;
 
 
-import edu.nyu.cess.remote.common.config.HostConfigInterface;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -19,10 +17,10 @@ public class HostConfigFile implements HostConfigInterface
 	private String hostname;
 
 	public HostConfigFile() throws IOException {
-		readPropertiesFile();
+		readConfig();
 	}
 
-    public void readPropertiesFile() throws IOException
+    public void readConfig() throws IOException
     {
 		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 		InputStream in = classLoader.getResourceAsStream(NAME);
