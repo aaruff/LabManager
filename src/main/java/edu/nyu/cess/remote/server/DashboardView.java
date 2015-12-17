@@ -4,6 +4,7 @@
 package edu.nyu.cess.remote.server;
 
 import edu.nyu.cess.remote.server.ui.NoInsetsPanel;
+import org.apache.log4j.Logger;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
@@ -14,23 +15,24 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.HashMap;
-
-;
+import java.util.List;
 
 /**
  * @author Anwar A. Ruff
  */
-public class DashboardView extends JFrame implements ActionListener, LiteClientsObserver {
+public class DashboardView extends JFrame implements ActionListener, LiteClientsObserver
+{
+	final static Logger log = Logger.getLogger(Server.class);
 
 	private static final long serialVersionUID = 1L;
 
-	private final HashMap<String, JPanel> liteClientPanels = new HashMap<String, JPanel>();
+	private final HashMap<String, JPanel> liteClientPanels = new HashMap<>();
 
-	private final HashMap<String, JButton> clientStartButtons = new HashMap<String, JButton>();
-	private final HashMap<String, JButton> clientStopButtons = new HashMap<String, JButton>();
+	private final HashMap<String, JButton> clientStartButtons = new HashMap<>();
+	private final HashMap<String, JButton> clientStopButtons = new HashMap<>();
 
-	private final HashMap<String, JLabel> applicationStateLabels = new HashMap<String, JLabel>();
-	private final HashMap<String, JLabel> clientDescriptionLabels = new HashMap<String, JLabel>();
+	private final HashMap<String, JLabel> applicationStateLabels = new HashMap<>();
+	private final HashMap<String, JLabel> clientDescriptionLabels = new HashMap<>();
 
 	private final JPanel contentPane = new JPanel(new GridBagLayout());
 	private final JPanel clientPanel = new JPanel(new GridLayout(0, 6, 10, 10));
@@ -79,9 +81,11 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 				}
 			}
 		}
-		catch (Exception e) {}
+		catch (Exception e) {
+			log.warn("Unable to set look and feel", e);
+		}
 
-		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		this.setResizable(false);
 
 		/*
@@ -111,7 +115,7 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 
 		JLabel applicationLabel = new JLabel("Select a Program: ");
 
-		clientApplicationsComboBox = new JComboBox(server.getApplicationNames());
+		clientApplicationsComboBox = new JComboBox<>(server.getApplicationNames());
 
 		JPanel programSelectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		programSelectionPanel.setBackground(Color.white);
@@ -228,15 +232,11 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 	/**
 	 * Returns a {@link GridBagConstraints} with the following parameters set.
 	 *
-	 * @param gridx
-	 *            grid x coordinate position
-	 * @param gridy
-	 *            grid y coordinate position
-	 * @param weightx
-	 *            row weight distribution
-	 * @param weighty
-	 *            column weight distribution
-	 * @return
+	 * @param gridx grid x coordinate position
+	 * @param gridy grid y coordinate position
+	 * @param weightx row weight distribution
+	 * @param weighty column weight distribution
+	 * @return grid constraints
 	 */
 	public GridBagConstraints getConstraint(int gridx, int gridy, double weightx, double weighty) {
 		GridBagConstraints constraints = new GridBagConstraints();
@@ -251,11 +251,8 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 	/**
 	 * Sets the application range panel, which contains two {@link JComboBox}s.
 	 *
-	 * @param lowerBound
-	 *            the {@link JComboBox} used for selecting a lower bound client.
-	 * @param upperBound
-	 *            the {@link JComboBox} used for selecting an upper bound
-	 *            client.
+	 * @param lowerBound the {@link JComboBox} used for selecting a lower bound client.
+	 * @param upperBound the {@link JComboBox} used for selecting an upper bound client.
 	 */
 	private void setApplicationRangePanel(JComboBox lowerBound, JComboBox upperBound) {
 		applicationExecutionRangePanel.removeAll();
@@ -273,6 +270,12 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 		applicationSelectionPanel.add(applicationExecutionRangePanel, constraint);
 	}
 
+	/**
+	 * Sets the message JPanel.
+	 *
+	 * @param lowerBound client name with the lowest ordinal value
+	 * @param upperBound client name with the greatest ordinal value
+     */
 	private void setMessageRangePanel(JComboBox lowerBound, JComboBox upperBound) {
 		applicationMessageRangePanel.removeAll();
 		applicationMessageRangePanel.setOpaque(false);
@@ -284,6 +287,10 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 		messageRangeCards.add(applicationMessageRangePanel, "Computer Range");
 	}
 
+	/**
+	 * Adds the JCombobox to the message panel.
+	 * @param computers computer combo box
+     */
 	private void setMessagePanel(JComboBox computers) {
 		applicationMessagePanel.removeAll();
 		applicationMessagePanel.setOpaque(false);
@@ -293,6 +300,10 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 		messageRangeCards.add(applicationMessagePanel, "One Computer");
 	}
 
+	/**
+	 * Sets the card layout.
+	 * @param radioButtonID Radio button value
+     */
 	private void setMessageCard(String radioButtonID) {
 		CardLayout cl = (CardLayout) (messageRangeCards.getLayout());
 		cl.show(messageRangeCards, radioButtonID);
@@ -304,8 +315,13 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 	 */
 	public void updateLiteClientAdded(String ipAddress) {
 		ClientPool clientPool = server.getClientPool();
-		LiteClient liteClient = clientPool.getByIp(ipAddress);
-		SwingUtilities.invokeLater(new AddClientRunnable(ipAddress, liteClient));
+		try {
+			LiteClient liteClient = clientPool.getByIp(ipAddress);
+			SwingUtilities.invokeLater(new AddClientRunnable(ipAddress, liteClient));
+		}
+		catch (LiteClientNotFoundException e) {
+			log.error("Client not found", e);
+		}
 	}
 
 	/**
@@ -457,23 +473,23 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 
 			clientPanel.removeAll();
 
-			LiteClient[] sortedClients = server.getClientPool().getSortedLiteClients();
-			String[] clientHostNames = new String[sortedClients.length];
-			for (int i = 0; i < sortedClients.length; ++i) {
-				clientHostNames[i] = sortedClients[i].getHostName();
-				clientPanel.add(liteClientPanels.get(sortedClients[i].getIPAddress()));
+			ClientPool clientPool = server.getClientPool();
+			List<LiteClient> sortedClients = clientPool.sort(LiteClient.SORT_BY_HOSTNAME);
+			for (LiteClient client : sortedClients) {
+				clientPanel.add(liteClientPanels.get(client.getIPAddress()));
 			}
 
 			TitledBorder titledBorder = BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),
-					"Connections: " + sortedClients.length);
+					"Connections: " + sortedClients.size());
 			clientPanel.setBorder(titledBorder);
 
-			clientsLowerBoundComboBox = new JComboBox(clientHostNames);
-			clientsUpperBoundComboBox = new JComboBox(clientHostNames);
+			String[] hostNames = clientPool.getHostNames(LiteClient.SORT_BY_HOSTNAME).toArray(new String[clientPool.size()]);
+			clientsLowerBoundComboBox = new JComboBox<>(hostNames);
+			clientsUpperBoundComboBox = new JComboBox<>(hostNames);
 
 			setApplicationRangePanel(clientsLowerBoundComboBox, clientsUpperBoundComboBox);
-			setMessagePanel(new JComboBox(clientHostNames));
-			setMessageRangePanel(new JComboBox(clientHostNames), new JComboBox(clientHostNames));
+			setMessagePanel(new JComboBox<>(hostNames));
+			setMessageRangePanel(new JComboBox<>(hostNames), new JComboBox<>(hostNames));
 
 			GridBagConstraints constraint = getConstraint(0, 1, 1.0, 0.0);
 			constraint.fill = GridBagConstraints.HORIZONTAL;
@@ -510,24 +526,21 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 			clientStartButtons.remove(ipAddress);
 			clientStopButtons.remove(ipAddress);
 
-			LiteClient[] sortedClients = server.getClientPool().getSortedLiteClients();
-			String[] clientHostNames = new String[sortedClients.length];
-			for (int i = 0; i < sortedClients.length; ++i) {
-				clientHostNames[i] = sortedClients[i].getHostName();
-			}
+			ClientPool clientPool = server.getClientPool();
+			String[] hostNames = clientPool.getHostNames(LiteClient.SORT_BY_HOSTNAME).toArray(new String[clientPool.size()]);
 
-			clientPanel.setBorder(new TitledBorder("Computers Connected: " + clientHostNames.length));
+			clientPanel.setBorder(new TitledBorder("Computers Connected: " + hostNames.length));
 
-			clientsLowerBoundComboBox = new JComboBox(clientHostNames);
-			clientsUpperBoundComboBox = new JComboBox(clientHostNames);
+			clientsLowerBoundComboBox = new JComboBox<>(hostNames);
+			clientsUpperBoundComboBox = new JComboBox<>(hostNames);
 
 			setApplicationRangePanel(clientsLowerBoundComboBox, clientsUpperBoundComboBox);
 
-			connectedComputersComboBox = new JComboBox(clientHostNames);
+			connectedComputersComboBox = new JComboBox<>(hostNames);
 			setMessagePanel(connectedComputersComboBox);
 
-			clientsMessageLowerBound = new JComboBox(clientHostNames);
-			clientsMessageUpperBound = new JComboBox(clientHostNames);
+			clientsMessageLowerBound = new JComboBox<>(hostNames);
+			clientsMessageUpperBound = new JComboBox<>(hostNames);
 			setMessageRangePanel(clientsMessageLowerBound, clientsMessageUpperBound);
 
 			GridBagConstraints constraint = getConstraint(0, 1, 1.0, 0.0);
@@ -563,13 +576,20 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 			}
 
 			if (singleRadioButton.isSelected()) {
-				String hostNameSelected = (String) connectedComputersComboBox.getSelectedItem();
+				String selectedHost = (String) connectedComputersComboBox.getSelectedItem();
 
-				if (hostNameSelected.isEmpty()) {
+				if (selectedHost.isEmpty()) {
 					messageJLabel.setText("Messaging Error: A computer was not selected.");
 					return;
 				}
-				server.messageClient(message, clientPool.getByHostname(hostNameSelected).getIPAddress());
+
+				try {
+					LiteClient client = clientPool.getByHostname(selectedHost);
+					server.messageClient(message, client.getIPAddress());
+				}
+				catch (LiteClientNotFoundException liteClientException) {
+					log.error("Requested client not found", liteClientException);
+				}
 			}
 			else {
 				server.messageClientInRange(message,
@@ -611,11 +631,16 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 
 			System.out.println(ipAddress + " Start button selected");
 
-			ClientPool clientPool = server.getClientPool();
-			LiteClient liteClient = clientPool.getByIp(ipAddress);
-			liteClient.setApplicationName(applicationSelected);
+			try {
+				ClientPool clientPool = server.getClientPool();
+				LiteClient liteClient = clientPool.getByIp(ipAddress);
+				liteClient.setApplicationName(applicationSelected);
 
-			server.startApplication(applicationSelected, ipAddress);
+				server.startApplication(applicationSelected, ipAddress);
+			}
+			catch (LiteClientNotFoundException liteClientException) {
+				log.error("Requested client not found", liteClientException);
+			}
 		}
 
 	}
