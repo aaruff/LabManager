@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Application implements ApplicationObservable, Serializable {
+public class App implements ApplicationObservable, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -16,7 +16,7 @@ public class Application implements ApplicationObservable, Serializable {
 
 	private State currentState;
 
-	private final State startedState, stopedState;
+	private final State startedState, stoppedState;
 
 	private Process process;
 
@@ -25,14 +25,14 @@ public class Application implements ApplicationObservable, Serializable {
 
 	public Thread processMonitor;
 
-	public Application(String name, String path, String args) {
+	public App(String name, String path, String args) {
 		this.name = name;
 		this.path = path;
 		this.args = args;
 
 		currentState = new StopedState();
 		startedState = new StartedState();
-		stopedState = new StopedState();
+		stoppedState = new StopedState();
 
 		process = null;
 	}
@@ -63,13 +63,13 @@ public class Application implements ApplicationObservable, Serializable {
 						System.out.println(name + " has been executed");
 					}
 					else {
-						currentState = stopedState;
+						currentState = stoppedState;
 					}
 				} catch (SecurityException ex) {
 					System.out.println("Security Exception Occured");
 				} catch (IOException e) {
 					System.out.println("Process execution failed for: " + path + name + " " + args);
-					currentState = stopedState;
+					currentState = stoppedState;
 				}
 			}
 		}
@@ -87,7 +87,7 @@ public class Application implements ApplicationObservable, Serializable {
 			process.destroy();
 		}
 
-		currentState = stopedState;
+		currentState = stoppedState;
 
 		process = null;
 		args = null;
