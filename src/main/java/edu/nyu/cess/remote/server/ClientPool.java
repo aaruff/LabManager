@@ -57,6 +57,22 @@ public class ClientPool implements LiteClientsObservable
 		throw new LiteClientNotFoundException("Client not found with hostname: " + hostname + ".");
 	}
 
+	/**
+	 * Returns the client names in the order specified by the comparator argument.
+	 *
+	 * @param comparator sort order
+	 * @return A list of client names in the order specified.
+     */
+	public List<String> getHostNames(Comparator<LiteClient> comparator) {
+		List<LiteClient> sortedClients = sort(comparator);
+		List<String> names = new ArrayList<>();
+		for (LiteClient client : sortedClients) {
+			names.add(client.getHostName());
+		}
+
+		return names;
+	}
+
     /**
      * Notify observers that a client has been added.
      *
