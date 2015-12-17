@@ -4,7 +4,6 @@ import edu.nyu.cess.remote.client.validator.HostNameValidator;
 import edu.nyu.cess.remote.client.validator.IpValidator;
 import edu.nyu.cess.remote.client.validator.PortValidator;
 import edu.nyu.cess.remote.client.validator.Validator;
-import edu.nyu.cess.remote.common.config.HostConfigInterface;
 
 
 /**
