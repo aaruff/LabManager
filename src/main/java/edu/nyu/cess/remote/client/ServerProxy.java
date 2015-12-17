@@ -3,10 +3,13 @@
  */
 package edu.nyu.cess.remote.client;
 
-import edu.nyu.cess.remote.common.config.HostConfigInterface;
-import edu.nyu.cess.remote.common.app.ExecutionRequest;
+import edu.nyu.cess.remote.client.config.HostConfigInterface;
+import edu.nyu.cess.remote.client.net.CommunicationNetworkInterface;
+import edu.nyu.cess.remote.common.app.ExeRequestMessage;
 import edu.nyu.cess.remote.common.app.State;
-import edu.nyu.cess.remote.common.net.*;
+import edu.nyu.cess.remote.common.net.DataPacket;
+import edu.nyu.cess.remote.common.net.PacketType;
+import edu.nyu.cess.remote.common.net.PortWatcher;
 
 import java.util.ArrayList;
 
@@ -21,11 +24,18 @@ public class ServerProxy implements PortWatcher, ServerProxyObservable {
 
 	private final int POLL_INTERVAL = 2000; // milliseconds
 
+	/**
+	 * Initialize the network interface and add this as an observer.
+	 * @param hostConfig
+     */
 	public ServerProxy(HostConfigInterface hostConfig) {
 		networkInterface = new CommunicationNetworkInterface(hostConfig);
 		networkInterface.addObserver(this);
 	}
 
+	/**
+	 * Establishes a persistent connection between the client and the server.
+	 */
 	public void establishPersistentServerConnection() {
 
 		while (true) {
@@ -52,7 +62,7 @@ public class ServerProxy implements PortWatcher, ServerProxyObservable {
 		observers.remove(observer);
 	}
 
-	public void notifyApplicationExececutionRequestReceived(ExecutionRequest execRequest) {
+	public void notifyApplicationExececutionRequestReceived(ExeRequestMessage execRequest) {
 		for (ServerProxyObserver observer : observers) {
 			observer.updateServerExecutionRequestReceived(execRequest);
 		}
@@ -80,8 +90,8 @@ public class ServerProxy implements PortWatcher, ServerProxyObservable {
 
 		switch(dataPacket.getPacketType()) {
 		case APPLICATION_EXECUTION_REQUEST:
-			ExecutionRequest execRequest = (ExecutionRequest) dataPacket.getPayload();
-			if (execRequest != null && execRequest instanceof ExecutionRequest) {
+			ExeRequestMessage execRequest = (ExeRequestMessage) dataPacket.getPayload();
+			if (execRequest != null && execRequest instanceof ExeRequestMessage) {
 					System.out.println("Packet Content: ApplicationExecRequest");
 					notifyApplicationExececutionRequestReceived(execRequest);
 			}
