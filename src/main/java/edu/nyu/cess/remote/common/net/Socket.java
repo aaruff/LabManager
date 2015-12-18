@@ -117,7 +117,7 @@ public class Socket
 
 	public void startThreadedInboundCommunicationMonitor()
     {
-		inboundCommunicationThread = new Thread(new InboundCommunicationListener());
+		inboundCommunicationThread = new Thread(new InboundPacketListener());
 		inboundCommunicationThread.setName("Inbound communication thread");
 		inboundCommunicationThread.start();
 
@@ -217,7 +217,7 @@ public class Socket
 		}
 	}
 
-	private class InboundCommunicationListener implements Runnable
+	private class InboundPacketListener implements Runnable
     {
 		public void run() {
 			DataPacket dataPacket;
