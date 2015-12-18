@@ -10,7 +10,7 @@ import java.net.ServerSocket;
 
 public class NetworkPort
 {
-    final static Logger logger = Logger.getLogger(Port.class);
+    final static Logger log = Logger.getLogger(NetworkPort.class);
 
 	private ServerSocket serverSocket;
     private PortWatcher portWatcher;
@@ -24,26 +24,21 @@ public class NetworkPort
 
 	/**
 	 * Initializes a Server Socket
-	 * @return true is the socket is established, otherwise false
 	 */
-	public boolean initialize() {
+	public void initialize() {
 		serverSocket = null;
-		boolean result = false;
 		try {
 			serverSocket = new ServerSocket(localPortNumber);
-			System.out.println("Server socket established...");
-			result = true;
+			log.debug("Server socket established...");
 		}
 		catch (ConnectException ex) {
-			System.out.println("Network Connection Error");
+			log.error("Network Connection Error", ex);
 			System.exit(1);
 		}
 		catch (IOException ex) {
-			System.out.println("IO Exception occured...");
+			log.error("IO Exception occured...", ex);
 			System.exit(1);
 		}
-
-		return result;
 	}
 
     /**
@@ -64,7 +59,7 @@ public class NetworkPort
                 socket = serverSocket.accept();
                 ip = socket.getInetAddress().getHostAddress();
             } catch (IOException e) {
-                logger.debug(e.getStackTrace());
+                log.debug("Connection Error", e);
             }
         }
 
