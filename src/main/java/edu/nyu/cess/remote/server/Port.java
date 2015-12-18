@@ -41,7 +41,7 @@ public class Port implements PortWatcher
             }
 
             sockets.put(socket.getIP(), socket);
-            server.addBot(socket.getIP());
+            server.addClient(socket.getIP());
             socket.startThreadedInboundCommunicationMonitor();
 		}
 	}
