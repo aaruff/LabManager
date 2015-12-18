@@ -8,6 +8,8 @@ import edu.nyu.cess.remote.common.app.State;
 import edu.nyu.cess.remote.common.net.*;
 import org.apache.log4j.Logger;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.HashMap;
 
 /**
@@ -15,7 +17,7 @@ import java.util.HashMap;
  */
 public class Port implements PortWatcher
 {
-    final static Logger logger = Logger.getLogger(Port.class);
+    final static Logger log = Logger.getLogger(Port.class);
 
     private Server server;
 
@@ -28,16 +30,16 @@ public class Port implements PortWatcher
 
 	/**
 	 * Starts listening for inbound connections on the specified port.
-	 * @param port the port used to listen for inbound connections
+	 * @param portNumber the port used to listen for inbound connections
      */
-	public void listen(int port)
+	public void listen(int portNumber) throws IOException
     {
-        NetworkPort networkPort = new NetworkPort(port, this);
-		networkPort.initialize();
+        ServerSocket serverSocket = new ServerSocket(portNumber);
+        log.debug("Server socket established...");
 
 		while (true) {
 			// Blocking function call continues upon incoming connection requests.
-            SocketConnection socketConnection = networkPort.listenForConnections();
+            SocketConnection socketConnection = listenForConnections(serverSocket);
 
             // Ignore connections that have already been established.
             if (sockets.containsKey(socketConnection.getIP())) {
@@ -52,7 +54,7 @@ public class Port implements PortWatcher
 
 	public void processDataPacket(DataPacket dataPacket, String ipAddress)
     {
-        logger.debug("Packet received from client " + ipAddress);
+        log.debug("Packet received from client " + ipAddress);
 
 		switch(dataPacket.getPacketType()) {
 		case APPLICATION_EXECUTION_REQUEST:
@@ -86,7 +88,7 @@ public class Port implements PortWatcher
 
 	public void processStateChange(String ipAddress, boolean isConnected)
     {
-        logger.debug("Client " + ipAddress + " has " + ((isConnected) ? " connected to the server" : " disconnected"));
+        log.debug("Client " + ipAddress + " has " + ((isConnected) ? " connected to the server" : " disconnected"));
         if (isConnected) {
             return;
         }
@@ -109,5 +111,30 @@ public class Port implements PortWatcher
 	public void sendMessageToClient(String message, String ipAddress) {
 		DataPacket dataPacket = new DataPacket(PacketType.MESSAGE, message);
 		sockets.get(ipAddress).writeDataPacket(dataPacket);
+	}
+
+	/**
+	 *
+	 * Blocks until a network connection request is received, upon which
+	 * a Socket is returned.
+	 *
+	 * @return ClientSocket socket
+	 */
+	private SocketConnection listenForConnections(ServerSocket serverSocket)
+	{
+		log.debug("Waiting for inbound client connection request.");
+
+		String ip = null;
+		java.net.Socket socket = null;
+		while (socket == null || ip == null || ip.isEmpty()) {
+			try {
+				socket = serverSocket.accept();
+				ip = socket.getInetAddress().getHostAddress();
+			} catch (IOException e) {
+				log.debug("Connection Error", e);
+			}
+		}
+
+		return new SocketConnection(socket, this);
 	}
 }
