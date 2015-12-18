@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import javax.swing.*;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
@@ -51,6 +52,13 @@ public class ServerInitializer {
 					"Error", JOptionPane.ERROR_MESSAGE);
 			logger.error("File Not Found Exception: Unable to find the config file.", e);
 			System.exit(0);
+		}
+		catch (IOException e) {
+			JOptionPane.showMessageDialog(new JPanel(),
+					"A connection error occurred.\n" + e.getMessage(),
+					"Error", JOptionPane.ERROR_MESSAGE);
+			logger.error("Connection Error", e);
+
 		}
 	}
 }
