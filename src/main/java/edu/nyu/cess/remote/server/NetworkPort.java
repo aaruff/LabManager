@@ -50,7 +50,7 @@ public class NetworkPort
      */
 	public Socket listenForConnections()
     {
-		System.out.println("Wating for inbound client connection request.");
+		log.debug("Wating for inbound client connection request.");
 
         String ip = null;
         java.net.Socket socket = null;
