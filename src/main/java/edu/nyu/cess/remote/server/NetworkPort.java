@@ -17,6 +17,12 @@ public class NetworkPort
 
 	private int localPortNumber;
 
+	/**
+	 * Sets the port number to be used, and the observer.
+	 *
+	 * @param portNumber
+	 * @param portWatcher
+     */
 	public NetworkPort(int portNumber, PortWatcher portWatcher) {
 		localPortNumber = portNumber;
         this.portWatcher = portWatcher;
