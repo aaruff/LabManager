@@ -121,7 +121,7 @@ public class Socket
 		inboundCommunicationThread.setName("Inbound communication thread");
 		inboundCommunicationThread.start();
 
-        networkInterfaceMonitorThread = new Thread(new NetworkStreamMonitor());
+        networkInterfaceMonitorThread = new Thread(new ServerClientConnectionMonitor());
         networkInterfaceMonitorThread.setName("Network Interface Monitor");
         networkInterfaceMonitorThread.start();
 	}
@@ -196,12 +196,12 @@ public class Socket
 	 * still established. The termination of this tread is used as a flag to signal
 	 * that the connection between the server and the client has been broken.
 	 */
-	private class NetworkStreamMonitor implements Runnable
+	private class ServerClientConnectionMonitor implements Runnable
     {
 		public void run() {
 			boolean interfaceState = true;
 			DataPacket packet = new DataPacket(PacketType.SOCKET_TEST, null);
-			/* 
+			/*
 			 *  Sends an empty packet to the respective client
 			 *  to determine if the socket connection is still established.
 			 */
