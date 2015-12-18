@@ -5,7 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.StreamCorruptedException;
 
-public class Socket
+public class SocketConnection
 {
 	private java.net.Socket socket;
 
@@ -19,7 +19,7 @@ public class Socket
 	private ObjectInputStream objectInputStream;
 	private ObjectOutputStream objectOutputStream;
 
-    public Socket(java.net.Socket socket, PortWatcher portWatcher)
+    public SocketConnection(java.net.Socket socket, PortWatcher portWatcher)
     {
         this.socket = socket;
         this.portWatcher = portWatcher;
