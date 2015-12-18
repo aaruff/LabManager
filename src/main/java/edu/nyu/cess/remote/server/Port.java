@@ -19,13 +19,17 @@ public class Port implements PortWatcher
 
     private Server server;
 
-	private HashMap<String, Socket> sockets = new HashMap<String, Socket>();
+	private HashMap<String, SocketConnection> sockets = new HashMap<String, SocketConnection>();
 
 	public Port(Server server)
     {
         this.server = server;
 	}
 
+	/**
+	 * Starts listening for inbound connections on the specified port.
+	 * @param port the port used to listen for inbound connections
+     */
 	public void listen(int port)
     {
         NetworkPort networkPort = new NetworkPort(port, this);
@@ -33,16 +37,16 @@ public class Port implements PortWatcher
 
 		while (true) {
 			// Blocking function call continues upon incoming connection requests.
-            Socket socket = networkPort.listenForConnections();
+            SocketConnection socketConnection = networkPort.listenForConnections();
 
             // Ignore connections that have already been established.
-            if (sockets.containsKey(socket.getIP())) {
+            if (sockets.containsKey(socketConnection.getIP())) {
                 continue;
             }
 
-            sockets.put(socket.getIP(), socket);
-            server.addClient(socket.getIP());
-            socket.startThreadedInboundCommunicationMonitor();
+            sockets.put(socketConnection.getIP(), socketConnection);
+            server.addClient(socketConnection.getIP());
+            socketConnection.startThreadedInboundCommunicationMonitor();
 		}
 	}
 

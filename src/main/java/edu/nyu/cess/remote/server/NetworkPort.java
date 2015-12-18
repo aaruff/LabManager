@@ -1,7 +1,7 @@
 package edu.nyu.cess.remote.server;
 
 import edu.nyu.cess.remote.common.net.PortWatcher;
-import edu.nyu.cess.remote.common.net.Socket;
+import edu.nyu.cess.remote.common.net.SocketConnection;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -54,7 +54,7 @@ public class NetworkPort
      *
      * @return ClientSocket socket
      */
-	public Socket listenForConnections()
+	public SocketConnection listenForConnections()
     {
 		log.debug("Waiting for inbound client connection request.");
 
@@ -69,7 +69,7 @@ public class NetworkPort
             }
         }
 
-        return new Socket(socket, portWatcher);
+        return new SocketConnection(socket, portWatcher);
 	}
 
 }
