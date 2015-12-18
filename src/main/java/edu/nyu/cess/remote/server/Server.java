@@ -8,6 +8,7 @@ import edu.nyu.cess.remote.server.app.profile.AppProfile;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,7 +39,7 @@ public class Server
 	 * observer list, invoking the UI, and initializing the clientProxy which
 	 * handles network communication between the server and clients.
      */
-	public void init()
+	public void init() throws IOException
     {
 		clientPool.addObserver(dashboardView);
 
