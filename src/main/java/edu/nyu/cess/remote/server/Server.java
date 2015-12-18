@@ -68,7 +68,7 @@ public class Server
      * Adds a client proxy with the provided ip address to the servers collection of active clients.
      * @param ipAddress The clients IP address
      */
-	public void addBot(String ipAddress)
+	public void addClient(String ipAddress)
     {
 		clientPool.addClient(new LiteClient(ipAddress));
 	}
