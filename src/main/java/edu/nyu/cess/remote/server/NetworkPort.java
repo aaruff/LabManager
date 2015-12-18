@@ -36,7 +36,7 @@ public class NetworkPort
 			System.exit(1);
 		}
 		catch (IOException ex) {
-			log.error("IO Exception occured...", ex);
+			log.error("IO Exception occurred...", ex);
 			System.exit(1);
 		}
 	}
