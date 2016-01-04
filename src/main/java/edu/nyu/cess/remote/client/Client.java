@@ -28,7 +28,7 @@ public class Client implements ApplicationObserver, ServerProxyObserver
      */
 	public void initServerConnection(HostConfigInterface hostConfig) {
 		serverMessageDispatcher = new ServerMessageDispatcher(hostConfig);
-		serverMessageDispatcher.addServerProxyObserver(this);
+		serverMessageDispatcher.addDispatchObserver(this);
 		serverMessageDispatcher.createPersistentServerConnection();
 	}
 
