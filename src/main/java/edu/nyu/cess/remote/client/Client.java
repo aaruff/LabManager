@@ -17,16 +17,16 @@ public class Client implements ApplicationObserver, ServerProxyObserver {
 
 	private App app;
 
-	private ServerProxy serverProxy;
+	private ServerMessageDispatcher serverMessageDispatcher;
 
 	/**
 	 * Initialize the client
 	 * @param hostConfig host config file
      */
 	public void initServerConnection(HostConfigInterface hostConfig) {
-		serverProxy = new ServerProxy(hostConfig);
-		serverProxy.addServerProxyObserver(this);
-		serverProxy.establishPersistentServerConnection();
+		serverMessageDispatcher = new ServerMessageDispatcher(hostConfig);
+		serverMessageDispatcher.addServerProxyObserver(this);
+		serverMessageDispatcher.establishPersistentServerConnection();
 	}
 
 	/**
@@ -35,7 +35,7 @@ public class Client implements ApplicationObserver, ServerProxyObserver {
      */
 	public void applicationUpdate(State applicationState) {
 
-		serverProxy.sendServerApplicationState(applicationState);
+		serverMessageDispatcher.sendServerApplicationState(applicationState);
 
 		if (applicationState instanceof StartedState) {
 			System.out.println("Sending Started State");
