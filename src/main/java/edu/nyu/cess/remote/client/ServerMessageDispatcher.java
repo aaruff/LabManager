@@ -16,19 +16,17 @@ import java.util.ArrayList;
 /**
  * @author Anwar A. Ruff
  */
-public class ServerProxy implements PortWatcher, ServerProxyObservable {
+public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservable {
 
 	private final ArrayList<ServerProxyObserver> observers = new ArrayList<ServerProxyObserver>();
 
 	private static CommunicationNetworkInterface networkInterface;
 
-	private final int POLL_INTERVAL = 2000; // milliseconds
-
 	/**
 	 * Initialize the network interface and add this as an observer.
 	 * @param hostConfig
      */
-	public ServerProxy(HostConfigInterface hostConfig) {
+	public ServerMessageDispatcher(HostConfigInterface hostConfig) {
 		networkInterface = new CommunicationNetworkInterface(hostConfig);
 		networkInterface.addObserver(this);
 	}
@@ -39,10 +37,11 @@ public class ServerProxy implements PortWatcher, ServerProxyObservable {
 	public void establishPersistentServerConnection() {
 
 		while (true) {
-			networkInterface.setServerSocketConnection(POLL_INTERVAL);
+			int pollIntervalMilliseconds = 2000; // milliseconds
+			networkInterface.setServerSocketConnection(pollIntervalMilliseconds);
 			networkInterface.handleInboundPacketRequests();
 			try {
-				Thread.sleep(POLL_INTERVAL);
+				Thread.sleep(pollIntervalMilliseconds);
 			} catch (InterruptedException e) {
 			}
 			System.out.println("attempting to reconnect to server...");
