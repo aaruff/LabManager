@@ -85,15 +85,6 @@ public class CommunicationNetworkInterface
 	}
 
 	/**
-	 * Returns the current socket state.
-	 *
-	 * @return true if the socket is connected, otherwise false
-	 */
-	public boolean isServerSocketConnected() {
-		return (socket != null) ? socket.isConnected() : false;
-	}
-
-	/**
 	 * Initializes a {@link Socket} connection via the IP Address and Port
 	 * Number. If the initialization of the Socket fails the return value will
 	 * be null.
@@ -178,8 +169,6 @@ public class CommunicationNetworkInterface
 
 		DataPacket dataPacket = new DataPacket(PacketType.HOST_INFO, hostInfo);
 		writeDataPacket(dataPacket);
-
-		dataPacket = null;
 
 		localIPAddress = socket.getLocalAddress().getHostAddress();
 		startNetworkInterfaceMonitor();
@@ -319,7 +308,7 @@ public class CommunicationNetworkInterface
 
 	public synchronized void tellPortWatcherPacketReceived(DataPacket packet) {
 		for (PortWatcher observer : observers) {
-			observer.processDataPacket(packet, serverIp);
+			observer.readServerMessage(packet, serverIp);
 		}
 	}
 
