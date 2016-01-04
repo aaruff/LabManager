@@ -2,6 +2,7 @@ package edu.nyu.cess.remote.client;
 
 import edu.nyu.cess.remote.client.config.HostConfigInterface;
 import edu.nyu.cess.remote.common.app.*;
+import org.apache.log4j.Logger;
 
 import javax.swing.*;
 
@@ -13,7 +14,9 @@ import javax.swing.*;
  *
  * @author Anwar A. Ruff
  */
-public class Client implements ApplicationObserver, ServerProxyObserver {
+public class Client implements ApplicationObserver, ServerProxyObserver
+{
+	final static Logger log = Logger.getLogger(Client.class);
 
 	private App app;
 
@@ -26,7 +29,7 @@ public class Client implements ApplicationObserver, ServerProxyObserver {
 	public void initServerConnection(HostConfigInterface hostConfig) {
 		serverMessageDispatcher = new ServerMessageDispatcher(hostConfig);
 		serverMessageDispatcher.addServerProxyObserver(this);
-		serverMessageDispatcher.establishPersistentServerConnection();
+		serverMessageDispatcher.createPersistentServerConnection();
 	}
 
 	/**
@@ -38,10 +41,10 @@ public class Client implements ApplicationObserver, ServerProxyObserver {
 		serverMessageDispatcher.sendServerApplicationState(applicationState);
 
 		if (applicationState instanceof StartedState) {
-			System.out.println("Sending Started State");
+			log.info("Sending Started State");
 		}
 		else if (applicationState instanceof StopedState) {
-			System.out.println("Sending Stopped State");
+			log.info("Sending Stopped State");
 		}
 	}
 
@@ -52,7 +55,7 @@ public class Client implements ApplicationObserver, ServerProxyObserver {
 	public void updateServerExecutionRequestReceived(ExeRequestMessage exeReq) {
 
 		State requestedApplicationState = exeReq.getApplicationState();
-		System.out.println("Application execution request received from the server.");
+		log.info("Application execution request received from the server.");
 
 		// If a request to start an application has been made...
 		if (requestedApplicationState instanceof StartedState) {
@@ -93,7 +96,7 @@ public class Client implements ApplicationObserver, ServerProxyObserver {
 	public void updateNetworkStateChanged(boolean isConnected) {
 		if (isConnected && app != null) {
 			if (app.isStarted()) {
-				System.out.println("notifying server of applications prior state (StartedState).");
+				log.info("Sending started state message server.");
 				applicationUpdate(new StartedState());
 			}
 		}
