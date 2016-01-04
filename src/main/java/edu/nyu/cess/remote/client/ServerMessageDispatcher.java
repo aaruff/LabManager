@@ -10,13 +10,16 @@ import edu.nyu.cess.remote.common.app.State;
 import edu.nyu.cess.remote.common.net.DataPacket;
 import edu.nyu.cess.remote.common.net.PacketType;
 import edu.nyu.cess.remote.common.net.PortWatcher;
+import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 
 /**
  * @author Anwar A. Ruff
  */
-public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservable {
+public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservable
+{
+	final static Logger log = Logger.getLogger(Client.class);
 
 	private final ArrayList<ServerProxyObserver> observers = new ArrayList<ServerProxyObserver>();
 
@@ -34,17 +37,19 @@ public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservab
 	/**
 	 * Establishes a persistent connection between the client and the server.
 	 */
-	public void establishPersistentServerConnection() {
+	public void createPersistentServerConnection() {
 
 		while (true) {
 			int pollIntervalMilliseconds = 2000; // milliseconds
 			networkInterface.setServerSocketConnection(pollIntervalMilliseconds);
 			networkInterface.handleInboundPacketRequests();
 			try {
+				log.info("Connected to the server...");
 				Thread.sleep(pollIntervalMilliseconds);
 			} catch (InterruptedException e) {
+				log.error("Polling tread sleep interrupted", e);
 			}
-			System.out.println("attempting to reconnect to server...");
+			log.info("Attempting to reconnect to the server...");
 		}
 	}
 
@@ -53,21 +58,21 @@ public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservab
 		networkInterface.writeDataPacket(dataPacket);
 	}
 
-	public void addServerProxyObserver(ServerProxyObserver observer) {
+	public void addDispatchObserver(ServerProxyObserver observer) {
 		observers.add(observer);
 	}
 
-	public void deleteServerProxyObserver(ServerProxyObserver observer) {
+	public void removeDispatchObserver(ServerProxyObserver observer) {
 		observers.remove(observer);
 	}
 
-	public void notifyApplicationExececutionRequestReceived(ExeRequestMessage execRequest) {
+	public void notifyObserversMessageReceived(ExeRequestMessage execRequest) {
 		for (ServerProxyObserver observer : observers) {
 			observer.updateServerExecutionRequestReceived(execRequest);
 		}
 	}
 
-	public void notifyObserverNetworkStateChanged(boolean isConnected) {
+	public void notifyObserverServerConnectionStatusChanged(boolean isConnected) {
 		for (ServerProxyObserver observer : observers) {
 			observer.updateNetworkStateChanged(isConnected);
 		}
@@ -79,8 +84,8 @@ public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservab
 		}
 	}
 
-	public void processDataPacket(DataPacket dataPacket, String ipAddress) {
-		System.out.println("Network Packet Received.");
+	public void readServerMessage(DataPacket dataPacket, String ipAddress) {
+		log.info("Server message received.");
 
 		PacketType dataPacketType = dataPacket.getPacketType();
 		if (!(dataPacketType instanceof PacketType)) {
@@ -91,8 +96,8 @@ public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservab
 		case APPLICATION_EXECUTION_REQUEST:
 			ExeRequestMessage execRequest = (ExeRequestMessage) dataPacket.getPayload();
 			if (execRequest != null && execRequest instanceof ExeRequestMessage) {
-					System.out.println("Packet Content: ApplicationExecRequest");
-					notifyApplicationExececutionRequestReceived(execRequest);
+					log.info("Packet Content: ApplicationExecRequest");
+					notifyObserversMessageReceived(execRequest);
 			}
 			break;
 		case MESSAGE:
@@ -115,7 +120,7 @@ public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservab
 	}
 
 	public void processStateChange(String ipAddress, boolean isConnected) {
-		notifyObserverNetworkStateChanged(isConnected);
+		notifyObserverServerConnectionStatusChanged(isConnected);
 	}
 
 }
