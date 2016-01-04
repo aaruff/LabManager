@@ -125,9 +125,7 @@ public class CommunicationNetworkInterface
 	 * Polls the remote network node on a millisecond interval until a
 	 * {@link Socket} connection is established.
 	 *
-	 * @param pollInterval
-	 *            interval in which the remote node will be polled until a
-	 *            socket connection is established.
+	 * @param pollInterval poll interval in milliseconds
 	 */
 	public void setServerSocketConnection(int pollInterval) {
 		socket = null;
