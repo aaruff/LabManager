@@ -7,14 +7,14 @@ import edu.nyu.cess.remote.common.app.ExeRequestMessage;
 
 public interface ServerProxyObservable {
 
-	public void addDispatchObserver(ServerProxyObserver observer);
+	void addDispatchObserver(MessageDispatchObserver observer);
 
-	public void removeDispatchObserver(ServerProxyObserver observer);
+	void removeDispatchObserver(MessageDispatchObserver observer);
 
-	public void notifyObserversMessageReceived(ExeRequestMessage executionRequestMessage);
+	void notifyObserversMessageReceived(ExeRequestMessage executionRequestMessage);
 
-	public void notifyObserverServerConnectionStatusChanged(boolean isConnected);
+	void notifyObserverServerConnectionStatusChanged(boolean isConnected);
 
-	public void notifyServerMessageReceived(String message);
+	void notifyServerMessageReceived(String message);
 
 }
