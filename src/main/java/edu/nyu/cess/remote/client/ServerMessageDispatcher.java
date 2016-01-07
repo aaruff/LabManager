@@ -21,7 +21,7 @@ public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservab
 {
 	final static Logger log = Logger.getLogger(Client.class);
 
-	private final ArrayList<ServerProxyObserver> observers = new ArrayList<ServerProxyObserver>();
+	private final ArrayList<MessageDispatchObserver> observers = new ArrayList<MessageDispatchObserver>();
 
 	private static CommunicationNetworkInterface networkInterface;
 
@@ -58,28 +58,34 @@ public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservab
 		networkInterface.writeDataPacket(dataPacket);
 	}
 
-	public void addDispatchObserver(ServerProxyObserver observer) {
-		observers.add(observer);
+	/**
+	 * Adds a message dispatch observer to the list of observers.
+	 *
+	 * @param messageDispatchObserver
+     */
+	@Override public void addDispatchObserver(MessageDispatchObserver messageDispatchObserver)
+	{
+		observers.add(messageDispatchObserver);
 	}
 
-	public void removeDispatchObserver(ServerProxyObserver observer) {
+	public void removeDispatchObserver(MessageDispatchObserver observer) {
 		observers.remove(observer);
 	}
 
 	public void notifyObserversMessageReceived(ExeRequestMessage execRequest) {
-		for (ServerProxyObserver observer : observers) {
+		for (MessageDispatchObserver observer : observers) {
 			observer.updateServerExecutionRequestReceived(execRequest);
 		}
 	}
 
 	public void notifyObserverServerConnectionStatusChanged(boolean isConnected) {
-		for (ServerProxyObserver observer : observers) {
+		for (MessageDispatchObserver observer : observers) {
 			observer.updateNetworkStateChanged(isConnected);
 		}
 	}
 
 	public void notifyServerMessageReceived(String message) {
-		for (ServerProxyObserver observer : observers) {
+		for (MessageDispatchObserver observer : observers) {
 			observer.updateServerMessageReceived(message);
 		}
 	}
