@@ -9,8 +9,6 @@ public interface ServerProxyObservable {
 
 	void addDispatchObserver(MessageDispatchObserver observer);
 
-	void removeDispatchObserver(MessageDispatchObserver observer);
-
 	void notifyObserversMessageReceived(ExeRequestMessage executionRequestMessage);
 
 	void notifyObserverServerConnectionStatusChanged(boolean isConnected);
