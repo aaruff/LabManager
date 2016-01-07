@@ -50,7 +50,7 @@ public class Server
 			}
 		});
 
-		port.listen(2600);
+		port.listenForSocketConnectionOnPort(2600);
 	}
 
 	public void startAppInRange(String app, String start, String end)
