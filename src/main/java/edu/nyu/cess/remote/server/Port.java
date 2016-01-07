@@ -21,7 +21,7 @@ public class Port implements PortWatcher
 
     private Server server;
 
-	private HashMap<String, ClientSocketConnection> clientSocketConnections = new HashMap<String, ClientSocketConnection>();
+	private HashMap<String, SocketHandler> clientSocketConnections = new HashMap<String, SocketHandler>();
 
 	public Port(Server server)
     {
@@ -30,32 +30,34 @@ public class Port implements PortWatcher
 
 	/**
 	 * Starts listening for inbound connections on the specified port.
-	 * @param portNumber the port used to listen for inbound connections
+	 * @param portNumber the port used to listenForSocketConnectionOnPort for inbound connections
      */
-	public void listen(int portNumber) throws IOException
+	public void listenForSocketConnectionOnPort(int portNumber) throws IOException
     {
         ServerSocket serverSocket = new ServerSocket(portNumber);
         log.debug("Server socket established...");
 
 		while (true) {
 			// Blocking function: waits a client socket connection
-            ClientSocketConnection clientSocketConnection = listenForClientSocketConnection(serverSocket);
+            SocketHandler socketHandler = listenForClientSocketConnection(serverSocket);
 
-			if ( isNotAlreadyConnected(clientSocketConnection)) {
-				clientSocketConnections.put(clientSocketConnection.getIP(), clientSocketConnection);
-				server.addClient(clientSocketConnection.getIP());
-				clientSocketConnection.startThreadedInboundCommunicationMonitor();
+			if ( ! isAlreadyConnected(socketHandler)) {
+				clientSocketConnections.put(socketHandler.getRemoteIpAddress(), socketHandler);
+				log.debug("New socket connection made by " + socketHandler.getRemoteIpAddress());
+
+				server.addClient(socketHandler.getRemoteIpAddress());
+				socketHandler.startThreadedInboundCommunicationMonitor();
 			}
 		}
 	}
 
     /**
-     * Returns true if the client socket connection parameter isn't currently active, otherwise false is returned.
-     * @param clientSocketConnection client socket connection
-     * @return true if client is connected, otherwise false
+     * Returns true if the client socket connection parameter is currently active, otherwise false is returned.
+     * @param socketHandler client socket connection
+     * @return true if client is already connected, otherwise false is returned
      */
-	private boolean isNotAlreadyConnected(ClientSocketConnection clientSocketConnection) {
-		return ! clientSocketConnections.containsKey(clientSocketConnection.getIP());
+	private boolean isAlreadyConnected(SocketHandler socketHandler) {
+		return clientSocketConnections.containsKey(socketHandler.getRemoteIpAddress());
 	}
 
 	public void readServerMessage(DataPacket dataPacket, String ipAddress)
@@ -126,21 +128,21 @@ public class Port implements PortWatcher
 	 *
 	 * @return ClientSocket socket
 	 */
-	private ClientSocketConnection listenForClientSocketConnection(ServerSocket serverSocket)
+	private SocketHandler listenForClientSocketConnection(ServerSocket serverSocket)
 	{
 		log.debug("Waiting for inbound client connection request.");
 
-		String ip = null;
+		String remoteIpAddress = null;
 		java.net.Socket socket = null;
-		while (socket == null || ip == null || ip.isEmpty()) {
+		while (socket == null || remoteIpAddress == null || remoteIpAddress.isEmpty()) {
 			try {
-				socket = serverSocket.accept();
-				ip = socket.getInetAddress().getHostAddress();
+				socket = serverSocket.accept(); // Blocking call
+				remoteIpAddress = socket.getInetAddress().getHostAddress();
 			} catch (IOException e) {
 				log.debug("Connection Error", e);
 			}
 		}
 
-		return new ClientSocketConnection(socket, this);
+		return new SocketHandler(socket, this);
 	}
 }
