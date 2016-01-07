@@ -68,10 +68,6 @@ public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservab
 		observers.add(messageDispatchObserver);
 	}
 
-	public void removeDispatchObserver(MessageDispatchObserver observer) {
-		observers.remove(observer);
-	}
-
 	public void notifyObserversMessageReceived(ExeRequestMessage execRequest) {
 		for (MessageDispatchObserver observer : observers) {
 			observer.updateServerExecutionRequestReceived(execRequest);
