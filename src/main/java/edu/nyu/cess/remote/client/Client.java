@@ -14,7 +14,7 @@ import javax.swing.*;
  *
  * @author Anwar A. Ruff
  */
-public class Client implements ApplicationObserver, ServerProxyObserver
+public class Client implements ApplicationObserver, MessageDispatchObserver
 {
 	final static Logger log = Logger.getLogger(Client.class);
 
