@@ -5,7 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.StreamCorruptedException;
 
-public class ClientSocketConnection
+public class SocketHandler
 {
 	private java.net.Socket socket;
 
@@ -19,7 +19,7 @@ public class ClientSocketConnection
 	private ObjectInputStream objectInputStream;
 	private ObjectOutputStream objectOutputStream;
 
-    public ClientSocketConnection(java.net.Socket socket, PortWatcher portWatcher)
+    public SocketHandler(java.net.Socket socket, PortWatcher portWatcher)
     {
         this.socket = socket;
         this.portWatcher = portWatcher;
@@ -31,7 +31,7 @@ public class ClientSocketConnection
      *
      * @return String IP address
      */
-    public String getIP()
+    public String getRemoteIpAddress()
     {
         return remoteIPAddress;
     }
