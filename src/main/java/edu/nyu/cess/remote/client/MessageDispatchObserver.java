@@ -8,7 +8,8 @@ import edu.nyu.cess.remote.common.app.ExeRequestMessage;
 /**
  * @author Anwar A. Ruff
  */
-public interface ServerProxyObserver {
+public interface MessageDispatchObserver
+{
 
 	void updateServerExecutionRequestReceived(ExeRequestMessage exeRequestMessage);
 
