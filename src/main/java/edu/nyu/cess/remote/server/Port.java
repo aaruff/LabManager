@@ -21,7 +21,7 @@ public class Port implements PortWatcher
 
     private Server server;
 
-	private HashMap<String, SocketConnection> sockets = new HashMap<String, SocketConnection>();
+	private HashMap<String, ClientSocketConnection> clientSocketConnections = new HashMap<String, ClientSocketConnection>();
 
 	public Port(Server server)
     {
@@ -38,21 +38,27 @@ public class Port implements PortWatcher
         log.debug("Server socket established...");
 
 		while (true) {
-			// Blocking function call continues upon incoming connection requests.
-            SocketConnection socketConnection = listenForConnections(serverSocket);
+			// Blocking function: waits a client socket connection
+            ClientSocketConnection clientSocketConnection = listenForClientSocketConnection(serverSocket);
 
-            // Ignore connections that have already been established.
-            if (sockets.containsKey(socketConnection.getIP())) {
-                continue;
-            }
-
-            sockets.put(socketConnection.getIP(), socketConnection);
-            server.addClient(socketConnection.getIP());
-            socketConnection.startThreadedInboundCommunicationMonitor();
+			if ( isNotAlreadyConnected(clientSocketConnection)) {
+				clientSocketConnections.put(clientSocketConnection.getIP(), clientSocketConnection);
+				server.addClient(clientSocketConnection.getIP());
+				clientSocketConnection.startThreadedInboundCommunicationMonitor();
+			}
 		}
 	}
 
-	public void processDataPacket(DataPacket dataPacket, String ipAddress)
+    /**
+     * Returns true if the client socket connection parameter isn't currently active, otherwise false is returned.
+     * @param clientSocketConnection client socket connection
+     * @return true if client is connected, otherwise false
+     */
+	private boolean isNotAlreadyConnected(ClientSocketConnection clientSocketConnection) {
+		return ! clientSocketConnections.containsKey(clientSocketConnection.getIP());
+	}
+
+	public void readServerMessage(DataPacket dataPacket, String ipAddress)
     {
         log.debug("Packet received from client " + ipAddress);
 
@@ -93,24 +99,24 @@ public class Port implements PortWatcher
             return;
         }
 
-        sockets.get(ipAddress).close();
-        sockets.remove(ipAddress);
+        clientSocketConnections.get(ipAddress).close();
+        clientSocketConnections.remove(ipAddress);
         server.removeClient(ipAddress);
 	}
 
 	public void startApplicationOnClient(ExeRequestMessage applicationExeRequestMessage, String ipAddress) {
 		DataPacket dataPacket = new DataPacket(PacketType.APPLICATION_EXECUTION_REQUEST, applicationExeRequestMessage);
-		sockets.get(ipAddress).writeDataPacket(dataPacket);
+		clientSocketConnections.get(ipAddress).writeDataPacket(dataPacket);
 	}
 
 	public void stopApplicationOnClient(ExeRequestMessage stopExeRequestMessage, String ipAddress) {
 		DataPacket dataPacket = new DataPacket(PacketType.APPLICATION_EXECUTION_REQUEST, stopExeRequestMessage);
-		sockets.get(ipAddress).writeDataPacket(dataPacket);
+		clientSocketConnections.get(ipAddress).writeDataPacket(dataPacket);
 	}
 
 	public void sendMessageToClient(String message, String ipAddress) {
 		DataPacket dataPacket = new DataPacket(PacketType.MESSAGE, message);
-		sockets.get(ipAddress).writeDataPacket(dataPacket);
+		clientSocketConnections.get(ipAddress).writeDataPacket(dataPacket);
 	}
 
 	/**
@@ -120,7 +126,7 @@ public class Port implements PortWatcher
 	 *
 	 * @return ClientSocket socket
 	 */
-	private SocketConnection listenForConnections(ServerSocket serverSocket)
+	private ClientSocketConnection listenForClientSocketConnection(ServerSocket serverSocket)
 	{
 		log.debug("Waiting for inbound client connection request.");
 
@@ -135,6 +141,6 @@ public class Port implements PortWatcher
 			}
 		}
 
-		return new SocketConnection(socket, this);
+		return new ClientSocketConnection(socket, this);
 	}
 }
