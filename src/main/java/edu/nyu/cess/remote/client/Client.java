@@ -1,6 +1,6 @@
 package edu.nyu.cess.remote.client;
 
-import edu.nyu.cess.remote.client.config.HostConfigInterface;
+import edu.nyu.cess.remote.common.net.ClientServerNetworkInfo;
 import edu.nyu.cess.remote.common.app.*;
 import org.apache.log4j.Logger;
 
@@ -26,7 +26,7 @@ public class Client implements ApplicationObserver, MessageDispatchObserver
 	 * Initialize the client
 	 * @param hostConfig host config file
      */
-	public void initServerConnection(HostConfigInterface hostConfig) {
+	public void initServerConnection(ClientServerNetworkInfo hostConfig) {
 		serverMessageDispatcher = new ServerMessageDispatcher(hostConfig);
 		serverMessageDispatcher.addDispatchObserver(this);
 		serverMessageDispatcher.createPersistentServerConnection();
