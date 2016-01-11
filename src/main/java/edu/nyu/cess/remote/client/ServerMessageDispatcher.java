@@ -3,7 +3,7 @@
  */
 package edu.nyu.cess.remote.client;
 
-import edu.nyu.cess.remote.client.config.HostConfigInterface;
+import edu.nyu.cess.remote.common.net.ClientServerNetworkInfo;
 import edu.nyu.cess.remote.client.net.CommunicationNetworkInterface;
 import edu.nyu.cess.remote.common.app.ExeRequestMessage;
 import edu.nyu.cess.remote.common.app.State;
@@ -27,10 +27,10 @@ public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservab
 
 	/**
 	 * Initialize the network interface and add this as an observer.
-	 * @param hostConfig
+	 * @param clientServerNetworkInfo
      */
-	public ServerMessageDispatcher(HostConfigInterface hostConfig) {
-		networkInterface = new CommunicationNetworkInterface(hostConfig);
+	public ServerMessageDispatcher(ClientServerNetworkInfo clientServerNetworkInfo) {
+		networkInterface = new CommunicationNetworkInterface(clientServerNetworkInfo);
 		networkInterface.addObserver(this);
 	}
 
@@ -42,7 +42,7 @@ public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservab
 		while (true) {
 			int pollIntervalMilliseconds = 2000; // milliseconds
 			networkInterface.setServerSocketConnection(pollIntervalMilliseconds);
-			networkInterface.handleInboundPacketRequests();
+			networkInterface.handleClientServerMessaging();
 			try {
 				log.info("Connected to the server...");
 				Thread.sleep(pollIntervalMilliseconds);
