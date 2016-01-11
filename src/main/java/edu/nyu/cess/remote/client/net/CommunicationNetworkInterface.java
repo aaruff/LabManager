@@ -1,8 +1,7 @@
 package edu.nyu.cess.remote.client.net;
 
-import edu.nyu.cess.remote.client.config.HostConfigInterface;
+import edu.nyu.cess.remote.common.net.ClientServerNetworkInfo;
 import edu.nyu.cess.remote.common.net.DataPacket;
-import edu.nyu.cess.remote.common.net.HostInfo;
 import edu.nyu.cess.remote.common.net.PacketType;
 import edu.nyu.cess.remote.common.net.PortWatcher;
 
@@ -21,20 +20,14 @@ public class CommunicationNetworkInterface
 
 	private NetworkInterface networkInterface;
 
-	private String localIPAddress;
-	private String serverIp;
-	private String localHostName;
-
-	private int serverPortNumber;
+	private ClientServerNetworkInfo clientServerNetworkInfo;
 
 	private ObjectInputStream objectInputStream;
 	private ObjectOutputStream objectOutputStream;
 
-	public CommunicationNetworkInterface(HostConfigInterface hostConfig)
+	public CommunicationNetworkInterface(ClientServerNetworkInfo clientServerNetworkInfo)
 	{
-		serverIp = hostConfig.getIpAddress();
-		serverPortNumber = Integer.parseInt(hostConfig.getPort());
-		localHostName = hostConfig.getHostName();
+		this.clientServerNetworkInfo = clientServerNetworkInfo;
 	}
 
 	/**
@@ -95,18 +88,18 @@ public class CommunicationNetworkInterface
 	public Socket getServerSocketConnection() {
 		socket = null;
 		try {
-			socket = new Socket(serverIp, serverPortNumber);
+			socket = new Socket(clientServerNetworkInfo.getServerIpAddress(), clientServerNetworkInfo.getServerPort());
 
 			System.out.println("Network connection established...");
 
 		} catch (UnknownHostException ex) {
-			System.out.println("Network Connection Error: No Known Host...");
+			System.out.println("Network Error: No Known Host.");
 
 		} catch (ConnectException ex) {
-			System.out.println("Network Connection Error: connection to server " + serverIp + " failed.");
+			System.out.println("Network Error: connection to server " + clientServerNetworkInfo.getServerIpAddress() + " failed.");
 
 		} catch (IOException ex) {
-			System.out.println("IO Exception occured...");
+			System.out.println("IO Exception occurred.");
 		}
 
 		return socket;
@@ -125,10 +118,10 @@ public class CommunicationNetworkInterface
 		while (socket == null) {
 			try {
 				Thread.sleep(pollInterval);
-				System.out.println("Attempting to connect to server: " + serverIp);
+				System.out.println("Attempting to connect to server: " + clientServerNetworkInfo.getServerIpAddress());
 				socket = getServerSocketConnection();
 			} catch (InterruptedException e) {
-				System.out.println("Thread sleep interruped...");
+				System.out.println("Thread sleep interrupted...");
 			}
 		}
 	}
@@ -143,39 +136,19 @@ public class CommunicationNetworkInterface
 
 	}
 
-	private String getLocalHostName() {
-		return localHostName;
-	}
-
-	private String getLocalIPAddress() {
-		String ip;
-		try {
-			ip = InetAddress.getLocalHost().getHostAddress();
-		}
-		catch(UnknownHostException e) {
-			ip = new String("");
-		}
-		return ip;
-	}
-
 	/**
 	 * This function reads data packets and passes read {@link DataPacket}s to
 	 * {@link PortWatcher}s.
 	 */
-	public void handleInboundPacketRequests() {
-		// Send ID to server
-		HostInfo hostInfo = new HostInfo();
-		hostInfo.setHostName(getLocalHostName());
-		hostInfo.setIPAddress(getLocalIPAddress());
-		DataPacket dataPacket = new DataPacket(PacketType.HOST_INFO, hostInfo);
+	public void handleClientServerMessaging() {
+		DataPacket dataPacket = new DataPacket(PacketType.HOST_INFO, clientServerNetworkInfo);
 		writeDataPacket(dataPacket);
 
-		localIPAddress = socket.getLocalAddress().getHostAddress();
 		startNetworkInterfaceMonitor();
 
-		System.out.println("Waiting for message from " + serverIp);
+		System.out.println("Waiting for message from " + clientServerNetworkInfo.getServerIpAddress());
 
-		tellPortWatcherConnectionChanged(serverIp, true);
+		tellPortWatcherConnectionChanged(clientServerNetworkInfo.getServerIpAddress(), true);
 
 		while ((dataPacket = readDataPacket()) != null) {
 			tellPortWatcherPacketReceived(dataPacket);
@@ -198,8 +171,7 @@ public class CommunicationNetworkInterface
 			}
 		}
 
-		tellPortWatcherConnectionChanged(serverIp, false);
-
+		tellPortWatcherConnectionChanged(clientServerNetworkInfo.getServerIpAddress(), false);
 	}
 
 	/**
@@ -308,7 +280,7 @@ public class CommunicationNetworkInterface
 
 	public synchronized void tellPortWatcherPacketReceived(DataPacket packet) {
 		for (PortWatcher observer : observers) {
-			observer.readServerMessage(packet, serverIp);
+			observer.readServerMessage(packet, clientServerNetworkInfo.getServerIpAddress());
 		}
 	}
 
@@ -332,7 +304,7 @@ public class CommunicationNetworkInterface
 			while (networkInterfaceUp) {
 
 				try {
-					InetAddress addr = InetAddress.getByName(localIPAddress);
+					InetAddress addr = InetAddress.getByName(clientServerNetworkInfo.getClientIpAddress());
 					networkInterface = NetworkInterface.getByInetAddress(addr);
 				} catch (SocketException e) {
 					networkInterface = null;
