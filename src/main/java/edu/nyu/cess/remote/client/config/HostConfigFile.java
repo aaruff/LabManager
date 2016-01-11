@@ -1,49 +1,38 @@
 package edu.nyu.cess.remote.client.config;
 
 
+import edu.nyu.cess.remote.common.net.ClientServerNetworkInfo;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.util.Properties;
 
 /**
- * Created by aruff on 11/3/15.
+ * Contains the client server and host config file information.
  */
-public class HostConfigFile implements HostConfigInterface
+public class HostConfigFile
 {
-	public static final String NAME = "config.properties";
-
-	private String ip;
-	private String port;
-	private String hostname;
-
-	public HostConfigFile() throws IOException {
-		readConfig();
-	}
-
-    public void readConfig() throws IOException
+	/**
+	 * Reads the client-server network property file for the server IP, Port, and Client hostname alias.
+	 *
+	 * @param propertyFileName
+	 * @return
+	 * @throws IOException
+     */
+    public static ClientServerNetworkInfo readPropertyFile(String propertyFileName) throws IOException
     {
 		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-		InputStream in = classLoader.getResourceAsStream(NAME);
+		InputStream in = classLoader.getResourceAsStream(propertyFileName);
         Properties properties = new Properties();
         properties.load(in);
 
-        ip = properties.getProperty("ip");
-        port = properties.getProperty("port");
-        hostname = properties.getProperty("hostname");
-	}
+		ClientServerNetworkInfo networkInfo = new ClientServerNetworkInfo();
+        networkInfo.setServerIpAddress(properties.getProperty("ip"));
+        networkInfo.setServerPort(Integer.parseInt(properties.getProperty("port")));
+        networkInfo.setClientName(properties.getProperty("name"));
+		networkInfo.setClientIpAddress(InetAddress.getLocalHost().getHostAddress());
 
-	public String getHostName()
-	{
-		return hostname;
-	}
-
-	public String getIpAddress()
-	{
-		return ip;
-	}
-
-	public String getPort()
-	{
-		return port;
+		return networkInfo;
 	}
 }
