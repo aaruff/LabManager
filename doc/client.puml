@@ -1,0 +1,24 @@
+@startuml
+participant ClientInitializer
+ClientInitializer -> Client: <<create>>
+activate Client
+ClientInitializer -> Client: initServerConnection(ConfigFile)
+
+
+Client -> ServerMessageDispatcher: <<create>> (HostConfigInterface)
+activate ServerMessageDispatcher
+ServerMessageDispatcher -> CommunicationNetworkInterface: <<create>> (HostConfigInterface)
+activate CommunicationNetworkInterface
+Client -> ServerMessageDispatcher: addDispatchObserver(this)
+ServerMessageDispatcher --> Client:
+Client -> ServerMessageDispatcher: createPersistentServerConnection()
+
+ServerMessageDispatcher -> CommunicationNetworkInterface: setServerSocketConnection(int)
+CommunicationNetworkInterface --> ServerMessageDispatcher :
+
+ServerMessageDispatcher -> CommunicationNetworkInterface: handleInboundPacketRequests()
+CommunicationNetworkInterface -> CommunicationNetworkInterface: writeDataPacket(DataPacket)
+CommunicationNetworkInterface -> CommunicationNetworkInterface: startNetworkInterfaceMonitor(DataPacket)
+deactivate ServerMessageDispatcher
+deactivate Client
+@enduml
