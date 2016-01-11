@@ -75,11 +75,11 @@ public class Port implements PortWatcher
 			}
 			break;
 		case HOST_INFO:
-			HostInfo hostInfo = (HostInfo) dataPacket.getPayload();
-			String hostName = hostInfo.getHostName();
+			ClientServerNetworkInfo clientServerNetworkInfo = (ClientServerNetworkInfo) dataPacket.getPayload();
+			String clientName = clientServerNetworkInfo.getClientName();
 
-			if(hostName != null && !hostName.isEmpty()) {
-                server.updateClientHostNameUpdate(hostName, ipAddress);
+			if(clientName != null && !clientName.isEmpty()) {
+                server.updateClientHostNameUpdate(clientName, ipAddress);
 			}
 			break;
 		case MESSAGE:
