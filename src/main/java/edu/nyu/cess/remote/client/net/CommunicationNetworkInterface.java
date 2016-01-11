@@ -163,10 +163,10 @@ public class CommunicationNetworkInterface
 	 * {@link PortWatcher}s.
 	 */
 	public void handleInboundPacketRequests() {
+		// Send ID to server
 		HostInfo hostInfo = new HostInfo();
 		hostInfo.setHostName(getLocalHostName());
 		hostInfo.setIPAddress(getLocalIPAddress());
-
 		DataPacket dataPacket = new DataPacket(PacketType.HOST_INFO, hostInfo);
 		writeDataPacket(dataPacket);
 
