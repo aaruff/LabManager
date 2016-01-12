@@ -2,15 +2,18 @@
 participant ClientInitializer
 ClientInitializer -> Client: <<create>>
 activate Client
-ClientInitializer -> Client: initServerConnection(ConfigFile)
+ClientInitializer -> Client: initServerConnection(ClientServerNetworkInfo)
 
 
-Client -> ServerMessageDispatcher: <<create>> (HostConfigInterface)
+Client -> ServerMessageDispatcher: <<create>> (ClientServerNetworkInfo)
 activate ServerMessageDispatcher
-ServerMessageDispatcher -> CommunicationNetworkInterface: <<create>> (HostConfigInterface)
+
+ServerMessageDispatcher -> CommunicationNetworkInterface: <<create>> (ClientServerNetworkInfo)
 activate CommunicationNetworkInterface
-Client -> ServerMessageDispatcher: addDispatchObserver(this)
+ServerMessageDispatcher -> CommunicationNetworkInterface: addObserver(this)
 ServerMessageDispatcher --> Client:
+
+Client -> ServerMessageDispatcher: addDispatchObserver(this)
 Client -> ServerMessageDispatcher: createPersistentServerConnection()
 
 ServerMessageDispatcher -> CommunicationNetworkInterface: setServerSocketConnection(int)
