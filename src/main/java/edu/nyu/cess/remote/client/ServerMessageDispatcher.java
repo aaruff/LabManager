@@ -23,15 +23,15 @@ public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservab
 
 	private final ArrayList<MessageDispatchObserver> observers = new ArrayList<MessageDispatchObserver>();
 
-	private static CommunicationNetworkInterface networkInterface;
+	private static CommunicationNetworkInterface commNetworkInterface;
 
 	/**
 	 * Initialize the network interface and add this as an observer.
 	 * @param clientServerNetworkInfo
      */
 	public ServerMessageDispatcher(ClientServerNetworkInfo clientServerNetworkInfo) {
-		networkInterface = new CommunicationNetworkInterface(clientServerNetworkInfo);
-		networkInterface.addObserver(this);
+		commNetworkInterface = new CommunicationNetworkInterface(clientServerNetworkInfo);
+		commNetworkInterface.addObserver(this);
 	}
 
 	/**
@@ -41,8 +41,8 @@ public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservab
 
 		while (true) {
 			int pollIntervalMilliseconds = 2000; // milliseconds
-			networkInterface.setServerSocketConnection(pollIntervalMilliseconds);
-			networkInterface.handleClientServerMessaging();
+			commNetworkInterface.setServerSocketConnection(pollIntervalMilliseconds);
+			commNetworkInterface.handleClientServerMessaging();
 			try {
 				log.info("Connected to the server...");
 				Thread.sleep(pollIntervalMilliseconds);
@@ -55,7 +55,7 @@ public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservab
 
 	public void sendServerApplicationState(State state) {
 		DataPacket dataPacket = new DataPacket(PacketType.APPLICATION_STATE_CHAGE, state);
-		networkInterface.writeDataPacket(dataPacket);
+		commNetworkInterface.writeDataPacket(dataPacket);
 	}
 
 	/**
