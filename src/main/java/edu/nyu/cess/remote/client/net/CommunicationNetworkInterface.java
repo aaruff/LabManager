@@ -4,6 +4,7 @@ import edu.nyu.cess.remote.common.net.ClientServerNetworkInfo;
 import edu.nyu.cess.remote.common.net.DataPacket;
 import edu.nyu.cess.remote.common.net.PacketType;
 import edu.nyu.cess.remote.common.net.PortWatcher;
+import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.net.*;
@@ -24,6 +25,8 @@ public class CommunicationNetworkInterface
 
 	private ObjectInputStream objectInputStream;
 	private ObjectOutputStream objectOutputStream;
+
+	final static Logger log = Logger.getLogger(CommunicationNetworkInterface.class);
 
 	public CommunicationNetworkInterface(ClientServerNetworkInfo clientServerNetworkInfo)
 	{
@@ -70,8 +73,8 @@ public class CommunicationNetworkInterface
 					objectOutputStream = new ObjectOutputStream(outputStream);
 					result = true;
 				}
-			} catch (IOException ex) {
-				System.out.println("Error occured retrieving ObjectOutputStream.");
+			} catch (IOException e) {
+				log.error("Error occurred retrieving ObjectOutputStream.", e);
 			}
 		}
 		return result;
@@ -90,16 +93,16 @@ public class CommunicationNetworkInterface
 		try {
 			socket = new Socket(clientServerNetworkInfo.getServerIpAddress(), clientServerNetworkInfo.getServerPort());
 
-			System.out.println("Network connection established...");
+			log.info("Network connection established...");
 
-		} catch (UnknownHostException ex) {
-			System.out.println("Network Error: No Known Host.");
+		} catch (UnknownHostException e) {
+			log.error("Error: No Known Host.", e);
 
-		} catch (ConnectException ex) {
-			System.out.println("Network Error: connection to server " + clientServerNetworkInfo.getServerIpAddress() + " failed.");
+		} catch (ConnectException e) {
+			log.error("Error: Failed to connection to server.", e);
 
-		} catch (IOException ex) {
-			System.out.println("IO Exception occurred.");
+		} catch (IOException e) {
+			log.error("IO Exception occurred.", e);
 		}
 
 		return socket;
@@ -118,10 +121,10 @@ public class CommunicationNetworkInterface
 		while (socket == null) {
 			try {
 				Thread.sleep(pollInterval);
-				System.out.println("Attempting to connect to server: " + clientServerNetworkInfo.getServerIpAddress());
+				log.info("Attempting to connect to server: " + clientServerNetworkInfo.getServerIpAddress());
 				socket = getServerSocketConnection();
 			} catch (InterruptedException e) {
-				System.out.println("Thread sleep interrupted...");
+				log.error("Thread sleep interrupted.", e);
 			}
 		}
 	}
@@ -146,7 +149,7 @@ public class CommunicationNetworkInterface
 
 		startNetworkInterfaceMonitor();
 
-		System.out.println("Waiting for message from " + clientServerNetworkInfo.getServerIpAddress());
+		log.info("Waiting for message from " + clientServerNetworkInfo.getServerIpAddress());
 
 		tellPortWatcherConnectionChanged(clientServerNetworkInfo.getServerIpAddress(), true);
 
@@ -159,7 +162,7 @@ public class CommunicationNetworkInterface
 				objectOutputStream.close();
 				objectOutputStream = null;
 			} catch (IOException e) {
-				System.out.println("failed closing output stream");
+				log.error("failed closing output stream", e);
 			}
 		}
 		if (objectInputStream != null) {
@@ -167,7 +170,7 @@ public class CommunicationNetworkInterface
 				objectInputStream.close();
 				objectInputStream = null;
 			} catch (IOException e) {
-				System.out.println("IO Exception: failed to close ObjectOutputStream.");
+				log.error("IO Exception: failed to close ObjectOutputStream.", e);
 			}
 		}
 
@@ -196,12 +199,14 @@ public class CommunicationNetworkInterface
 					try {
 						Object object = objectInputStream.readObject();
 						dataPacket = (DataPacket) object;
-					} catch (ClassNotFoundException ex) {
-						System.out.println("The Serialized Object Not Found");
+					} catch (ClassNotFoundException e) {
+						log.error("The Serialized Object Not Found", e);
 						dataPacket = null;
-					} catch (StreamCorruptedException ex) {
+					} catch (StreamCorruptedException e) {
+						log.error(e);
 						dataPacket = null;
-					} catch (IOException ex) {
+					} catch (IOException e) {
+						log.error(e);
 						dataPacket = null;
 					}
 				}
@@ -233,9 +238,8 @@ public class CommunicationNetworkInterface
 					try {
 						objectOutputStream.writeObject(packet);
 						objectOutputStream.flush();
-					} catch (IOException ex) {
-						System.out.println("IO Exception Occured Writing DataPacket");
-						ex.printStackTrace();
+					} catch (IOException e) {
+						log.error(e);
 					}
 				}
 			}
@@ -250,7 +254,7 @@ public class CommunicationNetworkInterface
 				socket.close();
 				socket = null;
 			} catch (IOException e) {
-				System.out.println("Socket Error: Failed to close.");
+				log.error(e);
 			}
 		}
 
@@ -258,8 +262,8 @@ public class CommunicationNetworkInterface
 			try {
 				objectOutputStream.close();
 				objectOutputStream = null;
-			} catch (IOException ex) {
-				System.out.println("IO Exception: Failed to close ObjectOutputStream.");
+			} catch (IOException e) {
+				log.error(e);
 			}
 		}
 
@@ -268,8 +272,7 @@ public class CommunicationNetworkInterface
 				objectInputStream.close();
 				objectInputStream = null;
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.error(e);
 			}
 		}
 	}
@@ -316,7 +319,7 @@ public class CommunicationNetworkInterface
 					try {
 						Thread.sleep(monitorInterval);
 						networkInterfaceUp = networkInterface.isUp();
-						System.out.println("NIC Status: " + ((networkInterfaceUp) ? "UP" : "DOWN"));
+						log.info("NIC Status: " + ((networkInterfaceUp) ? "UP" : "DOWN"));
 					} catch (InterruptedException e) {
 						networkInterfaceUp = false;
 					} catch (SocketException e) {
@@ -329,9 +332,8 @@ public class CommunicationNetworkInterface
 			}
 
 			closeServerNetworkConnection();
-			System.out.println("Network Interface Is Down!!!");
-			System.out.println("Attempting to interrupt the network communication thread...");
-
+			log.info("Network Interface Is Down!!!");
+			log.info("Attempting to interrupt the network communication thread...");
 		}
 	}
 
