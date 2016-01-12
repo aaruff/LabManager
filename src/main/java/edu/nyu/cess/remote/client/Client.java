@@ -1,7 +1,8 @@
 package edu.nyu.cess.remote.client;
 
-import edu.nyu.cess.remote.common.net.ClientServerNetworkInfo;
+import edu.nyu.cess.remote.client.ui.MessageRunnable;
 import edu.nyu.cess.remote.common.app.*;
+import edu.nyu.cess.remote.common.net.ClientServerNetworkInfo;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
@@ -110,20 +111,4 @@ public class Client implements ApplicationObserver, MessageDispatchObserver
 		SwingUtilities.invokeLater(new MessageRunnable(message));
 	}
 
-	/**
-	 * The message runnable class used to display messages sent from the server.
-	 */
-	private class MessageRunnable implements Runnable {
-		String message;
-
-		public MessageRunnable(String message) {
-			this.message = message;
-		}
-
-		public void run() {
-			JFrame frame = new JFrame();
-			JOptionPane.showMessageDialog(frame, message, "Experimenter Notification", JOptionPane.WARNING_MESSAGE);
-		}
-
-	}
 }
