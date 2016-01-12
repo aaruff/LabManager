@@ -17,9 +17,9 @@ public class ClientInitializer
      */
 	public static void main(String[] args) {
 
-		ClientServerNetworkInfo configFile;
+		ClientServerNetworkInfo clientServerNetworkInfo;
 		try {
-			configFile = HostConfigFile.readPropertyFile("config.properties");
+			clientServerNetworkInfo = HostConfigFile.readPropertyFile("config.properties");
 		}
 		catch (Exception e) {
 			log.error("Failed to open the configuration file. Make sure that config.properties is in the classpath.");
@@ -27,7 +27,7 @@ public class ClientInitializer
 			return;
 		}
 
-		ConfigFileValidator validator = new ConfigFileValidator(configFile);
+		ConfigFileValidator validator = new ConfigFileValidator(clientServerNetworkInfo);
 		if ( ! validator.validate()) {
 			log.error(StringUtils.join(validator.getErrors(), ", "));
 			System.exit(1);
@@ -35,7 +35,7 @@ public class ClientInitializer
 		}
 
 		Client client = new Client();
-		client.initServerConnection(configFile);
+		client.initServerConnection(clientServerNetworkInfo);
 	}
 
 }
