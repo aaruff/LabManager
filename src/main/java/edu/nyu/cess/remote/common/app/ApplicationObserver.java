@@ -1,5 +1,9 @@
 package edu.nyu.cess.remote.common.app;
 
-public interface ApplicationObserver {
+/**
+ * Application State Observer Interface
+ */
+public interface ApplicationObserver
+{
 	void applicationUpdate(State applicationState);
 }
