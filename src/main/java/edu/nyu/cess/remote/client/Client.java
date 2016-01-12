@@ -25,10 +25,10 @@ public class Client implements ApplicationObserver, MessageDispatchObserver
 
 	/**
 	 * Initialize the client
-	 * @param hostConfig host config file
+	 * @param clientServerNetworkInfo host config file
      */
-	public void initServerConnection(ClientServerNetworkInfo hostConfig) {
-		serverMessageDispatcher = new ServerMessageDispatcher(hostConfig);
+	public void initServerConnection(ClientServerNetworkInfo clientServerNetworkInfo) {
+		serverMessageDispatcher = new ServerMessageDispatcher(clientServerNetworkInfo);
 		serverMessageDispatcher.addDispatchObserver(this);
 		serverMessageDispatcher.createPersistentServerConnection();
 	}
