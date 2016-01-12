@@ -10,18 +10,33 @@ activate ServerMessageDispatcher
 
 ServerMessageDispatcher -> CommunicationNetworkInterface: <<create>> (ClientServerNetworkInfo)
 activate CommunicationNetworkInterface
+CommunicationNetworkInterface --> ServerMessageDispatcher :
+
 ServerMessageDispatcher -> CommunicationNetworkInterface: addObserver(this)
+CommunicationNetworkInterface --> ServerMessageDispatcher :
 ServerMessageDispatcher --> Client:
 
 Client -> ServerMessageDispatcher: addDispatchObserver(this)
+ServerMessageDispatcher --> Client:
+
 Client -> ServerMessageDispatcher: createPersistentServerConnection()
 
-ServerMessageDispatcher -> CommunicationNetworkInterface: setServerSocketConnection(int)
+ServerMessageDispatcher -> CommunicationNetworkInterface: setServerSocketConnection(int milliseconds)
 CommunicationNetworkInterface --> ServerMessageDispatcher :
 
 ServerMessageDispatcher -> CommunicationNetworkInterface: handleInboundPacketRequests()
+CommunicationNetworkInterface -> CommunicationNetworkInterface: getSocketConnection()
+CommunicationNetworkInterface --> ServerMessageDispatcher :
+
+ServerMessageDispatcher -> CommunicationNetworkInterface: handleClientServerMessaging()
+
+CommunicationNetworkInterface -> DataPacket: <<create>>(int, ClientNetworkInfo)
+activate DataPacket
+DataPacket --> CommunicationNetworkInterface:
+
 CommunicationNetworkInterface -> CommunicationNetworkInterface: writeDataPacket(DataPacket)
 CommunicationNetworkInterface -> CommunicationNetworkInterface: startNetworkInterfaceMonitor(DataPacket)
+deactivate DataPacket
 deactivate ServerMessageDispatcher
 deactivate Client
 @enduml
