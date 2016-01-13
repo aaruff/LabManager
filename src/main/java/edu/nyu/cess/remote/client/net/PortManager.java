@@ -10,7 +10,7 @@ import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 
-public class CommunicationNetworkInterface
+public class PortManager
 {
 
 	ArrayList<PortWatcher> observers = new ArrayList<PortWatcher>();
@@ -26,9 +26,9 @@ public class CommunicationNetworkInterface
 	private ObjectInputStream objectInputStream;
 	private ObjectOutputStream objectOutputStream;
 
-	final static Logger log = Logger.getLogger(CommunicationNetworkInterface.class);
+	final static Logger log = Logger.getLogger(PortManager.class);
 
-	public CommunicationNetworkInterface(ClientServerNetworkInfo clientServerNetworkInfo)
+	public PortManager(ClientServerNetworkInfo clientServerNetworkInfo)
 	{
 		this.clientServerNetworkInfo = clientServerNetworkInfo;
 	}
