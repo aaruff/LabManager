@@ -6,7 +6,7 @@ package edu.nyu.cess.remote.common.net;
  */
 public interface PortWatcher
 {
-    void readServerMessage(DataPacket dataPacket, String ipAddress);
+    void readServerMessage(Message message, String ipAddress);
 
     void processStateChange(String ipAddress, boolean isConnected);
 }
