@@ -7,8 +7,6 @@ import edu.nyu.cess.remote.common.app.ExeRequestMessage;
 
 public interface ServerProxyObservable {
 
-	void addDispatchObserver(MessageDispatchObserver observer);
-
 	void notifyObserversMessageReceived(ExeRequestMessage executionRequestMessage);
 
 	void notifyObserverServerConnectionStatusChanged(boolean isConnected);
