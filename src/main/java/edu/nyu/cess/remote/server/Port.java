@@ -60,32 +60,32 @@ public class Port implements PortWatcher
 		return clientSocketConnections.containsKey(socketHandler.getRemoteIpAddress());
 	}
 
-	public void readServerMessage(DataPacket dataPacket, String ipAddress)
+	public void readServerMessage(Message message, String ipAddress)
     {
         log.debug("Packet received from client " + ipAddress);
 
-		switch(dataPacket.getPacketType()) {
-		case APPLICATION_EXECUTION_REQUEST:
+		switch(message.getMessageType()) {
+		case EXECUTION_REQUEST:
 			// Not supported by the server
 			break;
-		case APPLICATION_STATE_CHAGE:
-			State appState = (State) dataPacket.getPayload();
+		case STATE_CHANGE:
+			State appState = (State) message.getPayload();
 			if (appState != null && appState instanceof State) {
                 server.updateClientState(ipAddress, appState);
 			}
 			break;
 		case HOST_INFO:
-			ClientServerNetworkInfo clientServerNetworkInfo = (ClientServerNetworkInfo) dataPacket.getPayload();
+			ClientServerNetworkInfo clientServerNetworkInfo = (ClientServerNetworkInfo) message.getPayload();
 			String clientName = clientServerNetworkInfo.getClientName();
 
 			if(clientName != null && !clientName.isEmpty()) {
                 server.updateClientHostNameUpdate(clientName, ipAddress);
 			}
 			break;
-		case MESSAGE:
+		case USER_NOTIFICATION:
 			// Not supported by the server
 			break;
-		case SOCKET_TEST:
+		case PING:
 			// No processing is done when a socket test is received
 			break;
 		default:
@@ -107,17 +107,17 @@ public class Port implements PortWatcher
 	}
 
 	public void startApplicationOnClient(ExeRequestMessage applicationExeRequestMessage, String ipAddress) {
-		DataPacket dataPacket = new DataPacket(PacketType.APPLICATION_EXECUTION_REQUEST, applicationExeRequestMessage);
-		clientSocketConnections.get(ipAddress).writeDataPacket(dataPacket);
+		Message message = new Message(MessageType.EXECUTION_REQUEST, applicationExeRequestMessage);
+		clientSocketConnections.get(ipAddress).writeDataPacket(message);
 	}
 
 	public void stopApplicationOnClient(ExeRequestMessage stopExeRequestMessage, String ipAddress) {
-		DataPacket dataPacket = new DataPacket(PacketType.APPLICATION_EXECUTION_REQUEST, stopExeRequestMessage);
-		clientSocketConnections.get(ipAddress).writeDataPacket(dataPacket);
+		Message message = new Message(MessageType.EXECUTION_REQUEST, stopExeRequestMessage);
+		clientSocketConnections.get(ipAddress).writeDataPacket(message);
 	}
 
 	public void sendMessageToClient(String message, String ipAddress) {
-		DataPacket dataPacket = new DataPacket(PacketType.MESSAGE, message);
+		Message dataPacket = new Message(MessageType.USER_NOTIFICATION, message);
 		clientSocketConnections.get(ipAddress).writeDataPacket(dataPacket);
 	}
 
