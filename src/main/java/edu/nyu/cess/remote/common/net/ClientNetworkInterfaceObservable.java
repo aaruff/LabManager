@@ -4,7 +4,7 @@ public interface ClientNetworkInterfaceObservable
 {
     boolean addObserver(PortWatcher networkObserver);
 
-    void notifyNetworkPacketReceived(DataPacket dataPacket);
+    void notifyNetworkPacketReceived(Message message);
 
     void notifyNetworkStatusChanged(String ipAddress, boolean isConnected);
 }
