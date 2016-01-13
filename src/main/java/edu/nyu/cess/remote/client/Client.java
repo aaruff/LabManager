@@ -1,5 +1,6 @@
 package edu.nyu.cess.remote.client;
 
+import edu.nyu.cess.remote.client.net.CommunicationNetworkInterface;
 import edu.nyu.cess.remote.client.ui.MessageRunnable;
 import edu.nyu.cess.remote.common.app.*;
 import edu.nyu.cess.remote.common.net.ClientServerNetworkInfo;
@@ -28,8 +29,8 @@ public class Client implements ApplicationObserver, MessageDispatchObserver
 	 * @param clientServerNetworkInfo host config file
      */
 	public void initServerConnection(ClientServerNetworkInfo clientServerNetworkInfo) {
-		serverMessageDispatcher = new ServerMessageDispatcher(clientServerNetworkInfo);
-		serverMessageDispatcher.addDispatchObserver(this);
+		CommunicationNetworkInterface communicationNetworkInterface = new CommunicationNetworkInterface(clientServerNetworkInfo);
+		serverMessageDispatcher = new ServerMessageDispatcher(communicationNetworkInterface, this);
 		serverMessageDispatcher.createPersistentServerConnection();
 	}
 

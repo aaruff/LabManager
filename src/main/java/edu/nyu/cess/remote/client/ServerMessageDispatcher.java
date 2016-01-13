@@ -3,16 +3,13 @@
  */
 package edu.nyu.cess.remote.client;
 
-import edu.nyu.cess.remote.common.net.ClientServerNetworkInfo;
 import edu.nyu.cess.remote.client.net.CommunicationNetworkInterface;
 import edu.nyu.cess.remote.common.app.ExeRequestMessage;
 import edu.nyu.cess.remote.common.app.State;
-import edu.nyu.cess.remote.common.net.DataPacket;
-import edu.nyu.cess.remote.common.net.PacketType;
+import edu.nyu.cess.remote.common.net.Message;
+import edu.nyu.cess.remote.common.net.MessageType;
 import edu.nyu.cess.remote.common.net.PortWatcher;
 import org.apache.log4j.Logger;
-
-import java.util.ArrayList;
 
 /**
  * @author Anwar A. Ruff
@@ -21,17 +18,14 @@ public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservab
 {
 	final static Logger log = Logger.getLogger(Client.class);
 
-	private final ArrayList<MessageDispatchObserver> observers = new ArrayList<MessageDispatchObserver>();
+	private Client client;
 
-	private static CommunicationNetworkInterface commNetworkInterface;
+	private CommunicationNetworkInterface commNetworkInterface;
 
-	/**
-	 * Initialize the network interface and add this as an observer.
-	 * @param clientServerNetworkInfo
-     */
-	public ServerMessageDispatcher(ClientServerNetworkInfo clientServerNetworkInfo) {
-		commNetworkInterface = new CommunicationNetworkInterface(clientServerNetworkInfo);
-		commNetworkInterface.addObserver(this);
+	public ServerMessageDispatcher(CommunicationNetworkInterface communicationNetworkInterface, Client client) {
+		this.client = client;
+		this.commNetworkInterface = communicationNetworkInterface;
+		this.commNetworkInterface.addObserver(this);
 	}
 
 	/**
@@ -54,65 +48,49 @@ public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservab
 	}
 
 	public void sendServerApplicationState(State state) {
-		DataPacket dataPacket = new DataPacket(PacketType.APPLICATION_STATE_CHAGE, state);
-		commNetworkInterface.writeDataPacket(dataPacket);
-	}
-
-	/**
-	 * Adds a message dispatch observer to the list of observers.
-	 *
-	 * @param messageDispatchObserver
-     */
-	@Override public void addDispatchObserver(MessageDispatchObserver messageDispatchObserver)
-	{
-		observers.add(messageDispatchObserver);
+		Message message = new Message(MessageType.STATE_CHANGE, state);
+		commNetworkInterface.writeDataPacket(message);
 	}
 
 	public void notifyObserversMessageReceived(ExeRequestMessage execRequest) {
-		for (MessageDispatchObserver observer : observers) {
-			observer.updateServerExecutionRequestReceived(execRequest);
-		}
+        client.updateServerExecutionRequestReceived(execRequest);
 	}
 
 	public void notifyObserverServerConnectionStatusChanged(boolean isConnected) {
-		for (MessageDispatchObserver observer : observers) {
-			observer.updateNetworkStateChanged(isConnected);
-		}
+        client.updateNetworkStateChanged(isConnected);
 	}
 
 	public void notifyServerMessageReceived(String message) {
-		for (MessageDispatchObserver observer : observers) {
-			observer.updateServerMessageReceived(message);
-		}
+        client.updateServerMessageReceived(message);
 	}
 
-	public void readServerMessage(DataPacket dataPacket, String ipAddress) {
+	public void readServerMessage(Message dataPacket, String ipAddress) {
 		log.info("Server message received.");
 
-		PacketType dataPacketType = dataPacket.getPacketType();
-		if (!(dataPacketType instanceof PacketType)) {
+		MessageType dataMessageType = dataPacket.getMessageType();
+		if (!(dataMessageType instanceof MessageType)) {
 			return;
 		}
 
-		switch(dataPacket.getPacketType()) {
-		case APPLICATION_EXECUTION_REQUEST:
+		switch(dataPacket.getMessageType()) {
+		case EXECUTION_REQUEST:
 			ExeRequestMessage execRequest = (ExeRequestMessage) dataPacket.getPayload();
 			if (execRequest != null && execRequest instanceof ExeRequestMessage) {
 					log.info("Packet Content: ApplicationExecRequest");
 					notifyObserversMessageReceived(execRequest);
 			}
 			break;
-		case MESSAGE:
+		case USER_NOTIFICATION:
 			String message = (String) dataPacket.getPayload();
 			if (message != null && !message.isEmpty()) {
 				notifyServerMessageReceived(message);
 			}
 			break;
-		case APPLICATION_STATE_CHAGE:
+		case STATE_CHANGE:
 		case HOST_INFO:
 			// Not supported by the Client
 			break;
-		case SOCKET_TEST:
+		case PING:
 			// No processing occurs during a socket test
 			break;
 		default:

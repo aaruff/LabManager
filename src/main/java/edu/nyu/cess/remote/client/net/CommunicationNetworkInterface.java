@@ -1,8 +1,8 @@
 package edu.nyu.cess.remote.client.net;
 
 import edu.nyu.cess.remote.common.net.ClientServerNetworkInfo;
-import edu.nyu.cess.remote.common.net.DataPacket;
-import edu.nyu.cess.remote.common.net.PacketType;
+import edu.nyu.cess.remote.common.net.Message;
+import edu.nyu.cess.remote.common.net.MessageType;
 import edu.nyu.cess.remote.common.net.PortWatcher;
 import org.apache.log4j.Logger;
 
@@ -140,12 +140,12 @@ public class CommunicationNetworkInterface
 	}
 
 	/**
-	 * This function reads data packets and passes read {@link DataPacket}s to
+	 * This function reads data packets and passes read {@link Message}s to
 	 * {@link PortWatcher}s.
 	 */
 	public void handleClientServerMessaging() {
-		DataPacket dataPacket = new DataPacket(PacketType.HOST_INFO, clientServerNetworkInfo);
-		writeDataPacket(dataPacket);
+		Message message = new Message(MessageType.HOST_INFO, clientServerNetworkInfo);
+		writeDataPacket(message);
 
 		startServerMessageListenerThread();
 
@@ -153,8 +153,8 @@ public class CommunicationNetworkInterface
 
 		notifyPortWatcher(clientServerNetworkInfo.getServerIpAddress(), true);
 
-		while ((dataPacket = readDataPacket()) != null) {
-			tellPortWatcherPacketReceived(dataPacket);
+		while ((message = readDataPacket()) != null) {
+			tellPortWatcherPacketReceived(message);
 		}
 
 		if (objectOutputStream != null) {
@@ -178,14 +178,14 @@ public class CommunicationNetworkInterface
 	}
 
 	/**
-	 * Read a {@link DataPacket} sent from a remote node via the initialized
+	 * Read a {@link Message} sent from a remote node via the initialized
 	 * {@link Socket} connection.
 	 *
-	 * @return a {@link DataPacket} or null if the packet reading process
+	 * @return a {@link Message} or null if the packet reading process
 	 *         failed.
 	 */
-	public synchronized DataPacket readDataPacket() {
-		DataPacket dataPacket = null;
+	public synchronized Message readDataPacket() {
+		Message message = null;
 		boolean streamInitialized = true;
 
 		if (socket != null) {
@@ -198,33 +198,33 @@ public class CommunicationNetworkInterface
 				if (objectInputStream != null && streamInitialized) {
 					try {
 						Object object = objectInputStream.readObject();
-						dataPacket = (DataPacket) object;
+						message = (Message) object;
 					} catch (ClassNotFoundException e) {
 						log.error("The Serialized Object Not Found", e);
-						dataPacket = null;
+						message = null;
 					} catch (StreamCorruptedException e) {
 						log.error(e);
-						dataPacket = null;
+						message = null;
 					} catch (IOException e) {
 						log.error(e);
-						dataPacket = null;
+						message = null;
 					}
 				}
 			}
 		}
 
-		return dataPacket;
+		return message;
 
 	}
 
 	/**
-	 * Sends a {@link DataPacket} to the Server
+	 * Sends a {@link Message} to the Server
 	 *
 	 * @param packet
 	 *            A data packet wrapper
 	 * @return true if a connection was established, otherwise false
 	 */
-	public boolean writeDataPacket(DataPacket packet) {
+	public boolean writeDataPacket(Message packet) {
 		boolean streamInitialized = false;
 
 		if (socket != null) {
@@ -281,7 +281,7 @@ public class CommunicationNetworkInterface
 		return observers.add(networkObserver);
 	}
 
-	public synchronized void tellPortWatcherPacketReceived(DataPacket packet) {
+	public synchronized void tellPortWatcherPacketReceived(Message packet) {
 		for (PortWatcher observer : observers) {
 			observer.readServerMessage(packet, clientServerNetworkInfo.getServerIpAddress());
 		}
