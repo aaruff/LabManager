@@ -5,7 +5,7 @@ package edu.nyu.cess.remote.client.validator;
  */
 public class PortValidator extends Validator
 {
-	private String port;
+	private Integer port;
 
 	public PortValidator(){}
 
@@ -14,7 +14,7 @@ public class PortValidator extends Validator
 	 *
 	 * @param port
      */
-	public PortValidator(String port)
+	public PortValidator(Integer port)
 	{
 		this.port = port;
 	}
@@ -34,8 +34,7 @@ public class PortValidator extends Validator
 		}
 
 		try {
-			Integer portNumber = Integer.parseInt(port);
-			if (portNumber < 1024 || portNumber > 49151) {
+			if (port < 1024 || port > 49151) {
 				errors.add("Port number is not between 1024-49151.");
 				return false;
 			}
@@ -53,7 +52,7 @@ public class PortValidator extends Validator
 	 *
 	 * @param port
      */
-	public void setPort(String port)
+	public void setPort(Integer port)
 	{
 		this.port = port;
 	}
