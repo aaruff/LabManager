@@ -20,21 +20,17 @@ public class PortValidatorTest
 		assertFalse(portValidator.validate());
 		assertTrue(portValidator.getErrors().size() > 0);
 
-		portValidator.setPort("");
-		assertFalse(portValidator.validate());
-		assertTrue(portValidator.getErrors().size() > 0);
-
-		portValidator.setPort("ab");
+		portValidator.setPort(null);
 		assertFalse(portValidator.validate());
 		assertTrue(portValidator.getErrors().size() > 0);
 
 		// Rejects values < 1024
-		portValidator.setPort("1023");
+		portValidator.setPort(1023);
 		assertFalse(portValidator.validate());
 		assertTrue(portValidator.getErrors().size() > 0);
 
 		// Rejects values > 49151
-		portValidator.setPort("49152");
+		portValidator.setPort(49152);
 		assertFalse(portValidator.validate());
 		assertTrue(portValidator.getErrors().size() > 0);
 	}
@@ -44,11 +40,11 @@ public class PortValidatorTest
 	{
 		PortValidator portValidator = new PortValidator();
 
-		portValidator.setPort("1204");
+		portValidator.setPort(1204);
 		assertTrue(portValidator.validate());
 		assertEquals(0, portValidator.getErrors().size());
 
-		portValidator.setPort("49151");
+		portValidator.setPort(49151);
 		assertTrue(portValidator.validate());
 		assertEquals(0, portValidator.getErrors().size());
 	}
