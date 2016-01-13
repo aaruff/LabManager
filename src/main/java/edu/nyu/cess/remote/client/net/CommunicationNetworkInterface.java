@@ -130,9 +130,9 @@ public class CommunicationNetworkInterface
 	}
 
 	/**
-	 * Initializes the network interface monitor thread.
+	 * Starts the thread that listens for incoming messages from the server.
 	 */
-	public void startNetworkInterfaceMonitor() {
+	public void startServerMessageListenerThread() {
 		networkInterfaceMonitorThread = new Thread(new MonitorNetworkInterface());
 		networkInterfaceMonitorThread.setName("Network Interface Monitor");
 		networkInterfaceMonitorThread.start();
@@ -147,11 +147,11 @@ public class CommunicationNetworkInterface
 		DataPacket dataPacket = new DataPacket(PacketType.HOST_INFO, clientServerNetworkInfo);
 		writeDataPacket(dataPacket);
 
-		startNetworkInterfaceMonitor();
+		startServerMessageListenerThread();
 
 		log.info("Waiting for message from " + clientServerNetworkInfo.getServerIpAddress());
 
-		tellPortWatcherConnectionChanged(clientServerNetworkInfo.getServerIpAddress(), true);
+		notifyPortWatcher(clientServerNetworkInfo.getServerIpAddress(), true);
 
 		while ((dataPacket = readDataPacket()) != null) {
 			tellPortWatcherPacketReceived(dataPacket);
@@ -174,7 +174,7 @@ public class CommunicationNetworkInterface
 			}
 		}
 
-		tellPortWatcherConnectionChanged(clientServerNetworkInfo.getServerIpAddress(), false);
+		notifyPortWatcher(clientServerNetworkInfo.getServerIpAddress(), false);
 	}
 
 	/**
@@ -287,7 +287,7 @@ public class CommunicationNetworkInterface
 		}
 	}
 
-	public synchronized void tellPortWatcherConnectionChanged(String ipAddress, boolean isConnected) {
+	public synchronized void notifyPortWatcher(String ipAddress, boolean isConnected) {
 		for (PortWatcher observer : observers) {
 			observer.processStateChange(ipAddress, isConnected);
 		}
