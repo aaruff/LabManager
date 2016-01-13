@@ -36,7 +36,7 @@ public class SocketHandler
         return remoteIPAddress;
     }
 
-	public boolean writeDataPacket(DataPacket packet)
+	public boolean writeDataPacket(Message packet)
     {
 		boolean streamInitialized = false;
 
@@ -142,9 +142,9 @@ public class SocketHandler
         return result;
     }
 
-    private DataPacket readDataPacket()
+    private Message readDataPacket()
     {
-        DataPacket dataPacket = null;
+        Message message = null;
         boolean streamInitialized = true;
 
         if (socket.isConnected()) {
@@ -156,19 +156,19 @@ public class SocketHandler
             if (objectInputStream != null && streamInitialized) {
                 try {
                     Object object = objectInputStream.readObject();
-                    dataPacket = (DataPacket) object;
+                    message = (Message) object;
                 } catch (ClassNotFoundException ex) {
                     System.out.println("The Serialized Object Not Found");
-                    dataPacket = null;
+                    message = null;
                 } catch (StreamCorruptedException ex) {
-                    dataPacket = null;
+                    message = null;
                 } catch (IOException ex) {
-                    dataPacket = null;
+                    message = null;
                 }
             }
         }
 
-        return dataPacket;
+        return message;
 
     }
 
@@ -200,7 +200,7 @@ public class SocketHandler
     {
 		public void run() {
 			boolean interfaceState = true;
-			DataPacket packet = new DataPacket(PacketType.SOCKET_TEST, null);
+			Message packet = new Message(MessageType.PING, null);
 			/*
 			 *  Sends an empty packet to the respective client
 			 *  to determine if the socket connection is still established.
@@ -220,14 +220,14 @@ public class SocketHandler
 	private class InboundPacketListener implements Runnable
     {
 		public void run() {
-			DataPacket dataPacket;
+			Message message;
 
             portWatcher.processStateChange(remoteIPAddress, true);
 
 			System.out.println("Waiting for message from Client " + remoteIPAddress);
-			while ((dataPacket = readDataPacket()) != null) {
+			while ((message = readDataPacket()) != null) {
 				System.out.println("Data Packet Received");
-                portWatcher.readServerMessage(dataPacket, remoteIPAddress);
+                portWatcher.readServerMessage(message, remoteIPAddress);
 			}
 
             portWatcher.processStateChange(remoteIPAddress, false);
