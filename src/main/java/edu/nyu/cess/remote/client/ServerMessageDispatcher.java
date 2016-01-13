@@ -3,7 +3,7 @@
  */
 package edu.nyu.cess.remote.client;
 
-import edu.nyu.cess.remote.client.net.CommunicationNetworkInterface;
+import edu.nyu.cess.remote.client.net.PortManager;
 import edu.nyu.cess.remote.common.app.ExeRequestMessage;
 import edu.nyu.cess.remote.common.app.State;
 import edu.nyu.cess.remote.common.net.Message;
@@ -20,12 +20,12 @@ public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservab
 
 	private Client client;
 
-	private CommunicationNetworkInterface commNetworkInterface;
+	private PortManager portManager;
 
-	public ServerMessageDispatcher(CommunicationNetworkInterface communicationNetworkInterface, Client client) {
+	public ServerMessageDispatcher(PortManager portManager, Client client) {
 		this.client = client;
-		this.commNetworkInterface = communicationNetworkInterface;
-		this.commNetworkInterface.addObserver(this);
+		this.portManager = portManager;
+		this.portManager.addObserver(this);
 	}
 
 	/**
@@ -35,8 +35,8 @@ public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservab
 
 		while (true) {
 			int pollIntervalMilliseconds = 2000; // milliseconds
-			commNetworkInterface.setServerSocketConnection(pollIntervalMilliseconds);
-			commNetworkInterface.handleClientServerMessaging();
+			portManager.setServerSocketConnection(pollIntervalMilliseconds);
+			portManager.handleClientServerMessaging();
 			try {
 				log.info("Connected to the server...");
 				Thread.sleep(pollIntervalMilliseconds);
@@ -49,7 +49,7 @@ public class ServerMessageDispatcher implements PortWatcher, ServerProxyObservab
 
 	public void sendServerApplicationState(State state) {
 		Message message = new Message(MessageType.STATE_CHANGE, state);
-		commNetworkInterface.writeDataPacket(message);
+		portManager.writeDataPacket(message);
 	}
 
 	public void notifyObserversMessageReceived(ExeRequestMessage execRequest) {
