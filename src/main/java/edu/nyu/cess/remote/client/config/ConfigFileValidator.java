@@ -23,20 +23,20 @@ public class ConfigFileValidator extends Validator
 	{
 		clearErrors();
 
-		IpValidator ipValidator = new IpValidator(hostConfig.getIpAddress());
+		IpValidator ipValidator = new IpValidator(hostConfig.getServerIpAddress());
 		if ( ! ipValidator.validate()) {
 			errors.addAll(ipValidator.getErrors());
 			return false;
 		}
 
-		PortValidator portValidator = new PortValidator(hostConfig.getPort());
+		PortValidator portValidator = new PortValidator(hostConfig.getServerPort());
 		if ( ! portValidator.validate()) {
 			errors.addAll(portValidator.getErrors());
 			return false;
 		}
 
 
-		HostNameValidator hostNameValidator = new HostNameValidator(hostConfig.getHostName());
+		HostNameValidator hostNameValidator = new HostNameValidator(hostConfig.getClientName());
 		if ( ! hostNameValidator.validate()) {
 			errors.addAll(hostNameValidator.getErrors());
 			return false;
