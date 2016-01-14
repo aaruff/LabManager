@@ -1,80 +1,106 @@
 package edu.nyu.cess.remote.common.app;
 
+import org.apache.log4j.Logger;
+
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
 
-public class App implements ApplicationObservable, Serializable {
+public class App implements ApplicationObservable, Serializable
+{
+	final static Logger log = Logger.getLogger(App.class);
 
 	private static final long serialVersionUID = 1L;
 
-	ArrayList<ApplicationObserver> observers = new ArrayList<ApplicationObserver>();
+	ApplicationObserver applicationObserver;
 
-	private String name;
-	private String path;
-	private String args;
+	private ExecutionRequest executionRequest;
 
-	private State currentState;
+	private AppState currentAppState;
 
-	private final State startedState, stoppedState;
-
-	private Process process;
+	private Process applicationProcess;
 
 	private ProcessIOStreamGobbler errorGobbler;
 	private ProcessIOStreamGobbler outputGobbler;
 
 	public Thread processMonitor;
 
-	public App(String name, String path, String args) {
-		this.name = name;
-		this.path = path;
-		this.args = args;
+	public App(ApplicationObserver applicationObserver, ExecutionRequest executionRequest) {
+		currentAppState = AppState.STOPPED;
 
-		currentState = new StopedState();
-		startedState = new StartedState();
-		stoppedState = new StopedState();
+		this.applicationObserver = applicationObserver;
+		this.executionRequest = executionRequest;
+	}
 
-		process = null;
+	public void setExecutionRequest(ExecutionRequest executionRequest)
+	{
+		this.executionRequest = executionRequest;
+	}
+
+	public synchronized void setState(AppState appState)
+	{
+		this.currentAppState = appState;
+	}
+
+	public synchronized AppState getStateSnapshot()
+	{
+		AppState stateSnapshot;
+		//TODO: ensure setState isn't being called (i.e. modifying the state) while reading the state.
+		switch(currentAppState) {
+			case STARTED:
+				stateSnapshot = AppState.STARTED;
+				break;
+			case STOPPED:
+				stateSnapshot = AppState.STOPPED;
+				break;
+			default:
+				stateSnapshot = AppState.STOPPED;
+		}
+
+		return stateSnapshot;
 	}
 
 	public boolean start() {
 		boolean execResult = false;
+		switch (currentAppState) {
+			case STOPPED:
+				if (applicationProcess == null) {
+					try {
+						String path = executionRequest.getPath();
+						String name = executionRequest.getName();
+						String args = executionRequest.getArgs();
 
-		if (currentState instanceof StopedState) {
+						log.info("Attempting to start " + path + name + " " + args);
+						applicationProcess = Runtime.getRuntime().exec(path + name + " " + args);
 
-			if (process == null) {
+						if (applicationProcess != null) {
+							currentAppState = AppState.STARTED;
 
-				try {
-					System.out.println("Attempting to start " + path + name + " " + args);
-					process = Runtime.getRuntime().exec(path + name + " " + args);
+							errorGobbler = new ProcessIOStreamGobbler(applicationProcess.getErrorStream(), "ERROR");
+							outputGobbler = new ProcessIOStreamGobbler(applicationProcess.getInputStream(), "OUTPUT");
 
-					if (process != null) {
-						currentState = startedState;
+							errorGobbler.start();
+							outputGobbler.start();
 
-						errorGobbler = new ProcessIOStreamGobbler(process.getErrorStream(), "ERROR");
-						outputGobbler = new ProcessIOStreamGobbler(process.getInputStream(), "OUTPUT");
+							startProcessMonitor();
 
-						errorGobbler.start();
-						outputGobbler.start();
-
-						startProcessMonitor();
-
-						execResult = true;
-						System.out.println(name + " has been executed");
+							execResult = true;
+							log.info(name + " has been executed.");
+						}
+						else {
+							currentAppState = AppState.STOPPED;
+						}
+					} catch (SecurityException e) {
+						log.error("Security Exception Occurred.", e);
+					} catch (IOException e) {
+						log.error("Process execution failed.", e);
+						currentAppState = AppState.STOPPED;
 					}
-					else {
-						currentState = stoppedState;
-					}
-				} catch (SecurityException ex) {
-					System.out.println("Security Exception Occured");
-				} catch (IOException e) {
-					System.out.println("Process execution failed for: " + path + name + " " + args);
-					currentState = stoppedState;
 				}
-			}
-		}
-		else if (currentState instanceof StartedState) {
-			execResult = true;
+				break;
+			case STARTED:
+				execResult = true;
+				break;
+			default:
 		}
 
 		return execResult;
@@ -82,102 +108,44 @@ public class App implements ApplicationObservable, Serializable {
 
 	public synchronized boolean stop() {
 
-		if (process != null) {
+		if (applicationProcess != null) {
 			processMonitor.interrupt();
-			process.destroy();
+			applicationProcess.destroy();
 		}
 
-		currentState = stoppedState;
+		currentAppState = AppState.STOPPED;
 
-		process = null;
-		args = null;
-		name = null;
-		path = null;
+		applicationProcess = null;
+		executionRequest = null;
 		outputGobbler = null;
 		errorGobbler = null;
 
-		System.out.println("application has terminated.");
+		log.info("application has terminated.");
 		return true;
 	}
 
-	public void changeState(State appState) {
-
-		if (appState instanceof StartedState) {
-			start();
+	public void changeState(AppState appState) {
+		switch(appState) {
+			case STARTED:
+				start();
+				break;
+			case STOPPED:
+				stop();
+				break;
+			default:
 		}
-		else if (appState instanceof StopedState) {
-			stop();
-		}
 
-		notifyObservers();
-	}
-
-	public boolean isStarted() {
-		return (currentState instanceof StartedState);
-	}
-
-	public boolean isStopped() {
-		return (currentState instanceof StopedState);
-	}
-
-	public void addObserver(ApplicationObserver observer) {
-		observers.add(observer);
-	}
-
-	public void deleteObserver(ApplicationObserver observer) {
-		observers.remove(observer);
+		notifyObserverAppStateChanged();
 	}
 
 	public void startProcessMonitor() {
-		processMonitor = new Thread(new ProcessMonitor());
+		processMonitor = new Thread(new ProcessCloseMonitor(this, applicationProcess));
 		processMonitor.start();
 
 	}
 
-	public synchronized void notifyObservers() {
-		State state;
-		if (currentState instanceof StartedState) {
-			state = new StartedState();
-		}
-		else {
-			state = new StopedState();
-		}
-
-		for (ApplicationObserver observer : observers) {
-			observer.applicationUpdate(state);
-		}
+	public synchronized void notifyObserverAppStateChanged() {
+		AppState appState = this.currentAppState;
+        applicationObserver.notifyStateChanged(appState);
 	}
-
-	private class ProcessMonitor implements Runnable {
-
-		public void run() {
-
-			try {
-				if (process != null) {
-					System.out.println("Monitoring process...");
-					process.waitFor();
-
-					//getErrorGobbler().join(); // handle condition where the
-					//getOutputGobbler().join(); // process ends before the threads finish
-
-					if (currentState instanceof StartedState) {
-						stop();
-						notifyObservers();
-					}
-				}
-				else {
-					System.out.println("******************************");
-					System.out.println("process null, what the hell!");
-					System.out.println("******************************");
-				}
-			} catch (InterruptedException e) {
-				System.out.println("Process execution interrupted.");
-			}
-
-			System.out.println("Process destroyed on client.");
-			// send message here to server
-		}
-
-	}
-
 }
