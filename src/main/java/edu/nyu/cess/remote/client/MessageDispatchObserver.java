@@ -3,7 +3,7 @@
  */
 package edu.nyu.cess.remote.client;
 
-import edu.nyu.cess.remote.common.app.ExeRequestMessage;
+import edu.nyu.cess.remote.common.app.ExecutionRequest;
 
 /**
  * @author Anwar A. Ruff
@@ -11,7 +11,7 @@ import edu.nyu.cess.remote.common.app.ExeRequestMessage;
 public interface MessageDispatchObserver
 {
 
-	void updateServerExecutionRequestReceived(ExeRequestMessage exeRequestMessage);
+	void updateServerExecutionRequestReceived(ExecutionRequest executionRequest);
 
 	void updateNetworkStateChanged(boolean isConnected);
 
