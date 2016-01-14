@@ -3,32 +3,45 @@ package edu.nyu.cess.remote.client.net;
 import edu.nyu.cess.remote.common.net.ClientServerNetworkInfo;
 import edu.nyu.cess.remote.common.net.Message;
 import edu.nyu.cess.remote.common.net.MessageType;
-import edu.nyu.cess.remote.common.net.PortWatcher;
+import edu.nyu.cess.remote.common.net.ServerMessageNotification;
 import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
 
-public class PortManager
+public class ClientSocket implements Socket
 {
+	ServerMessageNotification serverMessageNotification;
 
-	ArrayList<PortWatcher> observers = new ArrayList<PortWatcher>();
-
-	private Socket socket;
-
-	private Thread networkInterfaceMonitorThread;
-
-	private NetworkInterface networkInterface;
+	private java.net.Socket socket;
 
 	private ClientServerNetworkInfo clientServerNetworkInfo;
 
 	private ObjectInputStream objectInputStream;
 	private ObjectOutputStream objectOutputStream;
 
-	final static Logger log = Logger.getLogger(PortManager.class);
+	final static Logger log = Logger.getLogger(ClientSocket.class);
 
-	public PortManager(ClientServerNetworkInfo clientServerNetworkInfo)
+	/**
+	 * Establishes a persistent connection between the client and the server.
+	 */
+	public void createPersistentServerConnection() {
+
+		while (true) {
+			int pollIntervalMilliseconds = 2000; // milliseconds
+			setServerSocketConnection(pollIntervalMilliseconds);
+			startClientServerSocketCommunication();
+			try {
+				log.info("Connected to the server...");
+				Thread.sleep(pollIntervalMilliseconds);
+			} catch (InterruptedException e) {
+				log.error("Polling tread sleep interrupted", e);
+			}
+			log.info("Attempting to reconnect to the server...");
+		}
+	}
+
+	public ClientSocket(ClientServerNetworkInfo clientServerNetworkInfo)
 	{
 		this.clientServerNetworkInfo = clientServerNetworkInfo;
 	}
@@ -81,17 +94,17 @@ public class PortManager
 	}
 
 	/**
-	 * Initializes a {@link Socket} connection via the IP Address and Port
+	 * Initializes a {@link java.net.Socket} connection via the IP Address and Port
 	 * Number. If the initialization of the Socket fails the return value will
 	 * be null.
 	 *
-	 * @return initialized {@link Socket}, or null if a socket connection is not
+	 * @return initialized {@link java.net.Socket}, or null if a socket connection is not
 	 *         established.
 	 */
-	public Socket getServerSocketConnection() {
+	public java.net.Socket getServerSocketConnection() {
 		socket = null;
 		try {
-			socket = new Socket(clientServerNetworkInfo.getServerIpAddress(), clientServerNetworkInfo.getServerPort());
+			socket = new java.net.Socket(clientServerNetworkInfo.getServerIpAddress(), clientServerNetworkInfo.getServerPort());
 
 			log.info("Network connection established...");
 
@@ -110,7 +123,7 @@ public class PortManager
 
 	/**
 	 * Polls the remote network node on a millisecond interval until a
-	 * {@link Socket} connection is established.
+	 * {@link java.net.Socket} connection is established.
 	 *
 	 * @param pollInterval poll interval in milliseconds
 	 */
@@ -130,56 +143,33 @@ public class PortManager
 	}
 
 	/**
-	 * Starts the thread that listens for incoming messages from the server.
+	 * This function reads data packets and passes read {@link Message}s to
+	 * {@link ServerMessageNotification}s.
 	 */
-	public void startServerMessageListenerThread() {
-		networkInterfaceMonitorThread = new Thread(new MonitorNetworkInterface());
+	public void startClientServerSocketCommunication()
+	{
+		log.info("Sending initial client-server network info to the server.");
+		Message message = new Message(MessageType.NETWORK_INFO, clientServerNetworkInfo);
+		writeDataPacket(message);
+
+		log.info("Starting the network interface monitor.");
+		Thread networkInterfaceMonitorThread = new Thread(new NetworkInterfaceMonitor(this));
 		networkInterfaceMonitorThread.setName("Network Interface Monitor");
 		networkInterfaceMonitorThread.start();
 
-	}
-
-	/**
-	 * This function reads data packets and passes read {@link Message}s to
-	 * {@link PortWatcher}s.
-	 */
-	public void handleClientServerMessaging() {
-		Message message = new Message(MessageType.HOST_INFO, clientServerNetworkInfo);
-		writeDataPacket(message);
-
-		startServerMessageListenerThread();
-
-		log.info("Waiting for message from " + clientServerNetworkInfo.getServerIpAddress());
-
-		notifyPortWatcher(clientServerNetworkInfo.getServerIpAddress(), true);
-
+		log.info("Waiting for message from the server.");
 		while ((message = readDataPacket()) != null) {
-			tellPortWatcherPacketReceived(message);
+            serverMessageNotification.notifyServerMessageReceived(message);
 		}
 
-		if (objectOutputStream != null) {
-			try {
-				objectOutputStream.close();
-				objectOutputStream = null;
-			} catch (IOException e) {
-				log.error("failed closing output stream", e);
-			}
-		}
-		if (objectInputStream != null) {
-			try {
-				objectInputStream.close();
-				objectInputStream = null;
-			} catch (IOException e) {
-				log.error("IO Exception: failed to close ObjectOutputStream.", e);
-			}
-		}
+		close(objectOutputStream);
+		close(objectInputStream);
 
-		notifyPortWatcher(clientServerNetworkInfo.getServerIpAddress(), false);
 	}
 
 	/**
 	 * Read a {@link Message} sent from a remote node via the initialized
-	 * {@link Socket} connection.
+	 * {@link java.net.Socket} connection.
 	 *
 	 * @return a {@link Message} or null if the packet reading process
 	 *         failed.
@@ -248,93 +238,30 @@ public class PortManager
 		return streamInitialized;
 	}
 
-	public void closeServerNetworkConnection() {
-		if (socket != null) {
+	private void close(Closeable closeable)
+	{
+		if (closeable != null) {
 			try {
-				socket.close();
-				socket = null;
-			} catch (IOException e) {
-				log.error(e);
-			}
-		}
-
-		if (objectOutputStream != null) {
-			try {
-				objectOutputStream.close();
-				objectOutputStream = null;
-			} catch (IOException e) {
-				log.error(e);
-			}
-		}
-
-		if (objectInputStream != null) {
-			try {
-				objectInputStream.close();
-				objectInputStream = null;
+				closeable.close();
 			} catch (IOException e) {
 				log.error(e);
 			}
 		}
 	}
 
-	public boolean addObserver(PortWatcher networkObserver) {
-		return observers.add(networkObserver);
+	@Override public synchronized void closeSocketConnection() {
+		close(socket);
+		close(objectOutputStream);
+		close(objectInputStream);
 	}
 
-	public synchronized void tellPortWatcherPacketReceived(Message packet) {
-		for (PortWatcher observer : observers) {
-			observer.readServerMessage(packet, clientServerNetworkInfo.getServerIpAddress());
-		}
+	@Override
+	public synchronized InetAddress getInetAddress() throws UnknownHostException
+	{
+		return InetAddress.getByName(clientServerNetworkInfo.getClientIpAddress());
 	}
 
-	public synchronized void notifyPortWatcher(String ipAddress, boolean isConnected) {
-		for (PortWatcher observer : observers) {
-			observer.processStateChange(ipAddress, isConnected);
-		}
-
+	public void setServerMessageNotification(ServerMessageNotification serverMessageNotification) {
+		this.serverMessageNotification = serverMessageNotification;
 	}
-
-	/**
-	 * Monitors the state of the network interface. If the network interface is
-	 * down the socket is set to null to trigger an interrupt.
-	 */
-	private class MonitorNetworkInterface implements Runnable {
-
-		public void run() {
-			boolean networkInterfaceUp = true;
-			int monitorInterval = 40000;
-
-			while (networkInterfaceUp) {
-
-				try {
-					InetAddress addr = InetAddress.getByName(clientServerNetworkInfo.getClientIpAddress());
-					networkInterface = NetworkInterface.getByInetAddress(addr);
-				} catch (SocketException e) {
-					networkInterface = null;
-				} catch (UnknownHostException e) {
-					networkInterface = null;
-				}
-
-				if (networkInterface != null) {
-					try {
-						Thread.sleep(monitorInterval);
-						networkInterfaceUp = networkInterface.isUp();
-						log.info("NIC Status: " + ((networkInterfaceUp) ? "UP" : "DOWN"));
-					} catch (InterruptedException e) {
-						networkInterfaceUp = false;
-					} catch (SocketException e) {
-						networkInterfaceUp = false;
-					}
-				}
-				else {
-					networkInterfaceUp = false;
-				}
-			}
-
-			closeServerNetworkConnection();
-			log.info("Network Interface Is Down!!!");
-			log.info("Attempting to interrupt the network communication thread...");
-		}
-	}
-
 }
