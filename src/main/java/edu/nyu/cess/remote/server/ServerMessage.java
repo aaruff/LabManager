@@ -3,8 +3,8 @@
  */
 package edu.nyu.cess.remote.server;
 
-import edu.nyu.cess.remote.common.app.ExeRequestMessage;
-import edu.nyu.cess.remote.common.app.State;
+import edu.nyu.cess.remote.common.app.ExecutionRequest;
+import edu.nyu.cess.remote.common.app.AppState;
 import edu.nyu.cess.remote.common.net.*;
 import org.apache.log4j.Logger;
 
@@ -15,15 +15,15 @@ import java.util.HashMap;
 /**
  * The Class ClientProxy.
  */
-public class Port implements PortWatcher
+public class ServerMessage implements ServerMessageNotification
 {
-    final static Logger log = Logger.getLogger(Port.class);
+    final static Logger log = Logger.getLogger(ServerMessage.class);
 
     private Server server;
 
 	private HashMap<String, SocketHandler> clientSocketConnections = new HashMap<String, SocketHandler>();
 
-	public Port(Server server)
+	public ServerMessage(Server server)
     {
         this.server = server;
 	}
@@ -60,7 +60,7 @@ public class Port implements PortWatcher
 		return clientSocketConnections.containsKey(socketHandler.getRemoteIpAddress());
 	}
 
-	public void readServerMessage(Message message, String ipAddress)
+	public void notifySocketMessageReceived(edu.nyu.cess.remote.common.net.Message message, String ipAddress)
     {
         log.debug("Packet received from client " + ipAddress);
 
@@ -69,12 +69,12 @@ public class Port implements PortWatcher
 			// Not supported by the server
 			break;
 		case STATE_CHANGE:
-			State appState = (State) message.getPayload();
-			if (appState != null && appState instanceof State) {
-                server.updateClientState(ipAddress, appState);
+			AppState appAppState = (AppState) message.getPayload();
+			if (appAppState != null && appAppState instanceof AppState) {
+                server.updateClientState(ipAddress, appAppState);
 			}
 			break;
-		case HOST_INFO:
+		case NETWORK_INFO:
 			ClientServerNetworkInfo clientServerNetworkInfo = (ClientServerNetworkInfo) message.getPayload();
 			String clientName = clientServerNetworkInfo.getClientName();
 
@@ -106,18 +106,18 @@ public class Port implements PortWatcher
         server.removeClient(ipAddress);
 	}
 
-	public void startApplicationOnClient(ExeRequestMessage applicationExeRequestMessage, String ipAddress) {
-		Message message = new Message(MessageType.EXECUTION_REQUEST, applicationExeRequestMessage);
+	public void startApplicationOnClient(ExecutionRequest applicationExecutionRequest, String ipAddress) {
+		edu.nyu.cess.remote.common.net.Message message = new edu.nyu.cess.remote.common.net.Message(MessageType.EXECUTION_REQUEST, applicationExecutionRequest);
 		clientSocketConnections.get(ipAddress).writeDataPacket(message);
 	}
 
-	public void stopApplicationOnClient(ExeRequestMessage stopExeRequestMessage, String ipAddress) {
-		Message message = new Message(MessageType.EXECUTION_REQUEST, stopExeRequestMessage);
+	public void stopApplicationOnClient(ExecutionRequest stopExecutionRequest, String ipAddress) {
+		edu.nyu.cess.remote.common.net.Message message = new edu.nyu.cess.remote.common.net.Message(MessageType.EXECUTION_REQUEST, stopExecutionRequest);
 		clientSocketConnections.get(ipAddress).writeDataPacket(message);
 	}
 
 	public void sendMessageToClient(String message, String ipAddress) {
-		Message dataPacket = new Message(MessageType.USER_NOTIFICATION, message);
+		edu.nyu.cess.remote.common.net.Message dataPacket = new edu.nyu.cess.remote.common.net.Message(MessageType.USER_NOTIFICATION, message);
 		clientSocketConnections.get(ipAddress).writeDataPacket(dataPacket);
 	}
 
@@ -144,5 +144,11 @@ public class Port implements PortWatcher
 		}
 
 		return new SocketHandler(socket, this);
+	}
+
+	@Override
+	public void notifyServerMessageReceived(Message message)
+	{
+
 	}
 }
