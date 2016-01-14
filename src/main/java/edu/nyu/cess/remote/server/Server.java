@@ -1,9 +1,7 @@
 package edu.nyu.cess.remote.server;
 
-import edu.nyu.cess.remote.common.app.ExeRequestMessage;
-import edu.nyu.cess.remote.common.app.StartedState;
-import edu.nyu.cess.remote.common.app.State;
-import edu.nyu.cess.remote.common.app.StopedState;
+import edu.nyu.cess.remote.common.app.ExecutionRequest;
+import edu.nyu.cess.remote.common.app.AppState;
 import edu.nyu.cess.remote.server.app.profile.AppProfile;
 import org.apache.log4j.Logger;
 
@@ -17,7 +15,7 @@ public class Server
 {
     final static Logger logger = Logger.getLogger(Server.class);
 
-	private final Port port;
+	private final ServerMessage port;
 
 	protected final DashboardView dashboardView;
 
@@ -31,7 +29,7 @@ public class Server
 		this.appProfileMap = appProfileMap;
 
 		dashboardView = new DashboardView(this);
-		port = new Port(this);
+		port = new ServerMessage(this);
 	}
 
 	/**
@@ -75,12 +73,12 @@ public class Server
 	}
 
 	/**
-	 * Called by the {@link Port} when applicationState update has been
+	 * Called by the {@link ServerMessage} when applicationState update has been
 	 * received from a client.
 	 */
-	public void updateClientState(String ipAddress, State applicationState)
+	public void updateClientState(String ipAddress, AppState applicationAppState)
     {
-		clientPool.updateClientState(applicationState, ipAddress);
+		clientPool.updateClientState(applicationAppState, ipAddress);
 	}
 
 	/**
@@ -103,7 +101,7 @@ public class Server
 	}
 
 	/**
-	 * Prepares an {@link ExeRequestMessage}, which contains the information
+	 * Prepares an {@link ExecutionRequest}, which contains the information
 	 * needed to execute the chosen application on the client, and passes it to
 	 * the clientProxy which will handle sending it over the network to the
 	 * appropriate client.
@@ -119,9 +117,9 @@ public class Server
 		StartedState startState = new StartedState();
 
 		AppProfile appProfile = appProfileMap.get(appName);
-		ExeRequestMessage exeRequestMessage = new ExeRequestMessage(
+		ExecutionRequest executionRequest = new ExecutionRequest(
 				appProfile.getName(), appProfile.getPath(), appProfile.getOptions(), startState);
-		port.startApplicationOnClient(exeRequestMessage, ipAddress);
+		port.startApplicationOnClient(executionRequest, ipAddress);
 	}
 
 
@@ -134,9 +132,9 @@ public class Server
 	 */
 	public synchronized void stopApplication(String ipAddress)
     {
-		ExeRequestMessage exeRequestMessage = new ExeRequestMessage("", "", "", new StopedState());
+		ExecutionRequest executionRequest = new ExecutionRequest("", "", "", new StopedState());
 
-		port.stopApplicationOnClient(exeRequestMessage, ipAddress);
+		port.stopApplicationOnClient(executionRequest, ipAddress);
 	}
 
 
