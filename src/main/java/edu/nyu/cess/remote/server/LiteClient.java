@@ -1,8 +1,6 @@
 package edu.nyu.cess.remote.server;
 
-import edu.nyu.cess.remote.common.app.StartedState;
-import edu.nyu.cess.remote.common.app.State;
-import edu.nyu.cess.remote.common.app.StopedState;
+import edu.nyu.cess.remote.common.app.AppState;
 import edu.nyu.cess.remote.server.ui.NullComparator;
 
 import java.util.Comparator;
@@ -12,7 +10,7 @@ public class LiteClient implements Comparable<LiteClient>
 	private String ipAddress;
 	private String hostName;
 
-	private State applicationState;
+	private AppState applicationAppState;
 	private String applicationName;
 
 	public static final SortByHostname SORT_BY_HOSTNAME = new SortByHostname();
@@ -27,16 +25,16 @@ public class LiteClient implements Comparable<LiteClient>
 		this.ipAddress = ipAddress;
         hostName = ipAddress;
 
-		applicationState = new StopedState();
+		applicationAppState = new StopedState();
 	}
 
 	/**
 	 * Sets the client's application state.
 	 *
-	 * @param applicationState the application state
+	 * @param applicationAppState the application state
      */
-	public void setApplicationState(State applicationState) {
-		this.applicationState = applicationState;
+	public void setApplicationAppState(AppState applicationAppState) {
+		this.applicationAppState = applicationAppState;
 	}
 
 	public String getIPAddress() {
@@ -50,7 +48,7 @@ public class LiteClient implements Comparable<LiteClient>
      */
 	public boolean isApplicationRunning() {
 		boolean applicationRunning = false;
-		if (applicationState instanceof StartedState) {
+		if (applicationAppState instanceof StartedState) {
 			applicationRunning = true;
 		}
 		return applicationRunning;
