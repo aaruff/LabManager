@@ -3,7 +3,7 @@
  */
 package edu.nyu.cess.remote.server;
 
-import edu.nyu.cess.remote.common.app.State;
+import edu.nyu.cess.remote.common.app.AppState;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
@@ -88,14 +88,14 @@ public class ClientPool implements LiteClientsObservable
 	/**
 	 * Notify observers of a state change.
 	 *
-	 * @param state
+	 * @param appState
 	 * @param ipAddress
      */
-	public boolean updateClientState(State state, String ipAddress)
+	public boolean updateClientState(AppState appState, String ipAddress)
 	{
 		try {
 			LiteClient client = getByIp(ipAddress);
-			client.setApplicationState(state);
+			client.setApplicationAppState(appState);
 			notifyClientStateChanged(ipAddress);
 			return true;
 		}
