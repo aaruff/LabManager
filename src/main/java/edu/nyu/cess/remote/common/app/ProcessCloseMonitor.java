@@ -9,12 +9,12 @@ class ProcessCloseMonitor implements Runnable
 {
     final static Logger log = Logger.getLogger(ProcessCloseMonitor.class);
 
-    private App app;
+    private AppExecutor appExecutor;
 	private Process process;
 
-	public ProcessCloseMonitor(App app, Process process)
+	public ProcessCloseMonitor(AppExecutor appExecutor, Process process)
     {
-        this.app = app;
+        this.appExecutor = appExecutor;
         this.process = process;
     }
 
@@ -28,9 +28,8 @@ class ProcessCloseMonitor implements Runnable
                 //getErrorGobbler().join(); // handle condition where the
                 //getOutputGobbler().join(); // process ends before the threads finish
 
-                if (app.getStateSnapshot() == AppState.STARTED) {
-                    app.stop();
-                    app.notifyObserverAppStateChanged();
+                if (appExecutor.getCurrentState() == AppState.STARTED) {
+                    appExecutor.stop();
                 }
             }
             else {
