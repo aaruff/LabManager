@@ -2,7 +2,7 @@ package edu.nyu.cess.remote.common.app;
 
 import java.io.Serializable;
 
-public class ExecutionRequest implements Serializable {
+public class AppExecution implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -10,18 +10,18 @@ public class ExecutionRequest implements Serializable {
 	private final String path;
 	private final String args;
 
-	private AppState applicationAppState;
+	private AppState appState;
 
-	public ExecutionRequest(String name, String path, String args, AppState applicationAppState) {
+	public AppExecution(String name, String path, String args, AppState appState) {
 		this.name = name;
 		this.path = path;
 		this.args = args;
 
-		this.applicationAppState = applicationAppState;
+		this.appState = appState;
 	}
 
-	public AppState getApplicationAppState() {
-		return applicationAppState;
+	public AppState getState() {
+		return appState;
 	}
 
 	public String getName() {
@@ -36,4 +36,7 @@ public class ExecutionRequest implements Serializable {
 		return args;
 	}
 
+	public AppExecution clone(AppState appState) {
+		return new AppExecution(name, path, args, appState);
+	}
 }

@@ -5,17 +5,17 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.io.Serializable;
 
-public class App implements ApplicationObservable, Serializable
+public class AppExecutor implements AppExecutionHandler, Serializable
 {
-	final static Logger log = Logger.getLogger(App.class);
+	final static Logger log = Logger.getLogger(AppExecutor.class);
 
 	private static final long serialVersionUID = 1L;
 
-	ApplicationObserver applicationObserver;
+	ApplicationStateObserver applicationStateObserver;
 
-	private ExecutionRequest executionRequest;
+	private AppExecution appExecution;
 
-	private AppState currentAppState;
+	private AppState currentState;
 
 	private Process applicationProcess;
 
@@ -24,28 +24,26 @@ public class App implements ApplicationObservable, Serializable
 
 	public Thread processMonitor;
 
-	public App(ApplicationObserver applicationObserver, ExecutionRequest executionRequest) {
-		currentAppState = AppState.STOPPED;
-
-		this.applicationObserver = applicationObserver;
-		this.executionRequest = executionRequest;
+	public AppExecutor(ApplicationStateObserver applicationStateObserver)
+	{
+		this.applicationStateObserver = applicationStateObserver;
+		currentState = AppState.STOPPED;
 	}
 
-	public void setExecutionRequest(ExecutionRequest executionRequest)
+	public void setAppExecution(AppExecution appExecution)
 	{
-		this.executionRequest = executionRequest;
+		this.appExecution = appExecution;
 	}
 
 	public synchronized void setState(AppState appState)
 	{
-		this.currentAppState = appState;
+		this.currentState = appState;
 	}
 
-	public synchronized AppState getStateSnapshot()
+	public synchronized AppState getCurrentState()
 	{
 		AppState stateSnapshot;
-		//TODO: ensure setState isn't being called (i.e. modifying the state) while reading the state.
-		switch(currentAppState) {
+		switch(currentState) {
 			case STARTED:
 				stateSnapshot = AppState.STARTED;
 				break;
@@ -59,21 +57,53 @@ public class App implements ApplicationObservable, Serializable
 		return stateSnapshot;
 	}
 
+	@Override public void executeRequest(AppExecution appExecution)
+	{
+		log.info("Application execution request received from the server.");
+		AppState appState = appExecution.getState();
+
+		switch(appState) {
+			case STARTED:
+				switch (getCurrentState()) {
+					case STARTED:
+                        // TODO: Handle case where application start request received, but an application is already started
+						break;
+					case STOPPED:
+						setAppExecution(appExecution);
+                        start();
+						break;
+				}
+				break;
+			case STOPPED:
+				switch (getCurrentState()) {
+					case STARTED:
+						stop();
+						break;
+					case STOPPED:
+                        // TODO: Handle case where application start request received, but an application is already started
+						break;
+				}
+				break;
+			default:
+		}
+	}
+
 	public boolean start() {
 		boolean execResult = false;
-		switch (currentAppState) {
+		switch (currentState) {
 			case STOPPED:
 				if (applicationProcess == null) {
 					try {
-						String path = executionRequest.getPath();
-						String name = executionRequest.getName();
-						String args = executionRequest.getArgs();
+						String path = appExecution.getPath();
+						String name = appExecution.getName();
+						String args = appExecution.getArgs();
 
 						log.info("Attempting to start " + path + name + " " + args);
 						applicationProcess = Runtime.getRuntime().exec(path + name + " " + args);
 
 						if (applicationProcess != null) {
-							currentAppState = AppState.STARTED;
+							setState(AppState.STARTED);
+                            applicationStateObserver.applicationStateUpdate(appExecution.clone(currentState));
 
 							errorGobbler = new ProcessIOStreamGobbler(applicationProcess.getErrorStream(), "ERROR");
 							outputGobbler = new ProcessIOStreamGobbler(applicationProcess.getInputStream(), "OUTPUT");
@@ -87,13 +117,13 @@ public class App implements ApplicationObservable, Serializable
 							log.info(name + " has been executed.");
 						}
 						else {
-							currentAppState = AppState.STOPPED;
+							currentState = AppState.STOPPED;
 						}
 					} catch (SecurityException e) {
 						log.error("Security Exception Occurred.", e);
 					} catch (IOException e) {
 						log.error("Process execution failed.", e);
-						currentAppState = AppState.STOPPED;
+						currentState = AppState.STOPPED;
 					}
 				}
 				break;
@@ -113,39 +143,21 @@ public class App implements ApplicationObservable, Serializable
 			applicationProcess.destroy();
 		}
 
-		currentAppState = AppState.STOPPED;
-
 		applicationProcess = null;
-		executionRequest = null;
+		appExecution = null;
 		outputGobbler = null;
 		errorGobbler = null;
 
-		log.info("application has terminated.");
+		log.info("Application stopped.");
+        setState(AppState.STOPPED);
+        applicationStateObserver.applicationStateUpdate(appExecution.clone(currentState));
+
 		return true;
-	}
-
-	public void changeState(AppState appState) {
-		switch(appState) {
-			case STARTED:
-				start();
-				break;
-			case STOPPED:
-				stop();
-				break;
-			default:
-		}
-
-		notifyObserverAppStateChanged();
 	}
 
 	public void startProcessMonitor() {
 		processMonitor = new Thread(new ProcessCloseMonitor(this, applicationProcess));
 		processMonitor.start();
 
-	}
-
-	public synchronized void notifyObserverAppStateChanged() {
-		AppState appState = this.currentAppState;
-        applicationObserver.notifyStateChanged(appState);
 	}
 }

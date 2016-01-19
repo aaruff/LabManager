@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * The interface for host config information.
  */
-public class ClientServerNetworkInfo implements Serializable
+public class NetworkInformation implements Serializable
 {
 	private static final long serialVersionUID = -5362819996166894026L;
 
