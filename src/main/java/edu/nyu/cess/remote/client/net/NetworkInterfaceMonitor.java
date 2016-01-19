@@ -1,5 +1,6 @@
 package edu.nyu.cess.remote.client.net;
 
+import edu.nyu.cess.remote.common.net.NetworkInformation;
 import org.apache.log4j.Logger;
 
 import java.net.InetAddress;
@@ -15,11 +16,13 @@ class NetworkInterfaceMonitor implements Runnable
 {
 	final static Logger log = Logger.getLogger(NetworkInterfaceMonitor.class);
 
-    private Socket socket;
+    private MessageHandlerController messageHandlerController;
+	private NetworkInformation networkInfo;
 
-    public NetworkInterfaceMonitor(Socket socket)
+    public NetworkInterfaceMonitor(MessageHandlerController messageHandlerController, NetworkInformation networkInfo)
 	{
-        this.socket = socket;
+        this.messageHandlerController = messageHandlerController;
+		this.networkInfo = networkInfo;
     }
 
     public void run()
@@ -31,7 +34,7 @@ class NetworkInterfaceMonitor implements Runnable
 
 			NetworkInterface networkInterface;
             try {
-                InetAddress inetAddress = socket.getInetAddress();
+				InetAddress inetAddress = InetAddress.getByName(networkInfo.getClientIpAddress());
                 networkInterface = NetworkInterface.getByInetAddress(inetAddress);
             } catch (SocketException | UnknownHostException e) {
 				log.info("Failed to read IP Address.", e);
@@ -56,7 +59,7 @@ class NetworkInterfaceMonitor implements Runnable
             }
         }
 
-        socket.closeSocketConnection();
+        messageHandlerController.stopMessageHandler();
         log.info("Network Interface Is Down!");
         log.info("Attempting to interrupt the network communication thread.");
     }
