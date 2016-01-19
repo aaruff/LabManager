@@ -4,17 +4,17 @@ import edu.nyu.cess.remote.client.validator.HostNameValidator;
 import edu.nyu.cess.remote.client.validator.IpValidator;
 import edu.nyu.cess.remote.client.validator.PortValidator;
 import edu.nyu.cess.remote.client.validator.Validator;
-import edu.nyu.cess.remote.common.net.ClientServerNetworkInfo;
+import edu.nyu.cess.remote.common.net.NetworkInformation;
 
 
 /**
  * Validates the config file properties.
  */
-public class ConfigFileValidator extends Validator
+public class NetworkInformationFileValidator extends Validator
 {
-	private ClientServerNetworkInfo hostConfig;
+	private NetworkInformation hostConfig;
 
-	public ConfigFileValidator(ClientServerNetworkInfo hostConfig)
+	public NetworkInformationFileValidator(NetworkInformation hostConfig)
 	{
 		this.hostConfig = hostConfig;
 	}
