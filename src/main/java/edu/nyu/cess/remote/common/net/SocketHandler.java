@@ -9,7 +9,7 @@ public class SocketHandler
 {
 	private java.net.Socket socket;
 
-    private ServerMessageNotification serverMessageNotification;
+    private NetworkMessageReceiver networkMessageReceiver;
 
 	private Thread inboundCommunicationThread;
 	private Thread networkInterfaceMonitorThread;
@@ -19,10 +19,10 @@ public class SocketHandler
 	private ObjectInputStream objectInputStream;
 	private ObjectOutputStream objectOutputStream;
 
-    public SocketHandler(java.net.Socket socket, ServerMessageNotification serverMessageNotification)
+    public SocketHandler(java.net.Socket socket, NetworkMessageReceiver networkMessageReceiver)
     {
         this.socket = socket;
-        this.serverMessageNotification = serverMessageNotification;
+        this.networkMessageReceiver = networkMessageReceiver;
         remoteIPAddress = this.socket.getInetAddress().getHostAddress();
     }
 
@@ -225,7 +225,7 @@ public class SocketHandler
 			System.out.println("Waiting for message from Client " + remoteIPAddress);
 			while ((message = readDataPacket()) != null) {
 				System.out.println("Data Packet Received");
-                serverMessageNotification.notifyServerMessageReceived(message);
+                networkMessageReceiver.routeIncomingMessage(message);
 			}
 
 			System.out.println("Client " + remoteIPAddress + " connection closed...");
