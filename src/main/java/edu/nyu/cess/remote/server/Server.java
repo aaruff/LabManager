@@ -1,8 +1,17 @@
 package edu.nyu.cess.remote.server;
 
-import edu.nyu.cess.remote.common.app.ExecutionRequest;
+import edu.nyu.cess.remote.common.app.AppExecution;
 import edu.nyu.cess.remote.common.app.AppState;
-import edu.nyu.cess.remote.server.app.profile.AppProfile;
+import edu.nyu.cess.remote.common.net.NetworkInformation;
+import edu.nyu.cess.remote.server.app.AppProfile;
+import edu.nyu.cess.remote.server.client.ClientPool;
+import edu.nyu.cess.remote.server.client.ClientPoolController;
+import edu.nyu.cess.remote.server.client.LiteClient;
+import edu.nyu.cess.remote.server.client.LiteClientNotFoundException;
+import edu.nyu.cess.remote.server.message.ClientMessageHandler;
+import edu.nyu.cess.remote.server.net.ClientConnectionObserver;
+import edu.nyu.cess.remote.server.ui.DashboardView;
+import edu.nyu.cess.remote.server.ui.ViewActionObserver;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
@@ -11,11 +20,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class Server
+public class Server implements ClientConnectionObserver, ViewActionObserver, ClientPoolController
 {
     final static Logger logger = Logger.getLogger(Server.class);
 
-	private final ServerMessage port;
+	private final ClientMessageHandler clientMessageHandler;
 
 	protected final DashboardView dashboardView;
 
@@ -28,8 +37,23 @@ public class Server
 		this.clientPool = clientPool;
 		this.appProfileMap = appProfileMap;
 
-		dashboardView = new DashboardView(this);
-		port = new ServerMessage(this);
+		dashboardView = new DashboardView(getViewActionObserver(), clientPool, getApplicationNames());
+		clientMessageHandler = new ClientMessageHandler(getClientConnectionObserver(), getClientPoolController());
+	}
+
+	private ClientConnectionObserver getClientConnectionObserver()
+	{
+		return this;
+	}
+
+	private ClientPoolController getClientPoolController()
+	{
+		return this;
+	}
+
+	private ViewActionObserver getViewActionObserver()
+	{
+		return this;
 	}
 
 	/**
@@ -39,7 +63,7 @@ public class Server
      */
 	public void init() throws IOException
     {
-		clientPool.addObserver(dashboardView);
+		clientPool.addLiteClientObserver(dashboardView);
 
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
@@ -48,41 +72,106 @@ public class Server
 			}
 		});
 
-		port.listenForSocketConnectionOnPort(2600);
+		clientMessageHandler.handleNewClientSocketConnectionOn(2600);
 	}
 
-	public void startAppInRange(String app, String start, String end)
+	/**
+	 * {@link ViewActionObserver}
+     */
+	@Override public void notifyViewObserverStartAppInRangeRequested(String app, String start, String end)
     {
 		Thread startInRange = new Thread(new StartAppInRangeRunnable(app, start, end));
 		startInRange.start();
 	}
 
-	public void stopAppInRange(String start, String end)
+	/**
+	 * {@link ViewActionObserver}
+	 */
+	@Override public void stopAppInRange(String start, String end)
     {
 		Thread stopInRange = new Thread(new StopAppInRangeRunnable(start, end));
 		stopInRange.start();
 	}
 
-    /**
-     * Adds a client proxy with the provided ip address to the servers collection of active clients.
-     * @param ipAddress The clients IP address
+	/**
+	 * {@link ViewActionObserver}
      */
-	public void addClient(String ipAddress)
+	@Override public void notifyNewClientConnected(NetworkInformation networkInformation)
     {
-		clientPool.addClient(new LiteClient(ipAddress));
+		clientPool.addClient(new LiteClient(networkInformation));
 	}
 
 	/**
-	 * Called by the {@link ServerMessage} when applicationState update has been
-	 * received from a client.
+	 * {@link ViewActionObserver}
 	 */
-	public void updateClientState(String ipAddress, AppState applicationAppState)
-    {
-		clientPool.updateClientState(applicationAppState, ipAddress);
+	@Override public synchronized void messageClient(String message, String ipAddress)
+	{
+		clientMessageHandler.sendMessageToClient(message, ipAddress);
 	}
 
 	/**
-     * Removes the client with the corresponding IP address.
+	 * {@link ViewActionObserver}
+	 */
+	@Override public synchronized void startApplication(String appName, String ipAddress)
+	{
+		AppState startState = AppState.STARTED;
+
+		AppProfile appProfile = appProfileMap.get(appName);
+		AppExecution appExecution = new AppExecution(
+				appProfile.getName(), appProfile.getPath(), appProfile.getOptions(), startState);
+		clientMessageHandler.startApplicationOnClient(appExecution, ipAddress);
+	}
+
+	/**
+	 * {@link ViewActionObserver}
+	 */
+	@Override public synchronized void stopApplication(String ipAddress)
+	{
+		//TODO: Store AppExecution in the client, and return it when stopping and staring an application
+		AppExecution appExecution = new AppExecution("", "", "", AppState.STOPPED);
+
+		clientMessageHandler.stopApplicationOnClient(appExecution, ipAddress);
+	}
+
+	/**
+	 * {@link ViewActionObserver}
+	 */
+	public synchronized void messageClientInRange(String message, String lowerBoundHostName, String upperBoundHostName)
+	{
+		if (lowerBoundHostName.isEmpty() || upperBoundHostName.isEmpty()) {
+			logger.error("Either lower or upper bound is empty.");
+			return; // Error: Host range not set
+		}
+
+		List<LiteClient> sortedLiteClients = clientPool.sort(LiteClient.SORT_BY_HOSTNAME);
+		for (LiteClient client : sortedLiteClients) {
+			messageClient(message, client.getIPAddress());
+		}
+	}
+
+	/**
+	 * {@link ClientPoolController}
+	 */
+	public void updateClientState(String ipAddress, AppExecution appExecution)
+    {
+		clientPool.updateClientState(appExecution, ipAddress);
+	}
+
+	/**
+	 * {@link ClientPoolController}
+	 */
+	public void updateClientHostNameUpdate(String hostName, String ipAddress) {
+		try {
+			LiteClient client = clientPool.getByIp(ipAddress);
+			client.setHostName(hostName);
+		}
+		catch (LiteClientNotFoundException e) {
+			logger.error("Client not found", e);
+		}
+	}
+
+	/**
+	 * {@link ClientPoolController}
 	 */
 	public void removeClient(String ipAddress)
     {
@@ -95,91 +184,20 @@ public class Server
 		}
 	}
 
-	public synchronized void messageClient(String message, String ipAddress)
-    {
-		port.sendMessageToClient(message, ipAddress);
-	}
-
-	/**
-	 * Prepares an {@link ExecutionRequest}, which contains the information
-	 * needed to execute the chosen application on the client, and passes it to
-	 * the clientProxy which will handle sending it over the network to the
-	 * appropriate client.
-	 *
-	 * @param appName
-	 *            The name of the application to be executed
-	 * @param ipAddress
-	 *            The IP Address of the client receiving the application
-	 *            execution request
-	 */
-	public synchronized void startApplication(String appName, String ipAddress)
-    {
-		StartedState startState = new StartedState();
-
-		AppProfile appProfile = appProfileMap.get(appName);
-		ExecutionRequest executionRequest = new ExecutionRequest(
-				appProfile.getName(), appProfile.getPath(), appProfile.getOptions(), startState);
-		port.startApplicationOnClient(executionRequest, ipAddress);
-	}
-
-
-	/**
-	 * Request a client at ipAddress to stop the previously executed
-	 * application.
-	 *
-	 * @param ipAddress
-	 *            IP Address of the client running the application
-	 */
-	public synchronized void stopApplication(String ipAddress)
-    {
-		ExecutionRequest executionRequest = new ExecutionRequest("", "", "", new StopedState());
-
-		port.stopApplicationOnClient(executionRequest, ipAddress);
-	}
-
-
 	/**
 	 * Returns an array of strings containing the names of all of the supported
 	 * applications.
 	 *
 	 * @return Strings containing all supported application names.
 	 */
-	public String[] getApplicationNames()
+	private String[] getApplicationNames()
     {
 		Set<String> names = appProfileMap.keySet();
 		return names.toArray(new String[names.size()]);
 	}
 
-
-	/**
-	 * Returns a {@link ClientPool} which contains a collection of
-	 * {@link LiteClient} objects.
-	 *
-	 * @return returns the client collection
-	 */
-	public ClientPool getClientPool()
-    {
-		return clientPool;
-	}
-
-	public synchronized void messageClientInRange(String message, String lowerBoundHostName, String upperBoundHostName)
-    {
-		if (lowerBoundHostName.isEmpty() || upperBoundHostName.isEmpty()) {
-			logger.error("Either lower or upper bound is empty.");
-			return; // Error: Host range not set
-		}
-
-		List<LiteClient> sortedLiteClients = clientPool.sort(LiteClient.SORT_BY_HOSTNAME);
-		for (LiteClient client : sortedLiteClients) {
-			messageClient(message, client.getIPAddress());
-		}
-	}
-
-
 	/**
 	 * Thread request application execution on a remote client
-	 * @author Anwar A. Ruff
-	 *
 	 */
 	private class StartAppInRangeRunnable implements Runnable
     {
@@ -256,13 +274,4 @@ public class Server
 	}
 
 
-	public void updateClientHostNameUpdate(String hostName, String ipAddress) {
-		try {
-			LiteClient client = clientPool.getByIp(ipAddress);
-			client.setHostName(hostName);
-		}
-		catch (LiteClientNotFoundException e) {
-			logger.error("Client not found", e);
-		}
-	}
 }
