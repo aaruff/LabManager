@@ -3,8 +3,10 @@
  */
 package edu.nyu.cess.remote.server;
 
-import edu.nyu.cess.remote.server.app.profile.AppProfile;
-import edu.nyu.cess.remote.server.app.profile.AppProfilesFile;
+import edu.nyu.cess.remote.server.app.AppProfile;
+import edu.nyu.cess.remote.server.app.AppProfilesFile;
+import edu.nyu.cess.remote.server.client.ClientPool;
+import edu.nyu.cess.remote.server.yaml.YamlExceptionMessage;
 import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -29,20 +31,7 @@ public class ServerInitializer {
 			server.init();
 		}
 		catch (YAMLException e) {
-			JOptionPane.showMessageDialog(new JPanel(),
-					"YAML Error: There was a an error in the configuration file. \nPlease make sure that:\n" +
-					"1. There is a '---' before each set of configuration parameters.\n" +
-					"2. There is one parameter per line consisting of name, path, options.\n" +
-					"3. Below is an sample parameter file:\n\n" +
-					"---\n" +
-					"name: \'Program A\'\n" +
-					"path: \'C:\\\\Path\\To\\ProgramA\'\n" +
-					"options: \'-option\'\n" +
-					"---\n" +
-					"name: \'Program B\'\n" +
-					"path: \'C:\\\\Path\\To\\ProgramB\'\n" +
-					"options: \'-option\'\n",
-					"Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(new JPanel(), YamlExceptionMessage.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 			logger.error("YAML Exception: Unable to read config file because of an invalid entry(s).", e);
 			System.exit(0);
 		}
