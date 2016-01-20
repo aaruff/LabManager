@@ -1,14 +1,14 @@
 /**
  *
  */
-package edu.nyu.cess.remote.server;
+package edu.nyu.cess.remote.server.client;
 
 /**
  * @author akira
  */
 public interface LiteClientsObservable {
 
-	public void addObserver(LiteClientsObserver observer);
+	public void addLiteClientObserver(LiteClientsObserver observer);
 
 	public void removeObserver(LiteClientsObserver observer);
 

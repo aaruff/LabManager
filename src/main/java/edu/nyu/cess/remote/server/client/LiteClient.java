@@ -1,40 +1,34 @@
-package edu.nyu.cess.remote.server;
+package edu.nyu.cess.remote.server.client;
 
 import edu.nyu.cess.remote.common.app.AppState;
+import edu.nyu.cess.remote.common.net.NetworkInformation;
 import edu.nyu.cess.remote.server.ui.NullComparator;
 
 import java.util.Comparator;
 
 public class LiteClient implements Comparable<LiteClient>
 {
-	private String ipAddress;
-	private String hostName;
+	private NetworkInformation networkInformation;
 
-	private AppState applicationAppState;
+	private AppState appState;
 	private String applicationName;
 
 	public static final SortByHostname SORT_BY_HOSTNAME = new SortByHostname();
 	public static final SortByIp SORT_BY_IP = new SortByIp();
 
-    /**
-     * Sets the IP Address and the hostname to the IP Address.
-     *
-     * @param ipAddress String
-     */
-	public LiteClient(String ipAddress) {
-		this.ipAddress = ipAddress;
-        hostName = ipAddress;
+	public LiteClient(NetworkInformation networkInformation) {
+		this.networkInformation = networkInformation;
 
-		applicationAppState = new StopedState();
+		appState = AppState.STOPPED;
 	}
 
 	/**
 	 * Sets the client's application state.
 	 *
-	 * @param applicationAppState the application state
+	 * @param appState the application state
      */
-	public void setApplicationAppState(AppState applicationAppState) {
-		this.applicationAppState = applicationAppState;
+	public void setAppState(AppState appState) {
+		this.appState = appState;
 	}
 
 	public String getIPAddress() {
@@ -47,11 +41,7 @@ public class LiteClient implements Comparable<LiteClient>
 	 * @return the applications state
      */
 	public boolean isApplicationRunning() {
-		boolean applicationRunning = false;
-		if (applicationAppState instanceof StartedState) {
-			applicationRunning = true;
-		}
-		return applicationRunning;
+		return appState == AppState.STARTED;
 	}
 
 	/**

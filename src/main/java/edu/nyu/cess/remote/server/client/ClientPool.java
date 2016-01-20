@@ -1,9 +1,10 @@
 /**
  *
  */
-package edu.nyu.cess.remote.server;
+package edu.nyu.cess.remote.server.client;
 
-import edu.nyu.cess.remote.common.app.AppState;
+import edu.nyu.cess.remote.common.app.AppExecution;
+import edu.nyu.cess.remote.server.Server;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ public class ClientPool implements LiteClientsObservable
 	final static Logger logger = Logger.getLogger(Server.class);
 
 	List<LiteClient> clients = new ArrayList<>();
-	ArrayList<LiteClientsObserver> observers = new ArrayList<>();
+	LiteClientsObserver liteClientObserver;
 
 	/**
 	 * Returns the client specified by its IP address.
@@ -88,14 +89,15 @@ public class ClientPool implements LiteClientsObservable
 	/**
 	 * Notify observers of a state change.
 	 *
-	 * @param appState
+	 * @param appExecution
 	 * @param ipAddress
      */
-	public boolean updateClientState(AppState appState, String ipAddress)
+	public boolean updateClientState(AppExecution appExecution, String ipAddress)
 	{
+		// TODO: Update the application state on the client by passing it the AppExecution, instead of just the state.
 		try {
 			LiteClient client = getByIp(ipAddress);
-			client.setApplicationAppState(appState);
+			client.setAppState(appExecution.getState());
 			notifyClientStateChanged(ipAddress);
 			return true;
 		}
@@ -152,49 +154,41 @@ public class ClientPool implements LiteClientsObservable
 	}
 
 	public void notifyClientAdded(String ipAddress) {
-		for (LiteClientsObserver observer : observers) {
-			observer.updateLiteClientAdded(ipAddress);
-		}
+        liteClientObserver.updateLiteClientAdded(ipAddress);
 	}
 
 	public void notifyClientRemoved(String ipAddress) {
-		for (LiteClientsObserver observer : observers) {
-			observer.updateLiteClientRemoved(ipAddress);
-		}
+        liteClientObserver.updateLiteClientRemoved(ipAddress);
 	}
 
 	public void notifyClientStateChanged(String ipAddress) {
-		for (LiteClientsObserver observer : observers) {
-			try {
-				observer.updateLiteClientStateChanged(getByIp(ipAddress));
-			}
-			catch (LiteClientNotFoundException e) {
-				logger.error("Client not found", e);
-			}
-		}
+        try {
+            liteClientObserver.updateLiteClientStateChanged(getByIp(ipAddress));
+        }
+        catch (LiteClientNotFoundException e) {
+            logger.error("Client not found", e);
+        }
 	}
 
 	public void notifyClientHostNameChanged(String ipAddress) {
-		for (LiteClientsObserver observer : observers) {
-			try {
-				observer.updateLiteClientHostNameChanged(getByIp(ipAddress));
-			}
-			catch (LiteClientNotFoundException e) {
-				logger.error("Client not found", e);
-			}
-		}
+        try {
+            liteClientObserver.updateLiteClientHostNameChanged(getByIp(ipAddress));
+        }
+        catch (LiteClientNotFoundException e) {
+            logger.error("Client not found", e);
+        }
 	}
 
 	public int size() {
 		return this.clients.size();
 	}
 
-	public void addObserver(LiteClientsObserver observer) {
-		observers.add(observer);
+	public void addLiteClientObserver(LiteClientsObserver liteClientsObserver) {
+		this.liteClientObserver = liteClientsObserver;
 	}
 
 	public void removeObserver(LiteClientsObserver observer) {
-		observers.remove(observer);
+		liteClientObserver = null;
 	}
 
 }

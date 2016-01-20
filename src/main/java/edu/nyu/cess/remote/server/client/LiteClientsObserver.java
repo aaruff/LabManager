@@ -1,7 +1,7 @@
 /**
  *
  */
-package edu.nyu.cess.remote.server;
+package edu.nyu.cess.remote.server.client;
 
 /**
  * @author aruff
@@ -14,6 +14,6 @@ public interface LiteClientsObserver
 	void updateLiteClientRemoved(String ipAddress);
 
 	void updateLiteClientStateChanged(LiteClient liteClient);
-	
+
 	void updateLiteClientHostNameChanged(LiteClient liteClient);
 }

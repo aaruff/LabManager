@@ -1,4 +1,4 @@
-package edu.nyu.cess.remote.server;
+package edu.nyu.cess.remote.server.client;
 
 public class LiteClientNotFoundException extends Exception
 {

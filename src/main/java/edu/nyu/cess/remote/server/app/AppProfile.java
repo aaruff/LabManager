@@ -1,4 +1,4 @@
-package edu.nyu.cess.remote.server.app.profile;
+package edu.nyu.cess.remote.server.app;
 
 /**
  * The application profile class.

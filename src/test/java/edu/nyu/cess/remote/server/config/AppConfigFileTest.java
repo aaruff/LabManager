@@ -1,7 +1,7 @@
 package edu.nyu.cess.remote.server.config;
 
-import edu.nyu.cess.remote.server.app.profile.AppProfile;
-import edu.nyu.cess.remote.server.app.profile.AppProfilesFile;
+import edu.nyu.cess.remote.server.app.AppProfile;
+import edu.nyu.cess.remote.server.app.AppProfilesFile;
 import org.junit.Test;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -13,7 +13,7 @@ import static junit.framework.Assert.assertNull;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class AppProfilesFileTest
+public class AppConfigFileTest
 {
 	@Test
 	public void When_GivenValidListFile_Should_ReturnRemoteExecProfileList() throws Exception
