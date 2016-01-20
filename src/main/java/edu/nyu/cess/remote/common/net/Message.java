@@ -4,7 +4,8 @@ import edu.nyu.cess.remote.common.app.AppExecution;
 
 import java.io.Serializable;
 
-public class Message implements Serializable {
+public class Message implements Serializable
+{
 	private static final long serialVersionUID = 1L;
 
 	private MessageType messageType;
@@ -12,7 +13,8 @@ public class Message implements Serializable {
 	private AppExecution appExecution;
 	private String clientMessage;
 
-	public Message(MessageType messageType, AppExecution appExecution, NetworkInformation networkInfo) {
+	public Message(MessageType messageType, AppExecution appExecution, NetworkInformation networkInfo)
+	{
 		this.messageType = messageType;
 		this.appExecution = appExecution;
 		this.networkInfo = networkInfo;
