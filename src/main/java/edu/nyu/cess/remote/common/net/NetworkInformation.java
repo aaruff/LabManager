@@ -11,6 +11,7 @@ public class NetworkInformation implements Serializable
 
 	private String clientIpAddress;
 	private String serverIpAddress;
+
 	private String clientHostName;
 	private Integer serverPort;
 
