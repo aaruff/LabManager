@@ -32,7 +32,7 @@ public class LiteClient implements Comparable<LiteClient>
 	}
 
 	public String getIPAddress() {
-		return this.ipAddress;
+		return networkInformation.getClientIpAddress();
 	}
 
 	/**
@@ -49,8 +49,9 @@ public class LiteClient implements Comparable<LiteClient>
 	 *
 	 * @return the host name
      */
-	public String getHostName() {
-		return hostName;
+	public String getHostName()
+	{
+		return networkInformation.getClientName();
 	}
 
 	/**
@@ -58,8 +59,9 @@ public class LiteClient implements Comparable<LiteClient>
 	 *
 	 * @param hostName the clients host name
      */
-	public void setHostName(String hostName) {
-        this.hostName = hostName;
+	public void setHostName(String hostName)
+	{
+        this.networkInformation.setClientName(hostName);
 	}
 
 	/**
@@ -94,7 +96,7 @@ public class LiteClient implements Comparable<LiteClient>
 			return NullComparator.compareNullString(getHostName(), client.getHostName());
         }
 
-        return hostName.compareTo(client.getHostName());
+        return networkInformation.getClientName().compareTo(client.getHostName());
 	}
 
 	/**
