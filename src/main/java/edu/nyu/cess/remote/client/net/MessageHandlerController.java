@@ -6,5 +6,5 @@ package edu.nyu.cess.remote.client.net;
 public interface MessageHandlerController
 {
 	void stopMessageHandler();
-	void startMessageHandler();
+	void initServerMessageListener();
 }
