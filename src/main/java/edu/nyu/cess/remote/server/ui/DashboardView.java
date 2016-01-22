@@ -607,7 +607,7 @@ public class DashboardView extends JFrame implements ActionListener, LiteClients
 		public void actionPerformed(ActionEvent e) {
 			String clientLowerBound = (String) clientsLowerBoundComboBox.getSelectedItem();
 			String clientUpperBound = (String) clientsUpperBoundComboBox.getSelectedItem();
-			viewActionObserver.stopAppInRange(clientLowerBound, clientUpperBound);
+			viewActionObserver.notifyStopAppInRangeRequested(clientLowerBound, clientUpperBound);
 		}
 	}
 
