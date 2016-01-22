@@ -11,7 +11,7 @@ import java.io.*;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 
-public class NetworkMessageHandler implements MessageHandlerController, ApplicationStateObserver
+public class ServerMessageHandler implements MessageHandlerController, ApplicationStateObserver
 {
 	private java.net.Socket socket;
 
@@ -23,9 +23,9 @@ public class NetworkMessageHandler implements MessageHandlerController, Applicat
 	private ObjectInputStream objectInputStream;
 	private ObjectOutputStream objectOutputStream;
 
-	final static Logger log = Logger.getLogger(NetworkMessageHandler.class);
+	final static Logger log = Logger.getLogger(ServerMessageHandler.class);
 
-	public NetworkMessageHandler(NetworkInformation networkInformation, UserNotificationHandler userNotificationHandler)
+	public ServerMessageHandler(NetworkInformation networkInformation, UserNotificationHandler userNotificationHandler)
 	{
 		this.appExecutionHandler = new AppExecutor(this);
 		this.networkInformation = networkInformation;
@@ -33,29 +33,39 @@ public class NetworkMessageHandler implements MessageHandlerController, Applicat
 	}
 
 	/**
-	 * Triggers the network message handler to begin listening, routing, and sending messages on the specified port to,
-	 * and from the server.
+	 * {@link MessageHandlerController}
 	 */
-	@Override public void startMessageHandler() {
+	@Override public void initServerMessageListener() {
 
 		while (true) {
 			openSocket();
+            confirmNetworkInfo();
+            startNetworkInterfaceMonitor();
 			startSocketListenerThread();
-			log.info("Connected to the server...");
 		}
 	}
 
+	/**
+	 * {@link MessageHandlerController}
+	 */
 	@Override public synchronized void stopMessageHandler() {
 		close(socket);
 		close(objectOutputStream);
 		close(objectInputStream);
 	}
 
+	/**
+	 * {@link ApplicationStateObserver}
+	 */
 	@Override public void applicationStateUpdate(AppExecution appExecution)
 	{
 		Message message = new Message(MessageType.STATE_CHANGE, appExecution, networkInformation);
 		sendMessage(message);
 	}
+
+	/* ----------------------------------------------------
+	 *                       PRIVATE
+	 * ---------------------------------------------------- */
 
 	/**
 	 * Sends the provided message to the server.
@@ -81,10 +91,10 @@ public class NetworkMessageHandler implements MessageHandlerController, Applicat
 				}
 				break;
 			case STATE_CHANGE:
-			case NETWORK_INFO:
+			case NETWORK_INFO_UPDATE:
 				// Not supported by the Client
 				break;
-			case PING:
+			case KEEP_ALIVE_PING:
 				// No processing occurs during a socket test
 				break;
 			default:
@@ -92,7 +102,6 @@ public class NetworkMessageHandler implements MessageHandlerController, Applicat
 				break;
 		}
 	}
-
 
 	/**
 	 * Sends a {@link Message} to the Server
@@ -124,7 +133,6 @@ public class NetworkMessageHandler implements MessageHandlerController, Applicat
 
 		return streamInitialized;
 	}
-
 
 	private synchronized Message readDataPacket() {
 		Message message = null;
@@ -158,7 +166,6 @@ public class NetworkMessageHandler implements MessageHandlerController, Applicat
 		return message;
 
 	}
-
 
 	/**
 	 * Initialize the {@link ObjectInputStream}.
@@ -255,18 +262,37 @@ public class NetworkMessageHandler implements MessageHandlerController, Applicat
 		}
 	}
 
+    private void confirmNetworkInfo()
+    {
+        log.info("Sending initial client-server network info to the server.");
+        Message message = new Message(MessageType.NETWORK_INFO_UPDATE, networkInformation);
+        sendMessage(message);
+
+        boolean infoConfirmed = false;
+        while (! infoConfirmed) {
+            message = readDataPacket();
+            if (message.getMessageType() == MessageType.NETWORK_INFO_CONFIRMED) {
+                infoConfirmed = true;
+            }
+        }
+
+        close(objectOutputStream);
+        close(objectInputStream);
+    }
+
+    private void startNetworkInterfaceMonitor()
+    {
+        log.info("Starting the network interface monitor.");
+        Thread networkInterfaceMonitorThread = new Thread(new NetworkInterfaceMonitor(this, networkInformation));
+        networkInterfaceMonitorThread.setName("Network Interface Monitor");
+        networkInterfaceMonitorThread.start();
+    }
+
 	private void startSocketListenerThread()
 	{
-		log.info("Sending initial client-server network info to the server.");
-		Message message = new Message(MessageType.NETWORK_INFO, networkInformation);
-		sendMessage(message);
-
-		log.info("Starting the network interface monitor.");
-		Thread networkInterfaceMonitorThread = new Thread(new NetworkInterfaceMonitor(this, networkInformation));
-		networkInterfaceMonitorThread.setName("Network Interface Monitor");
-		networkInterfaceMonitorThread.start();
-
+        //TODO: Refactor out this function and place it into a thread that performs callback on the MessageHandler on incoming messages
 		log.info("Waiting for message from the server.");
+        Message message;
 		while ((message = readDataPacket()) != null) {
             routeIncomingMessage(message);
 		}
