@@ -35,28 +35,28 @@ class NetworkInterfaceMonitor implements Runnable
 			NetworkInterface networkInterface;
             try {
 				InetAddress inetAddress = InetAddress.getByName(networkInfo.getClientIpAddress());
-                networkInterface = NetworkInterface.getByInetAddress(inetAddress);
-            } catch (SocketException | UnknownHostException e) {
-				log.info("Failed to read IP Address.", e);
-                networkInterface = null;
-            }
-
-			if (networkInterface != null) {
-                try {
-                    Thread.sleep(monitorInterval);
-                    networkInterfaceUp = networkInterface.isUp();
-                    log.info("NIC Status: " + ((networkInterfaceUp) ? "UP" : "DOWN"));
-                } catch (InterruptedException e) {
-                    networkInterfaceUp = false;
-					log.info("Network polling interrupted.", e);
-                } catch (SocketException e) {
-					log.info("Socket Exception occurred during polling.", e);
-                    networkInterfaceUp = false;
-                }
-            }
-            else {
+				networkInterface = NetworkInterface.getByInetAddress(inetAddress);
+				if (networkInterface != null) {
+					Thread.sleep(monitorInterval);
+					networkInterfaceUp = networkInterface.isUp();
+				}
+				else {
+					networkInterfaceUp = false;
+				}
+			}
+            catch (InterruptedException e) {
+                networkInterfaceUp = false;
+                log.error("Sleep during network interface checking failed.", e);
+            } catch (SocketException e) {
+                log.error("Socket exception occurred during network interface status check.", e);
                 networkInterfaceUp = false;
             }
+			catch (UnknownHostException e) {
+				log.error("Unknown host error while attempting to retrieve the client IP address.", e);
+				networkInterfaceUp = false;
+			}
+
+			log.info("NIC Status: " + ((networkInterfaceUp) ? "UP" : "DOWN"));
         }
 
         messageHandlerController.stopMessageHandler();
