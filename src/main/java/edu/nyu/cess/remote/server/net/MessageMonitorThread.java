@@ -1,6 +1,7 @@
 package edu.nyu.cess.remote.server.net;
 
 import edu.nyu.cess.remote.common.net.Message;
+import edu.nyu.cess.remote.common.net.NetworkInformation;
 import edu.nyu.cess.remote.server.message.MessageHandler;
 import org.apache.log4j.Logger;
 
@@ -8,18 +9,20 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
 
-class ClientMessageListener implements Runnable
+class MessageMonitorThread implements Runnable
 {
-    final Logger logger = Logger.getLogger(ClientMessageListener.class);
+    final Logger logger = Logger.getLogger(MessageMonitorThread.class);
     private ObjectInputStream objectInputStream;
 
     private MessageHandler messageHandler;
     private Socket socket;
+    private NetworkInformation networkInfo;
 
-    public ClientMessageListener(Socket socket, MessageHandler messageHandler)
+    public MessageMonitorThread(Socket socket, MessageHandler messageHandler, NetworkInformation networkInfo)
     {
         this.socket = socket;
         this.messageHandler = messageHandler;
+        this.networkInfo = networkInfo;
     }
 
     public void run()
@@ -31,7 +34,7 @@ class ClientMessageListener implements Runnable
         logger.info("Waiting for message from Client " + clientIpAddress);
         while ((message = readDataPacket()) != null) {
             logger.info("Data Packet Received");
-			messageHandler.handleInboundMessage(message);
+			messageHandler.handleInboundMessage(message, networkInfo);
         }
 
         logger.info("Client " + clientIpAddress + " connection closed...");
