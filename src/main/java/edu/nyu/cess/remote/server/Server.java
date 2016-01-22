@@ -9,6 +9,7 @@ import edu.nyu.cess.remote.server.client.ClientPoolController;
 import edu.nyu.cess.remote.server.client.LiteClient;
 import edu.nyu.cess.remote.server.client.LiteClientNotFoundException;
 import edu.nyu.cess.remote.server.message.ClientMessageHandler;
+import edu.nyu.cess.remote.server.message.MessageHandler;
 import edu.nyu.cess.remote.server.net.ClientConnectionObserver;
 import edu.nyu.cess.remote.server.ui.DashboardView;
 import edu.nyu.cess.remote.server.ui.ViewActionObserver;
@@ -24,7 +25,7 @@ public class Server implements ClientConnectionObserver, ViewActionObserver, Cli
 {
     final static Logger logger = Logger.getLogger(Server.class);
 
-	private final ClientMessageHandler clientMessageHandler;
+	private final MessageHandler messageHandler;
 
 	protected final DashboardView dashboardView;
 
@@ -37,23 +38,8 @@ public class Server implements ClientConnectionObserver, ViewActionObserver, Cli
 		this.clientPool = clientPool;
 		this.appProfileMap = appProfileMap;
 
-		dashboardView = new DashboardView(getViewActionObserver(), clientPool, getApplicationNames());
-		clientMessageHandler = new ClientMessageHandler(getClientConnectionObserver(), getClientPoolController());
-	}
-
-	private ClientConnectionObserver getClientConnectionObserver()
-	{
-		return this;
-	}
-
-	private ClientPoolController getClientPoolController()
-	{
-		return this;
-	}
-
-	private ViewActionObserver getViewActionObserver()
-	{
-		return this;
+		dashboardView = new DashboardView(thisToViewActionObserver(), clientPool, getApplicationNames());
+		messageHandler = new ClientMessageHandler(thisToClientConnectionObserver(), thisToClientPoolController());
 	}
 
 	/**
@@ -61,7 +47,7 @@ public class Server implements ClientConnectionObserver, ViewActionObserver, Cli
 	 * observer list, invoking the UI, and initializing the clientProxy which
 	 * handles network communication between the server and clients.
      */
-	public void init() throws IOException
+	public void start() throws IOException
     {
 		clientPool.addLiteClientObserver(dashboardView);
 
@@ -72,7 +58,7 @@ public class Server implements ClientConnectionObserver, ViewActionObserver, Cli
 			}
 		});
 
-		clientMessageHandler.handleNewClientSocketConnectionOn(2600);
+		messageHandler.initializeMessageHandler();
 	}
 
 	/**
@@ -87,7 +73,7 @@ public class Server implements ClientConnectionObserver, ViewActionObserver, Cli
 	/**
 	 * {@link ViewActionObserver}
 	 */
-	@Override public void stopAppInRange(String start, String end)
+	@Override public void notifyStopAppInRangeRequested(String start, String end)
     {
 		Thread stopInRange = new Thread(new StopAppInRangeRunnable(start, end));
 		stopInRange.start();
@@ -106,7 +92,7 @@ public class Server implements ClientConnectionObserver, ViewActionObserver, Cli
 	 */
 	@Override public synchronized void messageClient(String message, String ipAddress)
 	{
-		clientMessageHandler.sendMessageToClient(message, ipAddress);
+		messageHandler.handleOutboundMessage(message, ipAddress);
 	}
 
 	/**
@@ -119,7 +105,7 @@ public class Server implements ClientConnectionObserver, ViewActionObserver, Cli
 		AppProfile appProfile = appProfileMap.get(appName);
 		AppExecution appExecution = new AppExecution(
 				appProfile.getName(), appProfile.getPath(), appProfile.getOptions(), startState);
-		clientMessageHandler.startApplicationOnClient(appExecution, ipAddress);
+		messageHandler.handleOutboundAppExecution(appExecution, ipAddress);
 	}
 
 	/**
@@ -130,7 +116,7 @@ public class Server implements ClientConnectionObserver, ViewActionObserver, Cli
 		//TODO: Store AppExecution in the client, and return it when stopping and staring an application
 		AppExecution appExecution = new AppExecution("", "", "", AppState.STOPPED);
 
-		clientMessageHandler.stopApplicationOnClient(appExecution, ipAddress);
+		messageHandler.handleOutboundAppExecution(appExecution, ipAddress);
 	}
 
 	/**
@@ -183,6 +169,10 @@ public class Server implements ClientConnectionObserver, ViewActionObserver, Cli
 			logger.error("Client not found.", e);
 		}
 	}
+
+	/* ----------------------------------------------------
+	 *                       PRIVATE
+	 * ---------------------------------------------------- */
 
 	/**
 	 * Returns an array of strings containing the names of all of the supported
@@ -273,5 +263,18 @@ public class Server implements ClientConnectionObserver, ViewActionObserver, Cli
 		}
 	}
 
+	private ClientConnectionObserver thisToClientConnectionObserver()
+	{
+		return this;
+	}
 
+	private ClientPoolController thisToClientPoolController()
+	{
+		return this;
+	}
+
+	private ViewActionObserver thisToViewActionObserver()
+	{
+		return this;
+	}
 }
