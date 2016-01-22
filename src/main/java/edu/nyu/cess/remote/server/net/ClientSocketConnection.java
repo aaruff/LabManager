@@ -1,7 +1,6 @@
 package edu.nyu.cess.remote.server.net;
 
 import edu.nyu.cess.remote.common.net.Message;
-import edu.nyu.cess.remote.common.net.MessageType;
 import edu.nyu.cess.remote.common.net.NetworkInformation;
 import edu.nyu.cess.remote.server.message.MessageHandler;
 import org.apache.log4j.Logger;
@@ -20,19 +19,17 @@ public class ClientSocketConnection
 
 	private ObjectOutputStream objectOutputStream;
 
-	private Thread inboundCommunicationThread;
-	private Thread networkInterfaceMonitorThread;
+	private Thread messageMonitorThread;
+	private Thread clientKeepAliveMonitor;
 
 	private NetworkInformation networkInfo;
 
 
-    public ClientSocketConnection(Socket socket, MessageHandler messageHandler)
+    public ClientSocketConnection(Socket socket, NetworkInformation networkInfo, MessageHandler messageHandler)
     {
         this.socket = socket;
         this.messageHandler = messageHandler;
-		this.networkInfo = new NetworkInformation();
-		this.networkInfo.setClientIpAddress(socket.getInetAddress().getHostAddress());
-		this.networkInfo.setServerIpAddress(socket.getLocalAddress().getHostAddress());
+		this.networkInfo = networkInfo;
     }
 
 	/**
@@ -70,7 +67,7 @@ public class ClientSocketConnection
 		return streamInitialized;
 	}
 
-	public void closeConnection()
+	public void close()
     {
 		if (socket != null) {
 			try {
@@ -90,23 +87,23 @@ public class ClientSocketConnection
 			}
 		}
 
-		if (inboundCommunicationThread != null) {
-			if (inboundCommunicationThread.isAlive()) {
-				inboundCommunicationThread.interrupt();
+		if (messageMonitorThread != null) {
+			if (messageMonitorThread.isAlive()) {
+				messageMonitorThread.interrupt();
 				try {
-					inboundCommunicationThread.join();
+					messageMonitorThread.join();
 				} catch (InterruptedException e) {
 					logger.error("LiteClientInterface Close(): Failed to join inbound communication thread", e);
 				}
 			}
 		}
 
-		if (networkInterfaceMonitorThread != null) {
-			if (networkInterfaceMonitorThread.isAlive()) {
-				networkInterfaceMonitorThread.interrupt();
+		if (clientKeepAliveMonitor != null) {
+			if (clientKeepAliveMonitor.isAlive()) {
+				clientKeepAliveMonitor.interrupt();
 
 				try {
-					networkInterfaceMonitorThread.join();
+					clientKeepAliveMonitor.join();
 				} catch (InterruptedException e) {
 					logger.error("LiteClientInterface Close(): Failed to join network monitor thread", e);
 				}
@@ -114,15 +111,18 @@ public class ClientSocketConnection
 		}
 	}
 
-	public void startThreadedInboundCommunicationMonitor()
-    {
-		inboundCommunicationThread = new Thread(new ClientMessageListener(socket, messageHandler));
-		inboundCommunicationThread.setName("Inbound communication thread");
-		inboundCommunicationThread.start();
+	public void startConnectionMessageMonitor()
+	{
+		messageMonitorThread = new Thread(new MessageMonitorThread(socket, messageHandler, networkInfo));
+		messageMonitorThread.setName("Inbound Message Monitor Thread");
+		messageMonitorThread.start();
+	}
 
-        networkInterfaceMonitorThread = new Thread(new ServerClientConnectionMonitor());
-        networkInterfaceMonitorThread.setName("Network Interface Monitor");
-        networkInterfaceMonitorThread.start();
+	public void startClientKeepAliveMonitor()
+    {
+        clientKeepAliveMonitor = new Thread(new ClientKeepAliveMonitor(messageHandler, networkInfo));
+        clientKeepAliveMonitor.setName("Client Server Keep Alive Monitor Thread");
+        clientKeepAliveMonitor.start();
 	}
 
 
@@ -141,33 +141,5 @@ public class ClientSocketConnection
         return result;
     }
 
-
-
-	/**
-	 * The network stream monitor thread is used to periodically (every 40 seconds)
-	 * poll the client with an empty packet to determine if the socket connection is
-	 * still established. The termination of this tread is used as a flag to signal
-	 * that the connection between the server and the client has been broken.
-	 */
-	private class ServerClientConnectionMonitor implements Runnable
-    {
-		public void run() {
-			boolean interfaceState = true;
-			Message packet = new Message(MessageType.PING, null);
-			/*
-			 *  Sends an empty packet to the respective client
-			 *  to determine if the socket connection is still established.
-			 */
-			while (interfaceState) {
-				try {
-					interfaceState = sendMessage(packet);
-					logger.info(((interfaceState) ? "OPEN CONNECTION: " + clientIpAddress
-							: "CLOSED CONNECTION: " + clientIpAddress));
-					Thread.sleep(40000);
-				} catch (InterruptedException e) {
-				}
-			}
-		}
-	}
 
 }
