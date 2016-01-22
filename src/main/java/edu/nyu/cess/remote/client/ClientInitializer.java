@@ -2,7 +2,7 @@ package edu.nyu.cess.remote.client;
 
 import edu.nyu.cess.remote.client.config.NetworkInformationFile;
 import edu.nyu.cess.remote.client.config.NetworkInformationFileValidator;
-import edu.nyu.cess.remote.client.net.NetworkMessageHandler;
+import edu.nyu.cess.remote.client.net.ServerMessageHandler;
 import edu.nyu.cess.remote.client.notification.UserNotifier;
 import edu.nyu.cess.remote.common.net.NetworkInformation;
 import org.apache.commons.lang.StringUtils;
@@ -29,8 +29,8 @@ public class ClientInitializer
                 return;
             }
 
-			NetworkMessageHandler networkMessageHandler = new NetworkMessageHandler(networkInfo, new UserNotifier());
-            networkMessageHandler.startMessageHandler();
+			ServerMessageHandler serverMessageHandler = new ServerMessageHandler(networkInfo, new UserNotifier());
+            serverMessageHandler.initServerMessageListener();
 		}
 		catch (Exception e) {
 			log.error("Failed to open the configuration file. Make sure that config.properties is in the classpath.");
