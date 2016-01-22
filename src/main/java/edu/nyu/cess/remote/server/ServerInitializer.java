@@ -28,7 +28,7 @@ public class ServerInitializer {
 			InputStream inputStream = ServerInitializer.class.getClassLoader().getResourceAsStream("app-config.yaml");
 			Map<String, AppProfile> appList = AppProfilesFile.readFile(inputStream);
 			Server server = new Server(new ClientPool(), appList);
-			server.init();
+			server.start();
 		}
 		catch (YAMLException e) {
 			JOptionPane.showMessageDialog(new JPanel(), YamlExceptionMessage.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
