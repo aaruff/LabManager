@@ -36,13 +36,12 @@ public class ClientMessageHandler implements MessageHandler
 	}
 
 	/**
-	 * Starts listening for inbound connections on the specified port.
-	 * @param portNumber the port used to handleNewClientSocketConnectionOn for inbound connections
+	 * {@link MessageHandler}
      */
-	public void handleNewClientSocketConnectionOn(int portNumber) throws IOException
+	public void initializeMessageHandler() throws IOException
     {
-        ServerSocket serverSocket = new ServerSocket(portNumber);
-        log.info("Server socket established...");
+		int port = 2600;
+        ServerSocket serverSocket = new ServerSocket(port);
 
 		while (true) {
 			// Blocking function: waits a client socket connection
@@ -54,89 +53,113 @@ public class ClientMessageHandler implements MessageHandler
 				log.info("New socket connection made by " + networkInfo.getClientIpAddress());
 
 				 // TODO: Add an authentication and network information confirmation stage before the client is added to the pool
-				clientConnectionObserver.notifyNewClientConnected(networkInfo);
+				//clientConnectionObserver.notifyNewClientConnected(networkInfo);
 
-				newClientSocketConnection.startThreadedInboundCommunicationMonitor();
+				newClientSocketConnection.startConnectionMessageMonitor();
+				newClientSocketConnection.startClientKeepAliveMonitor();
 			}
 		}
 	}
 
-    /**
-     * Returns true if the client socket connection parameter is currently active, otherwise false is returned.
-     * @param clientSocketConnection client socket connection
-     * @return true if client is already connected, otherwise false is returned
-     */
-	private boolean isNotAlreadyConnected(ClientSocketConnection clientSocketConnection)
+	/**
+	 * {@link MessageHandler}
+	 */
+	public synchronized boolean handleOutboundAppExecution(AppExecution applicationAppExecution, String ipAddress)
 	{
-		NetworkInformation networkInfo = clientSocketConnection.getNetworkInformation();
-		return ! clientSocketConnections.containsKey(networkInfo.getClientIpAddress());
+		NetworkInformation networkInfo = new NetworkInformation();
+		networkInfo.setClientIpAddress(ipAddress);
+		networkInfo.setServerIpAddress(serverIpAddress);
+
+		Message message = new Message(MessageType.APPLICATION_EXECUTION, applicationAppExecution, );
+		return clientSocketConnections.get(ipAddress).sendMessage(message);
 	}
 
-	public void handleInboundMessage(Message message)
-    {
-		NetworkInformation networkInfo = message.getNetworkInfo();
-        log.debug("Packet received from client " + networkInfo.getClientIpAddress());
+	/**
+	 * {@link MessageHandler}
+	 */
+	public synchronized boolean handleOutboundKeepAlive(NetworkInformation networkInfo)
+	{
+		networkInfo.setServerIpAddress(serverIpAddress);
+		Message message = new Message(MessageType.KEEP_ALIVE_PING, networkInfo);
+		return clientSocketConnections.get(networkInfo.getClientIpAddress()).sendMessage(message);
+	}
+
+	/**
+	 * {@link MessageHandler}
+	 */
+	public synchronized boolean handleOutboundMessage(String message, String ipAddress)
+	{
+		Message dataPacket = new Message(MessageType.USER_NOTIFICATION, message);
+		return clientSocketConnections.get(ipAddress).sendMessage(dataPacket);
+	}
+
+	/**
+	 * {@link MessageHandler}
+	 */
+	public synchronized void handleInboundMessage(Message message, NetworkInformation networkInfo)
+	{
+		log.info("Message received from client " + networkInfo.getClientIpAddress());
 
 		switch(message.getMessageType()) {
-		case APPLICATION_EXECUTION:
-			// Not supported by the server
-			break;
-		case STATE_CHANGE:
-			//TODO: Implement an AppExecution validator
-			AppExecution appExecution = message.getAppExecution();
-			if (appExecution != null) {
-                clientPoolController.updateClientState(networkInfo.getClientIpAddress(), appExecution);
-			}
-			break;
-		case NETWORK_INFO:
-			NetworkInformation networkInformation = message.getNetworkInfo();
-			String clientName = networkInformation.getClientName();
+			case APPLICATION_EXECUTION:
+				// Not supported by the server
+				break;
+			case STATE_CHANGE:
+				//TODO: Implement an AppExecution validator
+				AppExecution appExecution = message.getAppExecution();
+				if (appExecution != null) {
+					clientPoolController.updateClientState(networkInfo.getClientIpAddress(), appExecution);
+				}
+				break;
+			case NETWORK_INFO_UPDATE:
+				clientConnectionObserver.notifyNewClientConnected(message.getNetworkInfo());
 
-			if(clientName != null && !clientName.isEmpty()) {
-                clientPoolController.updateClientHostNameUpdate(clientName, networkInfo.getClientIpAddress());
-			}
-			break;
-		case USER_NOTIFICATION:
-			// Not supported by the server
-			break;
-		case PING:
-			// No processing is done when a socket test is received
-			break;
-		default:
-			// Do nothing
-			break;
+				if(clientName != null && !clientName.isEmpty()) {
+					clientPoolController.updateClientHostNameUpdate(clientName, networkInfo.getClientIpAddress());
+				}
+				break;
+			case USER_NOTIFICATION:
+				// Not supported by the server
+				break;
+			case KEEP_ALIVE_PING:
+				// No processing is done when a socket test is received
+				break;
+			default:
+				// Do nothing
+				break;
 		}
 	}
+
+	/* ----------------------------------------------------
+	 *                       PRIVATE
+	 * ---------------------------------------------------- */
 
 	public void processStateChange(String ipAddress, boolean isConnected)
     {
-        log.debug("Client " + ipAddress + " has " + ((isConnected) ? " connected to the server" : " disconnected"));
+        log.info("Client " + ipAddress + " has " + ((isConnected) ? " connected to the server" : " disconnected"));
         if (isConnected) {
             return;
         }
 
-        clientSocketConnections.get(ipAddress).closeConnection();
+        clientSocketConnections.get(ipAddress).close();
         clientSocketConnections.remove(ipAddress);
         clientPoolController.removeClient(ipAddress);
 	}
 
-	public void startApplicationOnClient(AppExecution applicationAppExecution, String ipAddress)
+	private MessageHandler getMessageHandlerFrom(ClientMessageHandler clientMessageHandler)
 	{
-		NetworkInformation networkInfo = new NetworkInformation();
-		networkInfo.setClientIpAddress(ipAddress);
-
-		Message message = new Message(MessageType.APPLICATION_EXECUTION, applicationAppExecution);
-		clientSocketConnections.get(ipAddress).sendMessage(message);
+		return clientMessageHandler;
 	}
 
-	public void stopApplicationOnClient(AppExecution stopAppExecution, String ipAddress) {
-		Message message = new Message(MessageType.APPLICATION_EXECUTION, stopAppExecution);
-		clientSocketConnections.get(ipAddress).sendMessage(message);
-	}
-
-	public void sendMessageToClient(String message, String ipAddress) {
-		Message dataPacket = new Message(MessageType.USER_NOTIFICATION, message);
-		clientSocketConnections.get(ipAddress).sendMessage(dataPacket);
+	/**
+	 * Returns true if the client socket connection parameter is currently active, otherwise false is returned.
+	 * @param clientSocketConnection client socket connection
+	 * @return true if client is already connected, otherwise false is returned
+	 */
+	private boolean isNotAlreadyConnected(ClientSocketConnection clientSocketConnection)
+	{
+		NetworkInformation networkInfo = clientSocketConnection.getNetworkInformation();
+		return ! clientSocketConnections.containsKey(networkInfo.getClientIpAddress());
 	}
 
 	/**
@@ -151,16 +174,21 @@ public class ClientMessageHandler implements MessageHandler
 		log.info("Waiting for inbound client connection request.");
 
 		String clientIpAddress = null;
+		String serverIpAddress = null;
 		Socket socketConnection = null;
 		while (socketConnection == null || clientIpAddress == null || clientIpAddress.isEmpty()) {
 			try {
 				socketConnection = serverSocket.accept(); // Blocking call
 				clientIpAddress = socketConnection.getInetAddress().getHostAddress();
+				serverIpAddress = socketConnection.getLocalAddress().getHostAddress();
 			} catch (IOException e) {
-				log.debug("Connection Error", e);
+				log.error("Connection Error", e);
 			}
 		}
 
-		return new ClientSocketConnection(socketConnection, this);
+		NetworkInformation networkInfo = new NetworkInformation();
+		networkInfo.setClientIpAddress(clientIpAddress);
+		networkInfo.setClientIpAddress(serverIpAddress);
+		return new ClientSocketConnection(socketConnection, networkInfo, getMessageHandlerFrom(this));
 	}
 }
