@@ -6,37 +6,40 @@ import edu.nyu.cess.remote.client.validator.PortValidator;
 import edu.nyu.cess.remote.client.validator.Validator;
 import edu.nyu.cess.remote.common.net.NetworkInformation;
 
+import java.util.ArrayList;
+
 
 /**
  * Validates the config file properties.
  */
-public class NetworkInformationFileValidator extends Validator
+public class NetworkInformationFileValidator implements Validator
 {
-	private NetworkInformation hostConfig;
+	private NetworkInformation networkInformation;
+	private ArrayList<String> errors;
 
-	public NetworkInformationFileValidator(NetworkInformation hostConfig)
+	public NetworkInformationFileValidator(NetworkInformation networkInformation)
 	{
-		this.hostConfig = hostConfig;
+		this.networkInformation = networkInformation;
 	}
 
-	public boolean validate()
+	@Override public boolean validate()
 	{
 		clearErrors();
 
-		IpValidator ipValidator = new IpValidator(hostConfig.getServerIpAddress());
+		IpValidator ipValidator = new IpValidator(networkInformation.getServerIpAddress());
 		if ( ! ipValidator.validate()) {
 			errors.addAll(ipValidator.getErrors());
 			return false;
 		}
 
-		PortValidator portValidator = new PortValidator(hostConfig.getServerPort());
+		PortValidator portValidator = new PortValidator(networkInformation.getServerPort());
 		if ( ! portValidator.validate()) {
 			errors.addAll(portValidator.getErrors());
 			return false;
 		}
 
 
-		HostNameValidator hostNameValidator = new HostNameValidator(hostConfig.getClientName());
+		HostNameValidator hostNameValidator = new HostNameValidator(networkInformation.getClientName());
 		if ( ! hostNameValidator.validate()) {
 			errors.addAll(hostNameValidator.getErrors());
 			return false;
@@ -44,4 +47,18 @@ public class NetworkInformationFileValidator extends Validator
 
 		return true;
 	}
+
+	@Override public ArrayList<String> getErrors()
+	{
+		return errors;
+	}
+
+	/**
+	 * Clear errors.
+	 */
+	private void clearErrors()
+	{
+		errors = new ArrayList<>();
+	}
+
 }
