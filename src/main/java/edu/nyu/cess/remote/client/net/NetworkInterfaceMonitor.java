@@ -16,12 +16,12 @@ class NetworkInterfaceMonitor implements Runnable
 {
 	final static Logger log = Logger.getLogger(NetworkInterfaceMonitor.class);
 
-    private MessageHandlerController messageHandlerController;
+    private NetworkInterfaceObserver networkInterfaceObserver;
 	private NetworkInformation networkInfo;
 
-    public NetworkInterfaceMonitor(MessageHandlerController messageHandlerController, NetworkInformation networkInfo)
+    public NetworkInterfaceMonitor(NetworkInterfaceObserver networkInterfaceObserver, NetworkInformation networkInfo)
 	{
-        this.messageHandlerController = messageHandlerController;
+        this.networkInterfaceObserver = networkInterfaceObserver;
 		this.networkInfo = networkInfo;
     }
 
@@ -59,7 +59,7 @@ class NetworkInterfaceMonitor implements Runnable
 			log.info("NIC Status: " + ((networkInterfaceUp) ? "UP" : "DOWN"));
         }
 
-        messageHandlerController.stopMessageHandler();
+        networkInterfaceObserver.notifyNetworkInterfaceDown();
         log.info("Network Interface Is Down!");
         log.info("Attempting to interrupt the network communication thread.");
     }
