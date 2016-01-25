@@ -30,7 +30,7 @@ public class ClientInitializer
             }
 
 			ServerMessageHandler serverMessageHandler = new ServerMessageHandler(networkInfo, new UserNotifier());
-            serverMessageHandler.initServerMessageListener();
+            serverMessageHandler.start(networkInfo);
 		}
 		catch (Exception e) {
 			log.error("Failed to open the configuration file. Make sure that config.properties is in the classpath.");
