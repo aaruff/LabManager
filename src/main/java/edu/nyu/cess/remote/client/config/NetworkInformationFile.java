@@ -27,12 +27,11 @@ public class NetworkInformationFile
         Properties properties = new Properties();
         properties.load(in);
 
-		NetworkInformation networkInfo = new NetworkInformation();
-        networkInfo.setServerIpAddress(properties.getProperty("ip"));
-        networkInfo.setServerPort(Integer.parseInt(properties.getProperty("port")));
-        networkInfo.setClientName(properties.getProperty("name"));
-		networkInfo.setClientIpAddress(InetAddress.getLocalHost().getHostAddress());
+		String serverIp = properties.getProperty("ip");
+		int serverPort = Integer.parseInt(properties.getProperty("port"));
+		String clientName = properties.getProperty("name");
+		String clientIp = InetAddress.getLocalHost().getHostAddress();
 
-		return networkInfo;
+		return new NetworkInformation(clientName, clientIp, serverIp, serverPort);
 	}
 }
