@@ -4,10 +4,7 @@ import edu.nyu.cess.remote.client.ui.MessageRunnable;
 
 import javax.swing.*;
 
-/**
- * Created by aruff on 1/14/16.
- */
-public class UserNotifier implements UserNotificationHandler
+public class UserPrompt implements UserPromptHandler
 {
 	@Override
 	public void notifyUser(String text)

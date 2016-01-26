@@ -10,11 +10,11 @@ import java.net.Socket;
 /**
  * Created by aruff on 1/25/16.
  */
-public class MessageSocketHandler implements MessageSocket
+public class ServerMessageSocket implements MessageSocket
 {
 	private final Socket socket;
 
-	public MessageSocketHandler(String ipAddress, int port) throws IOException
+	public ServerMessageSocket(String ipAddress, int port) throws IOException
 	{
 		socket = new Socket(ipAddress, port);
 	}
