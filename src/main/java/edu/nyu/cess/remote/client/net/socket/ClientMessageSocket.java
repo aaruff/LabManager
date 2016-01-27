@@ -1,4 +1,4 @@
-package edu.nyu.cess.remote.client.net;
+package edu.nyu.cess.remote.client.net.socket;
 
 import edu.nyu.cess.remote.common.net.Message;
 
@@ -8,13 +8,19 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 /**
- * Created by aruff on 1/25/16.
+ * This class handles the initialization, sending, and receiving of messages via the client socket.
  */
-public class ServerMessageSocket implements MessageSocket
+public class ClientMessageSocket implements MessageSocket
 {
 	private final Socket socket;
 
-	public ServerMessageSocket(String ipAddress, int port) throws IOException
+	/**
+	 * Initialize the client message socket with the required ip address and port.
+	 * @param ipAddress Server IP address
+	 * @param port Server port
+	 * @throws IOException Thrown if an IO error occurs while initializing a socket.
+     */
+	public ClientMessageSocket(String ipAddress, int port) throws IOException
 	{
 		socket = new Socket(ipAddress, port);
 	}
@@ -24,22 +30,14 @@ public class ServerMessageSocket implements MessageSocket
 		return socket != null && socket.isConnected() && ! socket.isClosed();
 	}
 
-
-	@Override public synchronized void sendMessage(Message packet) throws IOException
+	@Override public synchronized void sendMessage(Message message) throws IOException
 	{
-		if ( ! isConnected()) {
-			throw new IOException("Error attempting to send a message with an invalid socket");
-		}
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
-		objectOutputStream.writeObject(packet);
+		objectOutputStream.writeObject(message);
 		objectOutputStream.flush();
 	}
 
 	@Override public synchronized Message readMessage() throws IOException {
-		if ( ! isConnected()) {
-			throw new IOException("Error attempting to read a message with an invalid socket");
-		}
-
 		ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
 		Object object;
 		try {

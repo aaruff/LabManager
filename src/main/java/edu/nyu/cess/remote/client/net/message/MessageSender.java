@@ -1,4 +1,4 @@
-package edu.nyu.cess.remote.client.net;
+package edu.nyu.cess.remote.client.net.message;
 
 import edu.nyu.cess.remote.common.net.Message;
 

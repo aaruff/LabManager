@@ -1,5 +1,7 @@
-package edu.nyu.cess.remote.client.net;
+package edu.nyu.cess.remote.client.net.socket;
 
+import edu.nyu.cess.remote.client.net.message.MessageRouter;
+import edu.nyu.cess.remote.client.net.message.MessageSender;
 import edu.nyu.cess.remote.common.net.Message;
 import edu.nyu.cess.remote.common.net.NetworkInformation;
 import org.apache.log4j.Logger;
@@ -7,7 +9,8 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 
 /**
- * Created by aruff on 1/26/16.
+ * The SocketManager class handles the initialization of a persistent connection to the server, and passed inbound
+ * messages to the MessageRouter to be handled.
  */
 public class SocketManager implements MessageSender
 {
@@ -17,12 +20,21 @@ public class SocketManager implements MessageSender
 	private MessageRouter messageRouter;
 	private NetworkInformation networkInfo;
 
+	/**
+	 * Provides this class with the NetworkInformation required to establish a persistent connection to the server, and
+	 * the MessageRouter used to route messages from the server to the corresponding handlers.
+	 * @param messageRouter
+	 * @param networkInfo
+     */
 	public SocketManager(MessageRouter messageRouter, NetworkInformation networkInfo)
 	{
 		this.messageRouter = messageRouter;
 		this.networkInfo = networkInfo;
 	}
 
+	/**
+	 * Initializes a persistent connection with the server.
+	 */
 	public void startPersistentConnection()
 	{
 		while (true) {
@@ -60,9 +72,9 @@ public class SocketManager implements MessageSender
 		}
 	}
 
-	private ServerMessageSocket getNewMessageSocket() throws IOException
+	private ClientMessageSocket getNewMessageSocket() throws IOException
 	{
-		return new ServerMessageSocket(networkInfo.getServerIpAddress(), networkInfo.getServerPort());
+		return new ClientMessageSocket(networkInfo.getServerIpAddress(), networkInfo.getServerPort());
 	}
 
 }
