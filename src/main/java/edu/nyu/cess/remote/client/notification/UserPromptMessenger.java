@@ -1,6 +1,6 @@
 package edu.nyu.cess.remote.client.notification;
 
-import edu.nyu.cess.remote.client.net.MessageHandler;
+import edu.nyu.cess.remote.client.net.message.MessageHandler;
 import edu.nyu.cess.remote.common.net.Message;
 import org.apache.log4j.Logger;
 

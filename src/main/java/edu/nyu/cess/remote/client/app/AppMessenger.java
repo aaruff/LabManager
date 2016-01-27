@@ -1,28 +1,28 @@
 package edu.nyu.cess.remote.client.app;
 
-import edu.nyu.cess.remote.client.net.MessageHandler;
-import edu.nyu.cess.remote.client.net.MessageSender;
+import edu.nyu.cess.remote.client.app.process.ProcessExecution;
+import edu.nyu.cess.remote.client.app.process.ProcessStateObserver;
+import edu.nyu.cess.remote.client.net.message.MessageHandler;
+import edu.nyu.cess.remote.client.net.message.MessageSender;
 import edu.nyu.cess.remote.common.app.AppExecution;
-import edu.nyu.cess.remote.common.app.AppExecutionHandler;
 import edu.nyu.cess.remote.common.app.AppExecutionValidator;
-import edu.nyu.cess.remote.common.app.ApplicationStateObserver;
 import edu.nyu.cess.remote.common.net.Message;
 import edu.nyu.cess.remote.common.net.MessageType;
 import edu.nyu.cess.remote.common.net.NetworkInformation;
 import org.apache.log4j.Logger;
 
 /**
- * Created by aruff on 1/26/16.
+ * This class handles the unpacking, routing, and sending of application messages.
  */
-public class AppMessenger implements ApplicationStateObserver, MessageHandler
+public class AppMessenger implements ProcessStateObserver, MessageHandler
 {
 	final static Logger log = Logger.getLogger(AppMessenger.class);
 
 	private MessageSender messageSender;
 	private NetworkInformation networkInformation;
-	private AppExecutionHandler appHandler;
+	private ProcessExecution appHandler;
 
-	public AppMessenger(AppExecutionHandler appHandler, MessageSender messageSender, NetworkInformation networkInformation)
+	public AppMessenger(ProcessExecution appHandler, MessageSender messageSender, NetworkInformation networkInformation)
 	{
 		this.appHandler = appHandler;
 		this.messageSender = messageSender;
@@ -51,7 +51,7 @@ public class AppMessenger implements ApplicationStateObserver, MessageHandler
 	}
 
 	/**
-	 * {@link ApplicationStateObserver}
+	 * {@link ProcessStateObserver}
      */
 	@Override public void notifyStateChange(AppExecution appExecution)
 	{
