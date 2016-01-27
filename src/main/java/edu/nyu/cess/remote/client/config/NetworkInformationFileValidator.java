@@ -5,6 +5,7 @@ import edu.nyu.cess.remote.client.validator.IpValidator;
 import edu.nyu.cess.remote.client.validator.PortValidator;
 import edu.nyu.cess.remote.client.validator.Validator;
 import edu.nyu.cess.remote.common.net.NetworkInformation;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
 
@@ -59,6 +60,11 @@ public class NetworkInformationFileValidator implements Validator
 	private void clearErrors()
 	{
 		errors = new ArrayList<>();
+	}
+
+	public String getAllErrors()
+	{
+		return StringUtils.join(getErrors(), ", ");
 	}
 
 }
