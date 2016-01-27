@@ -3,11 +3,12 @@ package edu.nyu.cess.remote.client;
 import edu.nyu.cess.remote.client.app.AppMessenger;
 import edu.nyu.cess.remote.client.config.NetworkInformationFile;
 import edu.nyu.cess.remote.client.config.NetworkInformationFileValidator;
-import edu.nyu.cess.remote.client.net.ClientMessageRouter;
-import edu.nyu.cess.remote.client.net.SocketManager;
+import edu.nyu.cess.remote.client.net.message.InboundMessageRouter;
+import edu.nyu.cess.remote.client.net.socket.SocketManager;
 import edu.nyu.cess.remote.client.notification.UserPrompt;
 import edu.nyu.cess.remote.client.notification.UserPromptMessenger;
-import edu.nyu.cess.remote.common.app.AppExecutor;
+import edu.nyu.cess.remote.client.app.process.ProcessExecutionManager;
+import edu.nyu.cess.remote.common.net.MessageType;
 import edu.nyu.cess.remote.common.net.NetworkInformation;
 import org.apache.log4j.Logger;
 
@@ -32,14 +33,17 @@ public class ClientInitializer
                 return;
             }
 
-			ClientMessageRouter messageRouter = new ClientMessageRouter();
+			InboundMessageRouter messageRouter = new InboundMessageRouter();
 			SocketManager socketManager = new SocketManager(messageRouter, networkInfo);
 
-			AppMessenger appMessenger = new AppMessenger(new AppExecutor(), socketManager, networkInfo);
-			messageRouter.setAppMessageHandler(appMessenger);
+			ProcessExecutionManager appExecutionManager = new ProcessExecutionManager();
+			AppMessenger appMessenger = new AppMessenger(new ProcessExecutionManager(), socketManager, networkInfo);
+			appExecutionManager.setStateObserver(appMessenger);
+			messageRouter.setMessageHandler(MessageType.APPLICATION_EXECUTION, appMessenger);
+			messageRouter.setMessageHandler(MessageType.APPLICATION_STATE_UPDATE, appMessenger);
 
 			UserPromptMessenger userPromptMessenger = new UserPromptMessenger(new UserPrompt());
-			messageRouter.setUserPromptMessageHandler(userPromptMessenger);
+			messageRouter.setMessageHandler(MessageType.USER_NOTIFICATION, userPromptMessenger);
 
 			socketManager.startPersistentConnection();
 		}
