@@ -9,20 +9,22 @@ public class NetworkInformation implements Serializable
 {
 	private static final long serialVersionUID = -5362819996166894026L;
 
-	private String clientIpAddress;
-	private String serverIpAddress;
+	private final String clientIpAddress;
+	private final String serverIpAddress;
 
-	private String clientHostName;
-	private Integer serverPort;
+	private final String clientHostName;
+	private final Integer serverPort;
 
+	public NetworkInformation(String clientHostName, String clientIpAddress, String serverIpAddress, int serverPort)
+	{
+		this.clientHostName = clientHostName;
+		this.clientIpAddress = clientIpAddress;
+		this.serverIpAddress = serverIpAddress;
+		this.serverPort = serverPort;
+	}
 	public String getClientIpAddress()
 	{
 		return clientIpAddress;
-	}
-
-	public void setClientIpAddress(String clientIpAddress)
-	{
-		this.clientIpAddress = clientIpAddress;
 	}
 
 	public String getServerIpAddress()
@@ -30,28 +32,13 @@ public class NetworkInformation implements Serializable
 		return serverIpAddress;
 	}
 
-	public void setServerIpAddress(String serverIpAddress)
-	{
-		this.serverIpAddress = serverIpAddress;
-	}
-
 	public String getClientName()
 	{
 		return clientHostName;
 	}
 
-	public void setClientName(String clientHostName)
-	{
-		this.clientHostName = clientHostName;
-	}
-
 	public Integer getServerPort()
 	{
 		return serverPort;
-	}
-
-	public void setServerPort(Integer serverPort)
-	{
-		this.serverPort = serverPort;
 	}
 }
