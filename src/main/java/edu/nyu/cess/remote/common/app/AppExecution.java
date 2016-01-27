@@ -10,7 +10,7 @@ public class AppExecution implements Serializable {
 	private final String path;
 	private final String args;
 
-	private AppState appState;
+	private final AppState appState;
 
 	public AppExecution(String name, String path, String args, AppState appState) {
 		this.name = name;
@@ -34,9 +34,5 @@ public class AppExecution implements Serializable {
 
 	public String getArgs() {
 		return args;
-	}
-
-	public AppExecution clone(AppState appState) {
-		return new AppExecution(name, path, args, appState);
 	}
 }
