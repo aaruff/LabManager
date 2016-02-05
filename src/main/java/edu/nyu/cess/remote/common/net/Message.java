@@ -9,11 +9,11 @@ public class Message implements Serializable
 	private static final long serialVersionUID = 1L;
 
 	private MessageType messageType;
-	private NetworkInformation networkInfo;
+	private NetworkInfo networkInfo;
 	private AppExecution appExecution;
 	private String clientMessage;
 
-	public Message(MessageType messageType, AppExecution appExecution, NetworkInformation networkInfo)
+	public Message(MessageType messageType, AppExecution appExecution, NetworkInfo networkInfo)
 	{
 		this.messageType = messageType;
 		this.appExecution = appExecution;
@@ -26,7 +26,7 @@ public class Message implements Serializable
 		this.clientMessage = clientMessage;
 	}
 
-	public Message(MessageType messageType, NetworkInformation networkInfo)
+	public Message(MessageType messageType, NetworkInfo networkInfo)
 	{
 		this.messageType = messageType;
 		this.networkInfo = networkInfo;
@@ -36,7 +36,7 @@ public class Message implements Serializable
 		return this.messageType;
 	}
 
-	public NetworkInformation getNetworkInfo()
+	public NetworkInfo getNetworkInfo()
 	{
 		return networkInfo;
 	}
