@@ -27,7 +27,7 @@ public class ClientMessageSocket implements MessageSocket
 
 	@Override public synchronized boolean isConnected()
 	{
-		return socket != null && socket.isConnected() && ! socket.isClosed();
+		return socket.isConnected() && ! socket.isClosed();
 	}
 
 	@Override public synchronized void sendMessage(Message message) throws IOException
