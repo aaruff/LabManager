@@ -8,13 +8,13 @@ import java.io.IOException;
 /**
  * The ProcessExecutionManager handles the execution and monitoring of processes.
  */
-public class ProcessExecutionManager implements ProcessExecution, ProcessObserver, ProcessStateObservable
+public class AppExecutionManager implements ProcessExecution, ProcessObserver, ProcessStateObservable
 {
-	final static Logger log = Logger.getLogger(ProcessExecutionManager.class);
+	final static Logger log = Logger.getLogger(AppExecutionManager.class);
 
 	ProcessStateObserver stateObserver;
 
-	private AppExecution appExecution;
+	private AppExecution appExecution = new AppExecution("", "", "", AppState.STOPPED);
 
 	private Process applicationProcess;
 
@@ -26,7 +26,7 @@ public class ProcessExecutionManager implements ProcessExecution, ProcessObserve
 	/**
 	 * Initializes the process execution manager, with a default stopped state.
 	 */
-    public ProcessExecutionManager()
+    public AppExecutionManager()
     {
 		setAppExecutionState(AppState.STOPPED);
     }
@@ -90,9 +90,9 @@ public class ProcessExecutionManager implements ProcessExecution, ProcessObserve
 	 *                          PRIVATE
 	 * ---------------------------------------------------------------------*/
 
-	private static ProcessObserver getProcessObserverFrom(ProcessExecutionManager processExecutionManager)
+	private static ProcessObserver getProcessObserverFrom(AppExecutionManager appExecutionManager)
 	{
-		return processExecutionManager;
+		return appExecutionManager;
 	}
 
     private synchronized void setAppExecution(AppExecution appExecution)
