@@ -8,7 +8,7 @@ import edu.nyu.cess.remote.common.app.AppExecution;
 import edu.nyu.cess.remote.common.app.AppExecutionValidator;
 import edu.nyu.cess.remote.common.net.Message;
 import edu.nyu.cess.remote.common.net.MessageType;
-import edu.nyu.cess.remote.common.net.NetworkInformation;
+import edu.nyu.cess.remote.common.net.NetworkInfo;
 import org.apache.log4j.Logger;
 
 /**
@@ -19,14 +19,20 @@ public class AppMessenger implements ProcessStateObserver, MessageHandler
 	final static Logger log = Logger.getLogger(AppMessenger.class);
 
 	private MessageSender messageSender;
-	private NetworkInformation networkInformation;
+	private NetworkInfo networkInfo;
 	private ProcessExecution appHandler;
 
-	public AppMessenger(ProcessExecution appHandler, MessageSender messageSender, NetworkInformation networkInformation)
+	/**
+	 * Initializes the AppMessenger class with the required handler, sender, and network information.
+	 * @param appHandler the application execution handler
+	 * @param messageSender the message sender
+	 * @param networkInfo network information required for sending messages
+     */
+	public AppMessenger(ProcessExecution appHandler, MessageSender messageSender, NetworkInfo networkInfo)
 	{
 		this.appHandler = appHandler;
 		this.messageSender = messageSender;
-		this.networkInformation = networkInformation;
+		this.networkInfo = networkInfo;
 	}
 
 	/**
@@ -55,7 +61,7 @@ public class AppMessenger implements ProcessStateObserver, MessageHandler
      */
 	@Override public void notifyStateChange(AppExecution appExecution)
 	{
-		Message message = new Message(MessageType.STATE_UPDATE, appExecution, networkInformation);
+		Message message = new Message(MessageType.STATE_UPDATE, appExecution, networkInfo);
 		messageSender.sendMessage(message);
 	}
 }
