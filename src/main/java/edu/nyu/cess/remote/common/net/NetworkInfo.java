@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * The interface for host config information.
  */
-public class NetworkInformation implements Serializable
+public class NetworkInfo implements Serializable
 {
 	private static final long serialVersionUID = -5362819996166894026L;
 
@@ -13,14 +13,12 @@ public class NetworkInformation implements Serializable
 	private final String serverIpAddress;
 
 	private final String clientHostName;
-	private final Integer serverPort;
 
-	public NetworkInformation(String clientHostName, String clientIpAddress, String serverIpAddress, int serverPort)
+	public NetworkInfo(String clientHostName, String clientIpAddress, String serverIpAddress)
 	{
 		this.clientHostName = clientHostName;
 		this.clientIpAddress = clientIpAddress;
 		this.serverIpAddress = serverIpAddress;
-		this.serverPort = serverPort;
 	}
 	public String getClientIpAddress()
 	{
@@ -35,10 +33,5 @@ public class NetworkInformation implements Serializable
 	public String getClientName()
 	{
 		return clientHostName;
-	}
-
-	public Integer getServerPort()
-	{
-		return serverPort;
 	}
 }
