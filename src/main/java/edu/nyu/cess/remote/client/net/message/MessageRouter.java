@@ -9,7 +9,7 @@ import edu.nyu.cess.remote.common.net.MessageType;
 public interface MessageRouter
 {
 	/**
-	 * Routes the received message to the corresponding message handler, specified by setMessageHandler().
+	 * Routes the received message to the corresponding message handler, specified by setInboundHandlerForMessageType().
 	 * Note: Messages without a provided type handler are ignored.
 	 * @param message message to route
      */
@@ -21,5 +21,5 @@ public interface MessageRouter
 	 * @param messageType
 	 * @param messageHandler
      */
-	void setMessageHandler(MessageType messageType, MessageHandler messageHandler);
+	void setInboundHandlerForMessageType(MessageType messageType, MessageHandler messageHandler);
 }

@@ -18,7 +18,7 @@ public class InboundMessageRouter implements MessageRouter
 	/**
 	 * {@link MessageRouter}
 	 */
-	public void setMessageHandler(MessageType messageType, MessageHandler messageHandler)
+	public void setInboundHandlerForMessageType(MessageType messageType, MessageHandler messageHandler)
 	{
 		messageHandlers.put(messageType, messageHandler);
 	}

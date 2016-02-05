@@ -3,7 +3,8 @@ package edu.nyu.cess.remote.client.net.socket;
 import edu.nyu.cess.remote.client.net.message.MessageRouter;
 import edu.nyu.cess.remote.client.net.message.MessageSender;
 import edu.nyu.cess.remote.common.net.Message;
-import edu.nyu.cess.remote.common.net.NetworkInformation;
+import edu.nyu.cess.remote.common.net.NetworkInfo;
+import edu.nyu.cess.remote.common.net.PortInfo;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -18,24 +19,27 @@ public class SocketManager implements MessageSender
 
 	private MessageSocket messageSocket;
 	private MessageRouter messageRouter;
-	private NetworkInformation networkInfo;
+	private NetworkInfo networkInfo;
+	private PortInfo portInfo;
 
 	/**
 	 * Provides this class with the NetworkInformation required to establish a persistent connection to the server, and
 	 * the MessageRouter used to route messages from the server to the corresponding handlers.
-	 * @param messageRouter
-	 * @param networkInfo
+	 * @param messageRouter the message router
+	 * @param networkInfo the network information
+	 * @param portInfo the port info
      */
-	public SocketManager(MessageRouter messageRouter, NetworkInformation networkInfo)
+	public SocketManager(MessageRouter messageRouter, NetworkInfo networkInfo, PortInfo portInfo)
 	{
 		this.messageRouter = messageRouter;
 		this.networkInfo = networkInfo;
+		this.portInfo = portInfo;
 	}
 
 	/**
-	 * Initializes a persistent connection with the server.
+	 * Initializes a persistent connection to the server, and passes all valid inbound messages to the router.
 	 */
-	public void startPersistentConnection()
+	public void startListeningForMessagesAndNotifyRouter()
 	{
 		while (true) {
 			try {
@@ -72,9 +76,14 @@ public class SocketManager implements MessageSender
 		}
 	}
 
+	/**
+	 * Creates and returns a new client socket.
+	 * @return a new socket
+	 * @throws IOException
+     */
 	private ClientMessageSocket getNewMessageSocket() throws IOException
 	{
-		return new ClientMessageSocket(networkInfo.getServerIpAddress(), networkInfo.getServerPort());
+		return new ClientMessageSocket(networkInfo.getServerIpAddress(), portInfo.getNumber());
 	}
 
 }
