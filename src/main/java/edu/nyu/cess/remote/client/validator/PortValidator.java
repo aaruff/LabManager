@@ -1,11 +1,14 @@
 package edu.nyu.cess.remote.client.validator;
 
+import java.util.ArrayList;
+
 /**
  * Validates Port Numbers
  */
-public class PortValidator extends Validator
+public class PortValidator implements Validator
 {
 	private Integer port;
+	private ArrayList<String> errors;
 
 	public PortValidator(){}
 
@@ -26,7 +29,7 @@ public class PortValidator extends Validator
      */
 	public boolean validate()
 	{
-		clearErrors();
+		errors = new ArrayList<>();
 
 		if (port == null) {
 			errors.add("IP address is null.");
@@ -57,4 +60,9 @@ public class PortValidator extends Validator
 		this.port = port;
 	}
 
+	@Override
+	public ArrayList<String> getErrors()
+	{
+		return errors;
+	}
 }

@@ -7,9 +7,10 @@ import java.util.ArrayList;
 /**
  * IP Address Validator
  */
-public class IpValidator extends Validator
+public class IpValidator implements Validator
 {
 	private String ip;
+	private ArrayList<String> errors;
 
 	public IpValidator() {}
 
@@ -52,5 +53,14 @@ public class IpValidator extends Validator
 	public void setIpAddress(String ip)
 	{
 		this.ip = ip;
+	}
+
+	/**
+	 * {@link Validator}
+	 * @return list of errors
+     */
+	public ArrayList<String> getErrors()
+	{
+		return errors;
 	}
 }

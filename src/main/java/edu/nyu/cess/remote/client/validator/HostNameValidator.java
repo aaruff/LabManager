@@ -2,12 +2,15 @@ package edu.nyu.cess.remote.client.validator;
 
 import org.apache.commons.lang.StringUtils;
 
+import java.util.ArrayList;
+
 /**
  * The HostName Validator.
  */
-public class HostNameValidator extends Validator
+public class HostNameValidator implements Validator
 {
 	private String hostName;
+	private ArrayList<String> errors;
 
 	public HostNameValidator(){}
 
@@ -19,7 +22,7 @@ public class HostNameValidator extends Validator
 	@Override
 	public boolean validate()
 	{
-		clearErrors();
+		errors = new ArrayList<>();
 
 		if (hostName == null) {
 			errors.add("Host name is null.");
@@ -32,6 +35,12 @@ public class HostNameValidator extends Validator
 		}
 
 		return true;
+	}
+
+	@Override
+	public ArrayList<String> getErrors()
+	{
+		return errors;
 	}
 
 	/**
