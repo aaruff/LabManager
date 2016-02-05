@@ -9,7 +9,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Created by aruff on 11/6/15.
  */
-public class PortValidatorTest
+public class PortInfoValidatorTest
 {
 
 	@Test
