@@ -1,10 +1,7 @@
 package edu.nyu.cess.remote.client.net.socket;
 
-import edu.nyu.cess.remote.client.net.message.MessageRouter;
 import edu.nyu.cess.remote.client.net.message.MessageSender;
-import edu.nyu.cess.remote.common.net.Message;
-import edu.nyu.cess.remote.common.net.NetworkInfo;
-import edu.nyu.cess.remote.common.net.PortInfo;
+import edu.nyu.cess.remote.common.net.*;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -13,25 +10,23 @@ import java.io.IOException;
  * The SocketManager class handles the initialization of a persistent connection to the server, and passed inbound
  * messages to the MessageRouter to be handled.
  */
-public class SocketManager implements MessageSender
+public class SocketManager implements MessageSender, MessageSourceObservable
 {
 	final static Logger log = Logger.getLogger(SocketManager.class);
 
 	private MessageSocket messageSocket;
-	private MessageRouter messageRouter;
 	private NetworkInfo networkInfo;
 	private PortInfo portInfo;
+    private MessageSourceObserver messageSourceObserver;
 
 	/**
 	 * Provides this class with the NetworkInformation required to establish a persistent connection to the server, and
 	 * the MessageRouter used to route messages from the server to the corresponding handlers.
-	 * @param messageRouter the message router
 	 * @param networkInfo the network information
 	 * @param portInfo the port info
      */
-	public SocketManager(MessageRouter messageRouter, NetworkInfo networkInfo, PortInfo portInfo)
+	public SocketManager(NetworkInfo networkInfo, PortInfo portInfo)
 	{
-		this.messageRouter = messageRouter;
 		this.networkInfo = networkInfo;
 		this.portInfo = portInfo;
 	}
@@ -39,7 +34,7 @@ public class SocketManager implements MessageSender
 	/**
 	 * Initializes a persistent connection to the server, and passes all valid inbound messages to the router.
 	 */
-	public void startListeningForMessagesAndNotifyRouter()
+	public void startListening()
 	{
 		while (true) {
 			try {
@@ -47,13 +42,11 @@ public class SocketManager implements MessageSender
 				// TODO: Add locking mechanism to prevent sendmessage() from being called when a new socket is being created.
 				messageSocket = getNewMessageSocket();
 				while (messageSocket.isConnected()) {
-					messageRouter.routeMessage(messageSocket.readMessage());
+                    messageSourceObserver.notifyObserverMessageReceived(messageSocket.readMessage());
 				}
 			} catch (IOException e) {
 				log.error("Failed to create a message socket.", e);
 
-			} catch (ClassNotFoundException e) {
-				log.error("Failed reading inbound message.", e);
 			}
 
 			// Wait 2 minutes before trying to create another socket
@@ -86,4 +79,11 @@ public class SocketManager implements MessageSender
 		return new ClientMessageSocket(networkInfo.getServerIpAddress(), portInfo.getNumber());
 	}
 
+    /**
+     * {@link MessageSourceObservable}
+     */
+    @Override public void addMessageSourceObserver(MessageSourceObserver messageSourceObserver)
+    {
+        this.messageSourceObserver = messageSourceObserver;
+    }
 }

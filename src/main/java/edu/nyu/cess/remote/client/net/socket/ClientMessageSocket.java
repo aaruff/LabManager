@@ -1,6 +1,7 @@
 package edu.nyu.cess.remote.client.net.socket;
 
 import edu.nyu.cess.remote.common.net.Message;
+import edu.nyu.cess.remote.common.net.MessageSocket;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -37,7 +38,8 @@ public class ClientMessageSocket implements MessageSocket
 		objectOutputStream.flush();
 	}
 
-	@Override public synchronized Message readMessage() throws IOException {
+	@Override public synchronized Message readMessage() throws IOException
+	{
 		ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
 		Object object;
 		try {
