@@ -2,7 +2,7 @@ package edu.nyu.cess.remote.common.app;
 
 public class AppExecutionValidator
 {
-    public static boolean validate(AppExecution exe)
+    public static boolean validate(AppExe exe)
     {
         return ! (exe == null || isEmpty(exe.getName()) || isEmpty(exe.getPath()) || isEmpty(exe.getArgs()) || isNotState(exe.getState()));
     }

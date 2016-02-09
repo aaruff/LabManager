@@ -1,6 +1,6 @@
 package edu.nyu.cess.remote.common.net;
 
-import edu.nyu.cess.remote.common.app.AppExecution;
+import edu.nyu.cess.remote.common.app.AppExe;
 
 import java.io.Serializable;
 
@@ -10,13 +10,13 @@ public class Message implements Serializable
 
 	private MessageType messageType;
 	private NetworkInfo networkInfo;
-	private AppExecution appExecution;
+	private AppExe appExe;
 	private String clientMessage;
 
-	public Message(MessageType messageType, AppExecution appExecution, NetworkInfo networkInfo)
+	public Message(MessageType messageType, AppExe appExe, NetworkInfo networkInfo)
 	{
 		this.messageType = messageType;
-		this.appExecution = appExecution;
+		this.appExe = appExe;
 		this.networkInfo = networkInfo;
 	}
 
@@ -41,9 +41,9 @@ public class Message implements Serializable
 		return networkInfo;
 	}
 
-	public AppExecution getAppExecution()
+	public AppExe getAppExe()
 	{
-		return appExecution;
+		return appExe;
 	}
 
 	public String getClientMessage()
