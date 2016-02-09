@@ -3,13 +3,13 @@ package edu.nyu.cess.remote.server.app;
 /**
  * The application profile class.
  */
-public class AppProfile implements Comparable<AppProfile>
+public class AppInfo implements Comparable<AppInfo>
 {
 	private String name;
 	private String path;
 	private String options;
 
-	public AppProfile(){}
+	public AppInfo(){}
 
 	/**
 	 * Returns the app name.
@@ -70,12 +70,12 @@ public class AppProfile implements Comparable<AppProfile>
 	 *    0: This object's name is equivalent to the argument's.
 	 *  < 0: This object's profile name lexically precedes the argument's name.
 	 *  > 0: This object's profile name lexically succeeds the argument's name.
-	 * @param appProfile
+	 * @param appInfo
 	 * @return
      */
 	@Override
-	public int compareTo(AppProfile appProfile)
+	public int compareTo(AppInfo appInfo)
 	{
-		return name.compareTo(appProfile.getName());
+		return name.compareTo(appInfo.getName());
 	}
 }
