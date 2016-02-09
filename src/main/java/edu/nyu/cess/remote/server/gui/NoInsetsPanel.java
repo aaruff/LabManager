@@ -1,4 +1,4 @@
-package edu.nyu.cess.remote.server.ui;
+package edu.nyu.cess.remote.server.gui;
 
 import java.awt.Insets;
 import java.awt.LayoutManager;

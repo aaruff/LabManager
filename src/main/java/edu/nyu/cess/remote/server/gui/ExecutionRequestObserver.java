@@ -1,6 +1,6 @@
-package edu.nyu.cess.remote.server.ui;
+package edu.nyu.cess.remote.server.gui;
 
-public interface ViewActionObserver
+public interface ExecutionRequestObserver
 {
 	void notifyViewObserverStartAppInRangeRequested(String app, String start, String end);
 	void messageClient(String message, String ipAddress);

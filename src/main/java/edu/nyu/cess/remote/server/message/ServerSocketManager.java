@@ -3,13 +3,14 @@
  */
 package edu.nyu.cess.remote.server.message;
 
-import edu.nyu.cess.remote.common.app.AppExecution;
+import edu.nyu.cess.remote.common.app.AppExe;
+import edu.nyu.cess.remote.common.app.ExeRequestObserver;
 import edu.nyu.cess.remote.common.net.Message;
 import edu.nyu.cess.remote.common.net.MessageType;
-import edu.nyu.cess.remote.common.net.NetworkInformation;
+import edu.nyu.cess.remote.common.net.NetworkInfo;
 import edu.nyu.cess.remote.server.client.ClientPoolController;
 import edu.nyu.cess.remote.server.net.ClientConnectionObserver;
-import edu.nyu.cess.remote.server.net.ClientSocketConnection;
+import edu.nyu.cess.remote.server.net.ClientMessageSocket;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -20,64 +21,57 @@ import java.util.HashMap;
 /**
  * The Class ClientProxy.
  */
-public class ClientMessageHandler implements MessageHandler
+public class ServerSocketManager implements ExeRequestObserver
 {
-    final static Logger log = Logger.getLogger(ClientMessageHandler.class);
+    final static Logger log = Logger.getLogger(ServerSocketManager.class);
 
     private ClientConnectionObserver clientConnectionObserver;
 	private ClientPoolController clientPoolController;
 
-	private HashMap<String, ClientSocketConnection> clientSocketConnections = new HashMap<>();
+	private HashMap<String, ClientMessageSocket> clientSocketConnections = new HashMap<>();
 
-	public ClientMessageHandler(ClientConnectionObserver clientConnectionObserver, ClientPoolController clientPoolController)
+	public ServerSocketManager(ClientConnectionObserver clientConnectionObserver, ClientPoolController clientPoolController)
     {
         this.clientConnectionObserver = clientConnectionObserver;
 		this.clientPoolController = clientPoolController;
 	}
 
-	/**
-	 * {@link MessageHandler}
-     */
-	public void initializeMessageHandler() throws IOException
+	public void startListening(int port) throws IOException
     {
-		int port = 2600;
         ServerSocket serverSocket = new ServerSocket(port);
 
 		while (true) {
 			// Blocking function: waits a client socket connection
-            ClientSocketConnection newClientSocketConnection = listenForNewClientSocketConnection(serverSocket);
+            ClientMessageSocket newClientSocketConnection = listenForNewClientSocketConnection(serverSocket);
 
 			if ( isNotAlreadyConnected(newClientSocketConnection)) {
-				NetworkInformation networkInfo = newClientSocketConnection.getNetworkInformation();
+				NetworkInfo networkInfo = newClientSocketConnection.getNetworkInformation();
 				clientSocketConnections.put(networkInfo.getClientIpAddress(), newClientSocketConnection);
 				log.info("New socket connection made by " + networkInfo.getClientIpAddress());
 
 				 // TODO: Add an authentication and network information confirmation stage before the client is added to the pool
 				//clientConnectionObserver.notifyNewClientConnected(networkInfo);
-
-				newClientSocketConnection.startConnectionMessageMonitor();
-				newClientSocketConnection.startClientKeepAliveMonitor();
 			}
 		}
 	}
 
 	/**
-	 * {@link MessageHandler}
+	 * {@link ExeRequestObserver}
 	 */
-	public synchronized boolean handleOutboundAppExecution(AppExecution applicationAppExecution, String ipAddress)
+	public synchronized void notifyAppExecution(AppExe appExe, String ipAddress)
 	{
-		NetworkInformation networkInfo = new NetworkInformation();
+		NetworkInfo networkInfo = new NetworkInfo();
 		networkInfo.setClientIpAddress(ipAddress);
 		networkInfo.setServerIpAddress(serverIpAddress);
 
-		Message message = new Message(MessageType.APPLICATION_EXECUTION, applicationAppExecution, );
+		Message message = new Message(MessageType.APPLICATION_EXECUTION, appExe, );
 		return clientSocketConnections.get(ipAddress).sendMessage(message);
 	}
 
 	/**
-	 * {@link MessageHandler}
+	 * {@link MessageObserver}
 	 */
-	public synchronized boolean handleOutboundKeepAlive(NetworkInformation networkInfo)
+	public synchronized boolean handleOutboundKeepAlive(NetworkInfo networkInfo)
 	{
 		networkInfo.setServerIpAddress(serverIpAddress);
 		Message message = new Message(MessageType.KEEP_ALIVE_PING, networkInfo);
@@ -85,7 +79,7 @@ public class ClientMessageHandler implements MessageHandler
 	}
 
 	/**
-	 * {@link MessageHandler}
+	 * {@link MessageObserver}
 	 */
 	public synchronized boolean handleOutboundMessage(String message, String ipAddress)
 	{
@@ -94,9 +88,9 @@ public class ClientMessageHandler implements MessageHandler
 	}
 
 	/**
-	 * {@link MessageHandler}
+	 * {@link MessageObserver}
 	 */
-	public synchronized void handleInboundMessage(Message message, NetworkInformation networkInfo)
+	public synchronized void notifyInboundMessage(Message message, NetworkInfo networkInfo)
 	{
 		log.info("Message received from client " + networkInfo.getClientIpAddress());
 
@@ -104,14 +98,14 @@ public class ClientMessageHandler implements MessageHandler
 			case APPLICATION_EXECUTION:
 				// Not supported by the server
 				break;
-			case STATE_CHANGE:
+			case STATE_UPDATE:
 				//TODO: Implement an AppExecution validator
-				AppExecution appExecution = message.getAppExecution();
-				if (appExecution != null) {
-					clientPoolController.updateClientState(networkInfo.getClientIpAddress(), appExecution);
+				AppExe appExe = message.getAppExe();
+				if (appExe != null) {
+					clientPoolController.updateClientState(networkInfo.getClientIpAddress(), appExe);
 				}
 				break;
-			case NETWORK_INFO_UPDATE:
+			case APPLICATION_STATE_UPDATE:
 				clientConnectionObserver.notifyNewClientConnected(message.getNetworkInfo());
 
 				if(clientName != null && !clientName.isEmpty()) {
@@ -146,7 +140,7 @@ public class ClientMessageHandler implements MessageHandler
         clientPoolController.removeClient(ipAddress);
 	}
 
-	private MessageHandler getMessageHandlerFrom(ClientMessageHandler clientMessageHandler)
+	private MessageObserver getMessageHandlerFrom(ServerSocketManager clientMessageHandler)
 	{
 		return clientMessageHandler;
 	}
@@ -156,9 +150,9 @@ public class ClientMessageHandler implements MessageHandler
 	 * @param clientSocketConnection client socket connection
 	 * @return true if client is already connected, otherwise false is returned
 	 */
-	private boolean isNotAlreadyConnected(ClientSocketConnection clientSocketConnection)
+	private boolean isNotAlreadyConnected(ClientMessageSocket clientSocketConnection)
 	{
-		NetworkInformation networkInfo = clientSocketConnection.getNetworkInformation();
+		NetworkInfo networkInfo = clientSocketConnection.getNetworkInformation();
 		return ! clientSocketConnections.containsKey(networkInfo.getClientIpAddress());
 	}
 
@@ -169,7 +163,7 @@ public class ClientMessageHandler implements MessageHandler
 	 *
 	 * @return ClientSocket socket
 	 */
-	private ClientSocketConnection listenForNewClientSocketConnection(ServerSocket serverSocket)
+	private ClientMessageSocket listenForNewClientSocketConnection(ServerSocket serverSocket)
 	{
 		log.info("Waiting for inbound client connection request.");
 
@@ -186,9 +180,7 @@ public class ClientMessageHandler implements MessageHandler
 			}
 		}
 
-		NetworkInformation networkInfo = new NetworkInformation();
-		networkInfo.setClientIpAddress(clientIpAddress);
-		networkInfo.setClientIpAddress(serverIpAddress);
-		return new ClientSocketConnection(socketConnection, networkInfo, getMessageHandlerFrom(this));
+		NetworkInfo networkInfo = new NetworkInfo("", clientIpAddress, serverIpAddress);
+		return new ClientMessageSocket(socketConnection, networkInfo, getMessageHandlerFrom(this));
 	}
 }
