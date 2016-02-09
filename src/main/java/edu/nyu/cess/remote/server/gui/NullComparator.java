@@ -1,4 +1,4 @@
-package edu.nyu.cess.remote.server.ui;
+package edu.nyu.cess.remote.server.gui;
 
 public class NullComparator
 {
