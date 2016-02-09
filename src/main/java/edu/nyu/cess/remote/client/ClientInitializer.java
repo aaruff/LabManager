@@ -1,16 +1,22 @@
 package edu.nyu.cess.remote.client;
 
-import edu.nyu.cess.remote.client.app.AppMessenger;
-import edu.nyu.cess.remote.client.app.process.AppExecutionManager;
+import edu.nyu.cess.remote.client.app.AppMessageDispatcher;
+import edu.nyu.cess.remote.client.app.process.AppExeManager;
+import edu.nyu.cess.remote.client.app.process.AppExeObservable;
+import edu.nyu.cess.remote.client.app.process.AppExecutor;
 import edu.nyu.cess.remote.client.config.NetInfoFile;
 import edu.nyu.cess.remote.client.config.NetInfoFileValidator;
-import edu.nyu.cess.remote.common.net.PortInfo;
-import edu.nyu.cess.remote.client.net.message.InboundMessageRouter;
+import edu.nyu.cess.remote.client.net.message.DispatchControl;
+import edu.nyu.cess.remote.client.net.message.MessageDispatchControl;
+import edu.nyu.cess.remote.client.net.message.MessageDispatcher;
+import edu.nyu.cess.remote.client.net.message.MessageSender;
 import edu.nyu.cess.remote.client.net.socket.SocketManager;
 import edu.nyu.cess.remote.client.notification.UserPrompt;
-import edu.nyu.cess.remote.client.notification.UserPromptMessenger;
+import edu.nyu.cess.remote.client.notification.UserPromptMessageDispatcher;
+import edu.nyu.cess.remote.common.net.MessageSourceObservable;
 import edu.nyu.cess.remote.common.net.MessageType;
 import edu.nyu.cess.remote.common.net.NetworkInfo;
+import edu.nyu.cess.remote.common.net.PortInfo;
 import org.apache.log4j.Logger;
 
 public class ClientInitializer
@@ -44,20 +50,23 @@ public class ClientInitializer
         PortInfo portInfo = netInfoFile.getPortInfo();
         NetworkInfo networkInfo = netInfoFile.getNetworkInfo();
 
-        InboundMessageRouter inboundMessageRouter = new InboundMessageRouter();
-        SocketManager socketManager = new SocketManager(inboundMessageRouter, networkInfo, portInfo);
+		SocketManager socketManager = new SocketManager(networkInfo, portInfo);
 
-        AppExecutionManager appExecutionManager = new AppExecutionManager();
-        AppMessenger appMessenger = new AppMessenger(new AppExecutionManager(), socketManager, networkInfo);
+        MessageSender messageSender = socketManager;
+        MessageSourceObservable messageSourceObservable = socketManager;
+        DispatchControl dispatchControl = new MessageDispatchControl(messageSourceObservable, messageSender);
 
-        appExecutionManager.setStateObserver(appMessenger);
+        AppExeManager appExeManager = new AppExeManager();
+        AppExecutor appExecutor = appExeManager;
+        AppExeObservable appExeObservable = appExeManager;
+        MessageDispatcher appMessageDispatcher = new AppMessageDispatcher(appExecutor, appExeObservable, networkInfo);
 
-        inboundMessageRouter.setInboundHandlerForMessageType(MessageType.APPLICATION_EXECUTION, appMessenger);
-        inboundMessageRouter.setInboundHandlerForMessageType(MessageType.APPLICATION_STATE_UPDATE, appMessenger);
+        MessageDispatcher userPromptMessageDispatcher = new UserPromptMessageDispatcher(new UserPrompt());
 
-        UserPromptMessenger userPromptMessenger = new UserPromptMessenger(new UserPrompt());
-        inboundMessageRouter.setInboundHandlerForMessageType(MessageType.USER_NOTIFICATION, userPromptMessenger);
+        dispatchControl.setMessageDispatcher(MessageType.APPLICATION_EXECUTION, appMessageDispatcher);
+        dispatchControl.setMessageDispatcher(MessageType.APPLICATION_STATE_UPDATE, appMessageDispatcher);
+        dispatchControl.setMessageDispatcher(MessageType.USER_NOTIFICATION, userPromptMessageDispatcher);
 
-        socketManager.startListeningForMessagesAndNotifyRouter();
+        socketManager.startListening();
 	}
 }
