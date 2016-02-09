@@ -13,19 +13,19 @@ public class AppProfilesFile
 	/**
 	 * Reads the remotely executable application list.
 	 *
-	 * @param inputStream
-	 * @return List<RemoteExecProfile>
-	 * @throws YAMLException
+	 * @param inputStream the input stream to read from
+	 * @return AppInfoCollection the collection of applications that are available for execution in the lab
+	 * @throws YAMLException when an error occurs reading the app info file
      */
-	public static Map<String, AppProfile> readFile(InputStream inputStream) throws YAMLException
+	public static AppInfoCollection readFile(InputStream inputStream) throws YAMLException
 	{
-		Yaml yaml = new Yaml(new Constructor(AppProfile.class));
+		Yaml yaml = new Yaml(new Constructor(AppInfo.class));
 
-		Map<String, AppProfile> appProfileList = new HashMap<>();
+		Map<String, AppInfo> appProfileList = new HashMap<>();
 		for (Object remoteExecProfile : yaml.loadAll(inputStream)) {
-			AppProfile appProfile = (AppProfile) remoteExecProfile;
-			appProfileList.put(appProfile.getName(), appProfile);
+			AppInfo appInfo = (AppInfo) remoteExecProfile;
+			appProfileList.put(appInfo.getName(), appInfo);
 		}
-		return appProfileList;
+		return new AppInfoCollection(appProfileList);
 	}
 }

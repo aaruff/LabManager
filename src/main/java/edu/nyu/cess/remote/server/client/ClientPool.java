@@ -3,7 +3,7 @@
  */
 package edu.nyu.cess.remote.server.client;
 
-import edu.nyu.cess.remote.common.app.AppExecution;
+import edu.nyu.cess.remote.common.app.AppExe;
 import edu.nyu.cess.remote.server.Server;
 import org.apache.log4j.Logger;
 
@@ -89,15 +89,15 @@ public class ClientPool implements LiteClientsObservable
 	/**
 	 * Notify observers of a state change.
 	 *
-	 * @param appExecution
+	 * @param appExe
 	 * @param ipAddress
      */
-	public boolean updateClientState(AppExecution appExecution, String ipAddress)
+	public boolean updateClientState(AppExe appExe, String ipAddress)
 	{
 		// TODO: Update the application state on the client by passing it the AppExecution, instead of just the state.
 		try {
 			LiteClient client = getByIp(ipAddress);
-			client.setAppState(appExecution.getState());
+			client.setAppState(appExe.getState());
 			notifyClientStateChanged(ipAddress);
 			return true;
 		}

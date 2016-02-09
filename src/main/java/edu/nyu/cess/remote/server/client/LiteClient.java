@@ -1,14 +1,14 @@
 package edu.nyu.cess.remote.server.client;
 
 import edu.nyu.cess.remote.common.app.AppState;
-import edu.nyu.cess.remote.common.net.NetworkInformation;
-import edu.nyu.cess.remote.server.ui.NullComparator;
+import edu.nyu.cess.remote.common.net.NetworkInfo;
+import edu.nyu.cess.remote.server.gui.NullComparator;
 
 import java.util.Comparator;
 
 public class LiteClient implements Comparable<LiteClient>
 {
-	private NetworkInformation networkInformation;
+	private NetworkInfo networkInfo;
 
 	private AppState appState;
 	private String applicationName;
@@ -16,8 +16,8 @@ public class LiteClient implements Comparable<LiteClient>
 	public static final SortByHostname SORT_BY_HOSTNAME = new SortByHostname();
 	public static final SortByIp SORT_BY_IP = new SortByIp();
 
-	public LiteClient(NetworkInformation networkInformation) {
-		this.networkInformation = networkInformation;
+	public LiteClient(NetworkInfo networkInfo) {
+		this.networkInfo = networkInfo;
 
 		appState = AppState.STOPPED;
 	}
@@ -32,7 +32,7 @@ public class LiteClient implements Comparable<LiteClient>
 	}
 
 	public String getIPAddress() {
-		return networkInformation.getClientIpAddress();
+		return networkInfo.getClientIpAddress();
 	}
 
 	/**
@@ -51,7 +51,7 @@ public class LiteClient implements Comparable<LiteClient>
      */
 	public String getHostName()
 	{
-		return networkInformation.getClientName();
+		return networkInfo.getClientName();
 	}
 
 	/**
@@ -61,7 +61,7 @@ public class LiteClient implements Comparable<LiteClient>
      */
 	public void setHostName(String hostName)
 	{
-        this.networkInformation.setClientName(hostName);
+        this.networkInfo.setClientName(hostName);
 	}
 
 	/**
@@ -96,7 +96,7 @@ public class LiteClient implements Comparable<LiteClient>
 			return NullComparator.compareNullString(getHostName(), client.getHostName());
         }
 
-        return networkInformation.getClientName().compareTo(client.getHostName());
+        return networkInfo.getClientName().compareTo(client.getHostName());
 	}
 
 	/**

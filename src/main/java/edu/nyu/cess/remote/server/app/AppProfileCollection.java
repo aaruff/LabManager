@@ -7,18 +7,18 @@ import java.util.List;
 /**
  * An application configuration collection.
  */
-public class AppProfileCollection implements Iterable<AppProfile>
+public class AppProfileCollection implements Iterable<AppInfo>
 {
-	private List<AppProfile> appProfileCollection;
+	private List<AppInfo> appInfoCollection;
 
 	/**
 	 * Construct the collection
 	 *
-	 * @param appProfileCollection
+	 * @param appInfoCollection
 	 */
-	public AppProfileCollection(List<AppProfile> appProfileCollection)
+	public AppProfileCollection(List<AppInfo> appInfoCollection)
 	{
-		this.appProfileCollection = appProfileCollection;
+		this.appInfoCollection = appInfoCollection;
 	}
 
 	public static void sort(Object[] a, Comparator comparator)
@@ -27,9 +27,9 @@ public class AppProfileCollection implements Iterable<AppProfile>
 	}
 
 	@Override
-	public Iterator<AppProfile> iterator()
+	public Iterator<AppInfo> iterator()
 	{
-		return appProfileCollection.iterator();
+		return appInfoCollection.iterator();
 	}
 
 }

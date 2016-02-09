@@ -1,7 +1,7 @@
 package edu.nyu.cess.remote.server.net;
 
-import edu.nyu.cess.remote.common.net.NetworkInformation;
-import edu.nyu.cess.remote.server.message.MessageHandler;
+import edu.nyu.cess.remote.common.net.NetworkInfo;
+import edu.nyu.cess.remote.common.net.SocketObserver;
 
 /**
  * The network stream monitor thread is used to periodically (every 40 seconds)
@@ -11,12 +11,12 @@ import edu.nyu.cess.remote.server.message.MessageHandler;
  */
 class ClientKeepAliveMonitor implements Runnable
 {
-    private MessageHandler messageHandler;
-    private NetworkInformation networkInfo;
+    private SocketObserver socketObserver;
+    private NetworkInfo networkInfo;
 
-    public ClientKeepAliveMonitor(MessageHandler messageHandler, NetworkInformation networkInfo)
+    public ClientKeepAliveMonitor(SocketObserver socketObserver, NetworkInfo networkInfo)
     {
-        this.messageHandler = messageHandler;
+        this.socketObserver = socketObserver;
         this.networkInfo = networkInfo;
     }
 
@@ -28,14 +28,14 @@ class ClientKeepAliveMonitor implements Runnable
          */
         while (interfaceState) {
             try {
-                interfaceState = messageHandler.handleOutboundKeepAlive(networkInfo);
+                interfaceState = socketObserver.notifySocketDisconnected(networkInfo);
                 if ( ! interfaceState) {
-                    ClientSocketConnection.logger.info("Connection broken between server and client " + networkInfo.getClientIpAddress());
+                    ClientMessageSocket.logger.info("Connection broken between server and client " + networkInfo.getClientIpAddress());
                 }
                 Thread.sleep(40000);
             }
             catch (InterruptedException e) {
-                ClientSocketConnection.logger.info(e);
+                ClientMessageSocket.logger.info(e);
             }
         }
     }

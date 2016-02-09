@@ -1,68 +1,66 @@
 package edu.nyu.cess.remote.server;
 
-import edu.nyu.cess.remote.common.app.AppExecution;
+import edu.nyu.cess.remote.common.app.AppExe;
 import edu.nyu.cess.remote.common.app.AppState;
-import edu.nyu.cess.remote.common.net.NetworkInformation;
-import edu.nyu.cess.remote.server.app.AppProfile;
+import edu.nyu.cess.remote.common.net.NetworkInfo;
+import edu.nyu.cess.remote.server.app.AppInfo;
+import edu.nyu.cess.remote.server.app.AppInfoCollection;
 import edu.nyu.cess.remote.server.client.ClientPool;
 import edu.nyu.cess.remote.server.client.ClientPoolController;
 import edu.nyu.cess.remote.server.client.LiteClient;
 import edu.nyu.cess.remote.server.client.LiteClientNotFoundException;
-import edu.nyu.cess.remote.server.message.ClientMessageHandler;
-import edu.nyu.cess.remote.server.message.MessageHandler;
 import edu.nyu.cess.remote.server.net.ClientConnectionObserver;
-import edu.nyu.cess.remote.server.ui.DashboardView;
-import edu.nyu.cess.remote.server.ui.ViewActionObserver;
+import edu.nyu.cess.remote.server.gui.LabViewFrame;
+import edu.nyu.cess.remote.server.gui.ExecutionRequestObserver;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-public class Server implements ClientConnectionObserver, ViewActionObserver, ClientPoolController
+public class Server implements ClientConnectionObserver, ExecutionRequestObserver, ClientPoolController
 {
     final static Logger logger = Logger.getLogger(Server.class);
 
-	private final MessageHandler messageHandler;
+	private final MessageObserver messageObserver;
 
-	protected final DashboardView dashboardView;
+	protected final LabViewFrame labViewFrame;
 
-	private Map<String, AppProfile> appProfileMap;
+	private AppInfoCollection appInfoCollection;
 
 	private ClientPool clientPool;
 
-	public Server(ClientPool clientPool, Map<String, AppProfile> appProfileMap)
+	public Server(ClientPool clientPool, AppInfoCollection appInfoCollection)
 	{
 		this.clientPool = clientPool;
-		this.appProfileMap = appProfileMap;
+		this.appInfoCollection = appInfoCollection;
 
-		dashboardView = new DashboardView(thisToViewActionObserver(), clientPool, getApplicationNames());
-		messageHandler = new ClientMessageHandler(thisToClientConnectionObserver(), thisToClientPoolController());
 	}
 
 	/**
 	 * Initializes the Server by adding itself to the {@link ClientPool}
 	 * observer list, invoking the UI, and initializing the clientProxy which
 	 * handles network communication between the server and clients.
+     *
+     * @param port the port the server will listen on
      */
-	public void start() throws IOException
+	public void start(int port) throws IOException
     {
-		clientPool.addLiteClientObserver(dashboardView);
+		clientPool.addLiteClientObserver(labViewFrame);
 
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				dashboardView.buildGUI();
-				dashboardView.setVisible(true);
+				labViewFrame.initialize();
+				labViewFrame.setVisible(true);
 			}
 		});
 
-		messageHandler.initializeMessageHandler();
+		messageObserver.initializeMessageHandler(port);
 	}
 
 	/**
-	 * {@link ViewActionObserver}
+	 * {@link ExecutionRequestObserver}
      */
 	@Override public void notifyViewObserverStartAppInRangeRequested(String app, String start, String end)
     {
@@ -71,7 +69,7 @@ public class Server implements ClientConnectionObserver, ViewActionObserver, Cli
 	}
 
 	/**
-	 * {@link ViewActionObserver}
+	 * {@link ExecutionRequestObserver}
 	 */
 	@Override public void notifyStopAppInRangeRequested(String start, String end)
     {
@@ -80,47 +78,47 @@ public class Server implements ClientConnectionObserver, ViewActionObserver, Cli
 	}
 
 	/**
-	 * {@link ViewActionObserver}
+	 * {@link ExecutionRequestObserver}
      */
-	@Override public void notifyNewClientConnected(NetworkInformation networkInformation)
+	@Override public void notifyNewClientConnected(NetworkInfo networkInfo)
     {
-		clientPool.addClient(new LiteClient(networkInformation));
+		clientPool.addClient(new LiteClient(networkInfo));
 	}
 
 	/**
-	 * {@link ViewActionObserver}
+	 * {@link ExecutionRequestObserver}
 	 */
 	@Override public synchronized void messageClient(String message, String ipAddress)
 	{
-		messageHandler.handleOutboundMessage(message, ipAddress);
+		messageObserver.handleOutboundMessage(message, ipAddress);
 	}
 
 	/**
-	 * {@link ViewActionObserver}
+	 * {@link ExecutionRequestObserver}
 	 */
 	@Override public synchronized void startApplication(String appName, String ipAddress)
 	{
 		AppState startState = AppState.STARTED;
 
-		AppProfile appProfile = appProfileMap.get(appName);
-		AppExecution appExecution = new AppExecution(
-				appProfile.getName(), appProfile.getPath(), appProfile.getOptions(), startState);
-		messageHandler.handleOutboundAppExecution(appExecution, ipAddress);
+		AppInfo appInfo = appInfoCollection.get(appName);
+		AppExe appExe = new AppExe(
+				appInfo.getName(), appInfo.getPath(), appInfo.getOptions(), startState);
+		messageObserver.notifyAppExecution(appExe, ipAddress);
 	}
 
 	/**
-	 * {@link ViewActionObserver}
+	 * {@link ExecutionRequestObserver}
 	 */
 	@Override public synchronized void stopApplication(String ipAddress)
 	{
 		//TODO: Store AppExecution in the client, and return it when stopping and staring an application
-		AppExecution appExecution = new AppExecution("", "", "", AppState.STOPPED);
+		AppExe appExe = new AppExe("", "", "", AppState.STOPPED);
 
-		messageHandler.handleOutboundAppExecution(appExecution, ipAddress);
+		messageObserver.notifyAppExecution(appExe, ipAddress);
 	}
 
 	/**
-	 * {@link ViewActionObserver}
+	 * {@link ExecutionRequestObserver}
 	 */
 	public synchronized void messageClientInRange(String message, String lowerBoundHostName, String upperBoundHostName)
 	{
@@ -138,9 +136,9 @@ public class Server implements ClientConnectionObserver, ViewActionObserver, Cli
 	/**
 	 * {@link ClientPoolController}
 	 */
-	public void updateClientState(String ipAddress, AppExecution appExecution)
+	public void updateClientState(String ipAddress, AppExe appExe)
     {
-		clientPool.updateClientState(appExecution, ipAddress);
+		clientPool.updateClientState(appExe, ipAddress);
 	}
 
 	/**
@@ -182,7 +180,7 @@ public class Server implements ClientConnectionObserver, ViewActionObserver, Cli
 	 */
 	private String[] getApplicationNames()
     {
-		Set<String> names = appProfileMap.keySet();
+		Set<String> names = appInfoCollection.keySet();
 		return names.toArray(new String[names.size()]);
 	}
 
@@ -263,18 +261,18 @@ public class Server implements ClientConnectionObserver, ViewActionObserver, Cli
 		}
 	}
 
-	private ClientConnectionObserver thisToClientConnectionObserver()
+	private ClientConnectionObserver getClientConnectionObserverFrom(Server server)
 	{
-		return this;
+		return server;
 	}
 
-	private ClientPoolController thisToClientPoolController()
+	private ClientPoolController getClientPoolControllerFrom(Server server)
 	{
-		return this;
+		return server;
 	}
 
-	private ViewActionObserver thisToViewActionObserver()
+	private ExecutionRequestObserver getViewActionObserverFrom(Server server)
 	{
-		return this;
+		return server;
 	}
 }
