@@ -5,11 +5,11 @@ import edu.nyu.cess.remote.common.net.Message;
 /**
  * Interface for message handlers.
  */
-public interface MessageHandler
+public interface MessageDispatcher
 {
 	/**
 	 * Reads and process the message provided.
 	 * @param message
      */
-	void handleMessage(Message message);
+	void dispatchMessage(Message message);
 }

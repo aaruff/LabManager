@@ -8,13 +8,13 @@ import java.io.IOException;
 /**
  * The ProcessExecutionManager handles the execution and monitoring of processes.
  */
-public class AppExecutionManager implements ProcessExecution, ProcessObserver, ProcessStateObservable
+public class AppExeManager implements AppExecutor, ProcessObserver, AppExeObservable
 {
-	final static Logger log = Logger.getLogger(AppExecutionManager.class);
+	final static Logger log = Logger.getLogger(AppExeManager.class);
 
 	ProcessStateObserver stateObserver;
 
-	private AppExecution appExecution = new AppExecution("", "", "", AppState.STOPPED);
+	private AppExe appExe = new AppExe("", "", "", AppState.STOPPED);
 
 	private Process applicationProcess;
 
@@ -26,13 +26,13 @@ public class AppExecutionManager implements ProcessExecution, ProcessObserver, P
 	/**
 	 * Initializes the process execution manager, with a default stopped state.
 	 */
-    public AppExecutionManager()
+    public AppExeManager()
     {
 		setAppExecutionState(AppState.STOPPED);
     }
 
 	/**
-	 * {@link ProcessStateObservable}
+	 * {@link AppExeObservable}
      */
 	@Override public void setStateObserver(ProcessStateObserver stateObserver)
 	{
@@ -48,18 +48,18 @@ public class AppExecutionManager implements ProcessExecution, ProcessObserver, P
 	}
 
     /**
-     * {@link ProcessExecution}
+     * {@link AppExecutor}
      */
-	@Override public synchronized void executeRequest(AppExecution appExecution)
+	@Override public synchronized void executeRequest(AppExe appExe)
 	{
-		switch(appExecution.getState()) {
+		switch(appExe.getState()) {
 			case STARTED:
 				switch (getCurrentState()) {
 					case STARTED:
                         // TODO: Handle case where application start request received, but an application is already started
 						break;
 					case STOPPED:
-						setAppExecution(appExecution);
+						setAppExe(appExe);
                         start();
 						break;
 				}
@@ -79,54 +79,54 @@ public class AppExecutionManager implements ProcessExecution, ProcessObserver, P
 	}
 
     /**
-     * {@link ProcessExecution}
+     * {@link AppExecutor}
      */
-    public AppExecution getExecution()
+    public AppExe getExecution()
     {
-        return appExecution;
+        return appExe;
     }
 
 	/* ---------------------------------------------------------------------
 	 *                          PRIVATE
 	 * ---------------------------------------------------------------------*/
 
-	private static ProcessObserver getProcessObserverFrom(AppExecutionManager appExecutionManager)
+	private static ProcessObserver getProcessObserverFrom(AppExeManager appExeManager)
 	{
-		return appExecutionManager;
+		return appExeManager;
 	}
 
-    private synchronized void setAppExecution(AppExecution appExecution)
+    private synchronized void setAppExe(AppExe appExe)
     {
-        this.appExecution = appExecution;
+        this.appExe = appExe;
     }
 
     private synchronized AppState getCurrentState()
     {
-        return appExecution.getState();
+        return appExe.getState();
     }
 
     private synchronized void setAppExecutionState(AppState appState)
     {
-		appExecution = new AppExecution(appExecution.getName(), appExecution.getPath(), appExecution.getArgs(), appState);
+		appExe = new AppExe(appExe.getName(), appExe.getPath(), appExe.getArgs(), appState);
     }
 
 	private boolean start()
 	{
 		boolean execResult = false;
-		switch (appExecution.getState()) {
+		switch (appExe.getState()) {
 			case STOPPED:
 				if (applicationProcess == null) {
 					try {
-						String path = appExecution.getPath();
-						String name = appExecution.getName();
-						String args = appExecution.getArgs();
+						String path = appExe.getPath();
+						String name = appExe.getName();
+						String args = appExe.getArgs();
 
 						log.info("Attempting to start " + path + name + " " + args);
 						applicationProcess = Runtime.getRuntime().exec(path + name + " " + args);
 
 						if (applicationProcess != null) {
 							setAppExecutionState(AppState.STARTED);
-                            stateObserver.notifyStateChange(appExecution);
+                            stateObserver.notifyStateChange(appExe);
 
 							errorGobbler = new ProcessIOStreamGobbler(applicationProcess.getErrorStream(), "ERROR");
 							outputGobbler = new ProcessIOStreamGobbler(applicationProcess.getInputStream(), "OUTPUT");
@@ -177,6 +177,6 @@ public class AppExecutionManager implements ProcessExecution, ProcessObserver, P
 
 		log.info("Application stopped.");
 		setAppExecutionState(AppState.STOPPED);
-		stateObserver.notifyStateChange(appExecution);
+		stateObserver.notifyStateChange(appExe);
 	}
 }

@@ -4,7 +4,7 @@ package edu.nyu.cess.remote.client.app.process;
  * The ProcessStateObservable defines the method for setting the observer, and declares that only ProcessStateObservers
  * are allowed to to observe implementors of this interface..
  */
-public interface ProcessStateObservable
+public interface AppExeObservable
 {
 	/**
 	 * Sets the process state observer.
