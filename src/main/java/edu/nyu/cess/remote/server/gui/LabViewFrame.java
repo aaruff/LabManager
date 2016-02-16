@@ -3,28 +3,27 @@
  */
 package edu.nyu.cess.remote.server.gui;
 
-import edu.nyu.cess.remote.server.Server;
-import edu.nyu.cess.remote.server.client.ClientPool;
-import edu.nyu.cess.remote.server.client.LiteClient;
-import edu.nyu.cess.remote.server.client.LiteClientNotFoundException;
-import edu.nyu.cess.remote.server.client.LiteClientsObserver;
-import edu.nyu.cess.remote.server.gui.listeners.MessageClientsInRangeListener;
+import edu.nyu.cess.remote.common.app.AppExe;
+import edu.nyu.cess.remote.common.app.AppState;
+import edu.nyu.cess.remote.server.gui.listeners.StartStopButtonListener;
+import edu.nyu.cess.remote.server.gui.listeners.StartStopGroupButtonListener;
+import edu.nyu.cess.remote.server.gui.observers.StartStopButtonObserver;
+import edu.nyu.cess.remote.server.gui.observers.StartStopGroupButtonObserver;
+import edu.nyu.cess.remote.server.gui.observers.ViewAppExeObserver;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
  * @author Anwar A. Ruff
  */
-public class LabViewFrame extends JFrame implements LiteClientsObserver
+public class LabViewFrame extends JFrame implements StartStopGroupButtonObserver, StartStopButtonObserver, LabView
 {
-	final static Logger log = Logger.getLogger(Server.class);
+	final static Logger log = Logger.getLogger(LabViewFrame.class);
 
 	private static final long serialVersionUID = 1L;
 
@@ -37,40 +36,29 @@ public class LabViewFrame extends JFrame implements LiteClientsObserver
 	private final HashMap<String, JLabel> clientDescriptionLabels = new HashMap<>();
 
 	private final JPanel contentPane = new JPanel(new GridBagLayout());
-	private JPanel clientsContainerPanel;
 	private JPanel computerRangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-	private final JPanel applicationMessageRangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-	private final JPanel messageRangeCards = new JPanel(new CardLayout());
-	private final JPanel applicationMessagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-	private final JPanel rangeMessagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
+    private ArrayList<ViewClient> viewClients = new ArrayList<>();
+
+    private final String[] appNames;
+
+    private JPanel clientsContainerPanel;
 	private JPanel appExecutionPanel;
-	private final JPanel clientMessagingPanel = new JPanel(new GridBagLayout());
-
-	JTextField messageTextField = new JTextField(50);
-	JLabel messageJLabel = new JLabel();
 
 	private JComboBox<String> appNameComboBox;
-	private JComboBox clientsLowerBoundComboBox;
-	private JComboBox clientsUpperBoundComboBox;
-	private JComboBox clientsMessageLowerBound;
-	private JComboBox clientsMessageUpperBound;
-	private JComboBox connectedComputersComboBox;
+	private JComboBox<String> fromClientComboBox;
+	private JComboBox<String> toClientComboBox;
 
-	JRadioButton singleRadioButton;
-	JRadioButton rangeRadioButton;
+	private ViewAppExeObserver viewAppExeObserver;
 
-	private final ExecutionRequestObserver executionRequestObserver;
-	private ClientPool clientPool;
-	private String[] appNames;
-
-	public LabViewFrame(ExecutionRequestObserver executionRequestObserver, ClientPool clientPool, String[] appNames)
+	public LabViewFrame(String[] appNames, ViewAppExeObserver viewAppExeObserver)
 	{
-		super("CESS Lab Manager");
-		this.executionRequestObserver = executionRequestObserver;
-		this.clientPool = clientPool;
 		this.appNames = appNames;
+		this.viewAppExeObserver = viewAppExeObserver;
+	}
 
+	public void render()
+	{
 		setLookAndFeel();
 
 		contentPane.setBackground(Color.white);
@@ -82,192 +70,260 @@ public class LabViewFrame extends JFrame implements LiteClientsObserver
 		appExecutionPanel.setBackground(Color.white);
 		appExecutionPanel.setOpaque(false);
 
-		computerRangePanel = getComputerRangePanel();
-		appExecutionPanel.add(computerRangePanel, getAppExeRangeConstraints());
-
 		appNameComboBox = new JComboBox<>(appNames);
 		appExecutionPanel.add(getAppSelectionPanel(appNameComboBox), getAppSelectionPanelConstraints());
 
-		appExecutionPanel.add(getStartStopGroupPanel(), getStartStopGroupPanelConstraints());
+		fromClientComboBox = new JComboBox<>();
+		toClientComboBox = new JComboBox<>();
+		computerRangePanel = getClientRangePanel(fromClientComboBox, toClientComboBox);
+		appExecutionPanel.add(computerRangePanel, getAppExeRangeConstraints());
+
+		appExecutionPanel.add(getStartStopButtonPanel(), getStartStopButtonPanelConstraints());
+
+		contentPane.add(appExecutionPanel, getAppControlPanelConstraints());
 
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		setResizable(false);
-	}
-
-	public void initialize()
-	{
-		JPanel messageRadioButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		messageRadioButtonPanel.setOpaque(false);
-		messageRadioButtonPanel.setBorder(new TitledBorder("Select a Message Option"));
-
-		rangeRadioButton = new JRadioButton("Computer Range");
-		rangeRadioButton.addItemListener(new ItemListener() {
-			public void itemStateChanged(ItemEvent e) {
-				setMessageCard(((JRadioButton) e.getItem()).getText());
-			}
-		});
-
-		singleRadioButton = new JRadioButton("One Computer");
-		singleRadioButton.setSelected(true);
-		singleRadioButton.addItemListener(new ItemListener() {
-			public void itemStateChanged(ItemEvent e) {
-				setMessageCard(((JRadioButton) e.getItem()).getText());
-			}
-		});
-
-		ButtonGroup messageButtonGroup = new ButtonGroup();
-		messageButtonGroup.add(singleRadioButton);
-		messageButtonGroup.add(rangeRadioButton);
-
-		messageRadioButtonPanel.add(singleRadioButton);
-		messageRadioButtonPanel.add(rangeRadioButton);
-		clientsPanelConstraints = getConstraint(0, 0, 0.5, 0.0);
-		clientsPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
-		clientMessagingPanel.add(messageRadioButtonPanel, clientsPanelConstraints);
-
-		setMessagePanel(new JComboBox());
-		setMessageRangePanel(new JComboBox(), new JComboBox());
-
-		clientsPanelConstraints = getConstraint(0, 1, 1.0, 0.0);
-		clientsPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
-		messageRangeCards.setOpaque(false);
-		clientMessagingPanel.add(messageRangeCards, clientsPanelConstraints);
-
-		JButton messageSendingButton = new JButton("Send Message");
-		messageSendingButton.setToolTipText("Send a message to all computers in the selected range.");
-		messageSendingButton.addActionListener(new MessageClientsInRangeListener(this));
-
-		rangeMessagePanel.setOpaque(false);
-		rangeMessagePanel.add(messageSendingButton);
-		rangeMessagePanel.add(messageTextField);
-
-		clientsPanelConstraints = getConstraint(0, 2, 0.5, 0.0);
-		clientsPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
-		clientMessagingPanel.add(rangeMessagePanel, clientsPanelConstraints);
-
-		clientsPanelConstraints = getConstraint(0, 3, 1.0, 0.0);
-		clientsPanelConstraints.anchor = GridBagConstraints.WEST;
-		clientsPanelConstraints.insets = new Insets(0, 5, 0, 0);
-		clientMessagingPanel.add(messageJLabel, clientsPanelConstraints);
-
-		clientMessagingPanel.setOpaque(false);
-
-		JTabbedPane controlTab = new JTabbedPane();
-		controlTab.add("Program Execution", appExecutionPanel);
-		controlTab.add("Message Sending", clientMessagingPanel);
-
-		NoInsetsPanel tabPanel = new NoInsetsPanel(new GridBagLayout());
-		//tabPanel.setBorder(new TitledBorder(""));
-		tabPanel.setBorder(BorderFactory.createEmptyBorder());
-		tabPanel.setBackground(Color.white);
-		tabPanel.setOpaque(false);
-		clientsPanelConstraints = getConstraint(0, 0, 1, 1);
-		clientsPanelConstraints.fill = GridBagConstraints.BOTH;
-		tabPanel.add(controlTab, clientsPanelConstraints);
-
-		clientsPanelConstraints = getConstraint(1, 3, 0.5, 0.1);
-		clientsPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
-		clientsPanelConstraints.anchor = GridBagConstraints.PAGE_END;
-		clientsPanelConstraints.ipady = 20;
-		clientsPanelConstraints.insets = new Insets(0, 0, 10, 0);
-		contentPane.add(tabPanel, clientsPanelConstraints);
 
 		setContentPane(contentPane);
 		pack();
+
 	}
 
 	/**
-	 * Returns a {@link GridBagConstraints} with the following parameters set.
-	 *
-	 * @param gridx grid x coordinate position
-	 * @param gridy grid y coordinate position
-	 * @param weightx row weight distribution
-	 * @param weighty column weight distribution
-	 * @return grid constraints
-	 */
-	public GridBagConstraints getConstraint(int gridx, int gridy, double weightx, double weighty) {
+	 * {@link StartStopGroupButtonObserver}
+     */
+	@Override public void notifyGroupExeRequest(AppState state)
+	{
+		String fromClientName = String.valueOf(fromClientComboBox.getSelectedItem());
+		String toClientName = String.valueOf(toClientComboBox.getSelectedItem());
+		String app = String.valueOf(appNameComboBox.getSelectedItem());
+
+		if (fromClientName.isEmpty() || toClientName.isEmpty()) {
+			log.error("Failed attempt to start/stop clients across an invalid range.");
+			return;
+		}
+
+
+		// TODO: Refactor
+        //viewAppExeObserver.notifyAppExeRequest(app, state);
+	}
+
+	@Override public void notifyExeRequest(AppState appState, String clientName, String clientIp)
+	{
+		String app = String.valueOf(appNameComboBox.getSelectedItem());
+		// TODO: Refactor
+		//viewAppExeObserver.notifyAppExeRequest(, , networkInfo, app, appState);
+	}
+
+	/**
+	 * {@link LabView}
+     * @param clientName
+     * @param clientIp
+     */
+	@Override public void addClient(String clientName, String clientIp)
+	{
+        viewClients.add(new ViewClient(clientName, clientIp));
+
+		JPanel clientPanel = getClientPanel();
+
+		clientPanel.setLayout(new BoxLayout(clientPanel, BoxLayout.Y_AXIS));
+
+		JLabel descriptionLabel = new JLabel("" + clientIp);
+		descriptionLabel.setForeground(new Color(0, 0, 128));
+		clientDescriptionLabels.put(clientIp, descriptionLabel);
+
+		JPanel applicationStatePanel = new JPanel(new FlowLayout());
+		applicationStatePanel.setOpaque(false);
+		JLabel applicationStateLabel = new JLabel("Stopped");
+		applicationStateLabel.setForeground(Color.red);
+		applicationStatePanel.add(applicationStateLabel);
+		applicationStateLabels.put(clientIp, applicationStateLabel);
+		clientPanel.add(applicationStatePanel);
+
+		String startButtonName = "Start";
+		JButton startButton = new JButton(startButtonName);
+		startButton.setToolTipText("Starts selected application on " + clientIp + ".");
+		clientStartButtons.put(clientIp, startButton);
+
+		String stopButtonName = "Stop";
+		JButton stopButton = new JButton("Stop");
+		clientStopButtons.put(clientIp, stopButton);
+		clientStopButtons.get(clientIp).setEnabled(false);
+
+		clientStartButtons.get(clientIp).addActionListener(
+				new StartStopButtonListener(this, clientName, clientIp, startButtonName, stopButtonName));
+		clientStopButtons.get(clientIp).addActionListener(
+				new StartStopButtonListener(this, clientName, clientIp, startButtonName, stopButtonName));
+
+		JPanel clientDescriptionPanel = new JPanel(new FlowLayout());
+		clientDescriptionPanel.setOpaque(false);
+		clientDescriptionPanel.add(descriptionLabel);
+		clientPanel.add(clientDescriptionPanel);
+
+		JPanel buttonPanel = new JPanel(new FlowLayout());
+		buttonPanel.setOpaque(false);
+		buttonPanel.add(clientStartButtons.get(clientIp));
+		buttonPanel.add(clientStopButtons.get(clientIp));
+		clientPanel.add(buttonPanel);
+
+		liteClientPanels.put(clientIp, clientPanel);
+
+		//--------------------------------------------------------------
+		// Rebuild range combo boxes
+		//--------------------------------------------------------------
+
+		//TODO: Refactor
+		/*
+		clientPanel.removeAll();
+
+		java.util.List<Client> sortedClients = clientPool.sort(Client.SORT_BY_HOSTNAME);
+		for (Client client : sortedClients) {
+			clientPanel.add(labViewFrame.liteClientPanels.get(client.getIPAddress()));
+		}
+
+		TitledBorder titledBorder = BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),
+				"Connections: " + sortedClients.size());
+		clientPanel.setBorder(titledBorder);
+
+		String[] hostNames = labViewFrame.clientPool.getHostNames(Client.SORT_BY_HOSTNAME).toArray(new String[labViewFrame.clientPool.size()]);
+		clientsLowerBoundComboBox = new JComboBox<>(hostNames);
+		clientsUpperBoundComboBox = new JComboBox<>(hostNames);
+
+		setApplicationRangePanel(labViewFrame.clientsLowerBoundComboBox, labViewFrame.clientsUpperBoundComboBox);
+		setMessagePanel(new JComboBox<>(hostNames));
+		setMessageRangePanel(new JComboBox<>(hostNames), new JComboBox<>(hostNames));
+
+		GridBagConstraints constraint = labViewFrame.getConstraint(0, 1, 1.0, 0.0);
+		constraint.fill = GridBagConstraints.HORIZONTAL;
+		clientMessagingPanel.add(labViewFrame.messageRangeCards, constraint);
+		*/
+
+		pack();
+		contentPane.validate();
+	}
+
+	@Override public void updateClient(String clientIp, AppExe appExe)
+	{
+		//TODO: Refactor
+		/*
+		if (client.isApplicationRunning()) {
+			labViewFrame.applicationStateLabels.get(client.getIPAddress()).setText(
+					"Running: " + client.getApplicationName());
+			(labViewFrame.applicationStateLabels.get(client.getIPAddress())).setForeground(new Color(73, 143, 0));
+			labViewFrame.clientStartButtons.get(client.getIPAddress()).setEnabled(false);
+			labViewFrame.clientStopButtons.get(client.getIPAddress()).setEnabled(true);
+			labViewFrame.clientStopButtons.get(client.getIPAddress()).setToolTipText("Stops running application.");
+			if (!client.getHostName().isEmpty()) {
+				labViewFrame.clientDescriptionLabels.get(client.getIPAddress()).setText("" + client.getHostName());
+			}
+			labViewFrame.contentPane.validate();
+			labViewFrame.repaint();
+		} else {
+			labViewFrame.applicationStateLabels.get(client.getIPAddress()).setText("Stopped");
+			labViewFrame.applicationStateLabels.get(client.getIPAddress()).setForeground(Color.red);
+			labViewFrame.clientStartButtons.get(client.getIPAddress()).setEnabled(true);
+			labViewFrame.clientStopButtons.get(client.getIPAddress()).setEnabled(false);
+			if (!client.getHostName().isEmpty()) {
+				labViewFrame.clientDescriptionLabels.get(client.getIPAddress()).setText("" + client.getHostName());
+			}
+			labViewFrame.contentPane.validate();
+			labViewFrame.repaint();
+		}
+		*/
+	}
+
+	@Override
+	public void removeClient(String clientIp)
+	{
+		//TODO: Refactor
+		/*
+		String clientIpAddress = networkInfo.getClientIp();
+		clientsContainerPanel.remove(liteClientPanels.get(clientIpAddress));
+		liteClientPanels.remove(clientIpAddress);
+
+		clientDescriptionLabels.remove(clientIpAddress);
+		applicationStateLabels.remove(clientIpAddress);
+
+		clientStartButtons.remove(clientIpAddress);
+		clientStopButtons.remove(clientIpAddress);
+
+		String[] hostNames = clientPool.getHostNames(Client.SORT_BY_HOSTNAME).toArray(new String[clientPool.size()]);
+
+		clientsContainerPanel.setBorder(new TitledBorder("Computers Connected: " + hostNames.length));
+
+		clientsLowerBoundComboBox = new JComboBox<>(hostNames);
+		clientsUpperBoundComboBox = new JComboBox<>(hostNames);
+
+		setApplicationRangePanel(clientsLowerBoundComboBox, clientsUpperBoundComboBox);
+
+		connectedComputersComboBox = new JComboBox<>(hostNames);
+		setMessagePanel(connectedComputersComboBox);
+
+		clientsMessageLowerBound = new JComboBox<>(hostNames);
+		clientsMessageUpperBound = new JComboBox<>(hostNames);
+		setMessageRangePanel(clientsMessageLowerBound, labViewFrame.clientsMessageUpperBound);
+
+		GridBagConstraints constraint = getConstraint(0, 1, 1.0, 0.0);
+		constraint.fill = GridBagConstraints.HORIZONTAL;
+		clientMessagingPanel.add(messageRangeCards, constraint);
+
+		pack();
+		contentPane.validate();
+
+		repaint();
+		*/
+	}
+
+	/* ----------------------------------------------------
+	 *                       PRIVATE
+	 * ---------------------------------------------------- */
+
+
+    private JPanel getClientPanel()
+	{
+		return new JPanel() {
+			private final int gradientSize = 18;
+			private final Color lighterColor = new Color(250, 250, 250);
+			private final Color darkerColor = new Color(225, 225, 230);
+			private final Color edgeColor = new Color(140, 145, 145);
+			private final Stroke edgeStroke = new BasicStroke(1);
+			private final GradientPaint upperGradient = new GradientPaint(0, 0, lighterColor, 0, gradientSize, darkerColor);
+			@Override
+			public void paintComponent(Graphics g) {
+
+				Graphics2D g2 = (Graphics2D) g;
+				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+						RenderingHints.VALUE_ANTIALIAS_ON);
+				float gradientPerc = (float) gradientSize / getHeight();
+				LinearGradientPaint lgp = new LinearGradientPaint(0, 0, 0, getHeight() - 1,
+						new float[]{0, gradientPerc, 1 - gradientPerc, 1f},
+						new Color[]{lighterColor, darkerColor, darkerColor, lighterColor});
+				g2.setPaint(lgp);
+				g.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1,
+						gradientSize, gradientSize);
+				g2.setColor(edgeColor);
+				g2.setStroke(edgeStroke);
+				g.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1,
+						gradientSize, gradientSize);
+			}
+		};
+
+	}
+
+	private GridBagConstraints getAppControlPanelConstraints()
+	{
 		GridBagConstraints constraints = new GridBagConstraints();
-		constraints.weightx = weightx;
-		constraints.weighty = weighty;
-		constraints.gridx = gridx;
-		constraints.gridy = gridy;
+		constraints.weightx = 0.5;
+		constraints.weighty = 0.1;
+		constraints.gridx = 1;
+		constraints.gridy = 3;
+		constraints.fill = GridBagConstraints.HORIZONTAL;
+		constraints.anchor = GridBagConstraints.PAGE_END;
+		constraints.ipady = 20;
+		constraints.insets = new Insets(0, 0, 10, 0);
 
 		return constraints;
-	}
-
-	/**
-	 * Sets the message JPanel.
-	 *
-	 * @param lowerBound client name with the lowest ordinal value
-	 * @param upperBound client name with the greatest ordinal value
-     */
-	private void setMessageRangePanel(JComboBox lowerBound, JComboBox upperBound) {
-		applicationMessageRangePanel.removeAll();
-		applicationMessageRangePanel.setOpaque(false);
-		applicationMessageRangePanel.add(new JLabel("Select a Computer Range: "));
-		applicationMessageRangePanel.add(lowerBound);
-		applicationMessageRangePanel.add(new JLabel(" - "));
-		applicationMessageRangePanel.add(upperBound);
-
-		messageRangeCards.add(applicationMessageRangePanel, "Computer Range");
-	}
-
-	/**
-	 * Adds the JCombobox to the message panel.
-	 * @param computers computer combo box
-     */
-	private void setMessagePanel(JComboBox computers) {
-		applicationMessagePanel.removeAll();
-		applicationMessagePanel.setOpaque(false);
-		applicationMessagePanel.add(new JLabel("Select a Computer: "));
-		applicationMessagePanel.add(computers);
-
-		messageRangeCards.add(applicationMessagePanel, "One Computer");
-	}
-
-	/**
-	 * Sets the card layout.
-	 * @param radioButtonID Radio button value
-     */
-	private void setMessageCard(String radioButtonID) {
-		CardLayout cl = (CardLayout) (messageRangeCards.getLayout());
-		cl.show(messageRangeCards, radioButtonID);
-	}
-
-	/**
-	 * This method is called when a {@link LiteClient} is added to the
-	 * {@link ClientPool} collection.
-	 */
-	public void updateLiteClientAdded(String ipAddress) {
-		try {
-			LiteClient liteClient = clientPool.getByIp(ipAddress);
-			SwingUtilities.invokeLater(new AddClientRunnable(this, ipAddress, liteClient));
-		}
-		catch (LiteClientNotFoundException e) {
-			log.error("Client not found", e);
-		}
-	}
-
-	/**
-	 * This method is called when a {@link LiteClient} is removed from the
-	 * {@link ClientPool} collection.
-	 */
-	public void updateLiteClientRemoved(String ipAddress) {
-		SwingUtilities.invokeLater(new RemoveClientRunnable(this, ipAddress));
-	}
-
-	/**
-	 * This method is called when a {@link LiteClient}s state, in the
-	 * {@link ClientPool} collection, has been updated (not necessarily
-	 * changed).
-	 */
-	public void updateLiteClientStateChanged(LiteClient liteClient) {
-		SwingUtilities.invokeLater(new UpdateClient(this, liteClient));
-	}
-
-	public void updateLiteClientHostNameChanged(LiteClient liteClient) {
-		System.out.println("Hostname chaged to:" + liteClient.getHostName() + "\n");
-		SwingUtilities.invokeLater(new UpdateClient(this, liteClient));
 	}
 
 	private void setLookAndFeel()
@@ -287,7 +343,7 @@ public class LabViewFrame extends JFrame implements LiteClientsObserver
 
 	private JPanel getClientsPanel()
 	{
-		String statusText = "Connections: " + clientPool.size();
+		String statusText = "Connections: " + 0;
 		int rows = 0;
 		int columns = 6;
 		int horizontalGap = 10;
@@ -301,33 +357,41 @@ public class LabViewFrame extends JFrame implements LiteClientsObserver
 
 	private GridBagConstraints getClientPanelConstraints()
 	{
-		GridBagConstraints clientsPanelConstraints = getConstraint(0, 0, 1.0, 0.8);
-		clientsPanelConstraints.fill = GridBagConstraints.BOTH;
-		clientsPanelConstraints.gridwidth = 2;
-		clientsPanelConstraints.insets = new Insets(10, 0, 0, 0);
+		GridBagConstraints constraints = new GridBagConstraints();
+		constraints.weightx = 1.0;
+		constraints.weighty = 0.8;
+		constraints.gridx = 0;
+		constraints.gridy = 0;
+		constraints.fill = GridBagConstraints.BOTH;
+		constraints.gridwidth = 2;
+		constraints.insets = new Insets(10, 0, 0, 0);
 
-		return clientsPanelConstraints;
+		return constraints;
 	}
 
-	private JPanel getComputerRangePanel() {
+	private JPanel getClientRangePanel(JComboBox<String> from, JComboBox<String> to) {
 		JPanel computerRangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		computerRangePanel.setBackground(Color.white);
 		computerRangePanel.setOpaque(true);
 		computerRangePanel.add(new JLabel("Computer Range: "));
-		computerRangePanel.add(new JComboBox<String>());
+		computerRangePanel.add(from);
 		computerRangePanel.add(new JLabel(" - "));
-		computerRangePanel.add(new JComboBox<String>());
+		computerRangePanel.add(to);
 
 		return computerRangePanel;
 	}
 
 	private GridBagConstraints getAppExeRangeConstraints()
 	{
-		GridBagConstraints constraint = getConstraint(0, 1, 1.0, 0.4);
-		constraint.fill = GridBagConstraints.BOTH;
-		constraint.insets = new Insets(0, 5, 0, 0);
+		GridBagConstraints constraints = new GridBagConstraints();
+		constraints.weightx = 1.0;
+		constraints.weighty = 0.4;
+		constraints.gridx = 0;
+		constraints.gridy = 1;
+		constraints.fill = GridBagConstraints.BOTH;
+		constraints.insets = new Insets(0, 5, 0, 0);
 
-		return constraint;
+		return constraints;
 	}
 
 	private JPanel getAppSelectionPanel(JComboBox<String> comboBox)
@@ -343,22 +407,28 @@ public class LabViewFrame extends JFrame implements LiteClientsObserver
 
 	private GridBagConstraints getAppSelectionPanelConstraints()
 	{
-		GridBagConstraints clientsPanelConstraints = getConstraint(0, 0, 1.0, 0.5);
-		clientsPanelConstraints.insets = new Insets(0, 5, 0, 0);
-		clientsPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
-		return clientsPanelConstraints;
+		GridBagConstraints constraints = new GridBagConstraints();
+		constraints.weightx = 1.0;
+		constraints.weighty = 0.5;
+		constraints.gridx = 0;
+		constraints.gridy = 0;
+		constraints.insets = new Insets(0, 5, 0, 0);
+		constraints.fill = GridBagConstraints.HORIZONTAL;
+		return constraints;
 	}
 
-	private JPanel getStartStopGroupPanel()
+	private JPanel getStartStopButtonPanel()
 	{
-		JButton startGroupButton = new JButton("Start Group");
+		String startButtonText = "Start Group";
+		JButton startGroupButton = new JButton(startButtonText);
 		startGroupButton.setToolTipText("Starts the selected program on all computers in the selected range.");
 
-		JButton stopGroupButton = new JButton("Stop Group");
+		String stopButtonText = "Stop Group";
+		JButton stopGroupButton = new JButton(stopButtonText);
 		stopGroupButton.setToolTipText("Stops the running program on all computers in the selected range");
 
-		startGroupButton.addActionListener(new StartGroupListener(this));
-		stopGroupButton.addActionListener(new StopGroupListener(this));
+		startGroupButton.addActionListener(new StartStopGroupButtonListener(this, startButtonText, stopButtonText));
+		stopGroupButton.addActionListener(new StartStopGroupButtonListener(this, startButtonText, stopButtonText));
 
 		JPanel startStopButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		startStopButtonPanel.setOpaque(false);
@@ -368,13 +438,16 @@ public class LabViewFrame extends JFrame implements LiteClientsObserver
 		return startStopButtonPanel;
 	}
 
-	private GridBagConstraints getStartStopGroupPanelConstraints()
+	private GridBagConstraints getStartStopButtonPanelConstraints()
 	{
-		GridBagConstraints clientsPanelConstraints = getConstraint(0, 2, 0.5, 0.1);
-		clientsPanelConstraints.anchor = GridBagConstraints.WEST;
-		clientsPanelConstraints.insets = new Insets(0, 5, 0, 5);
-		return clientsPanelConstraints;
+		GridBagConstraints constraints = new GridBagConstraints();
+		constraints.weightx = 0.5;
+		constraints.weighty = 0.1;
+		constraints.gridx = 0;
+		constraints.gridy = 2;
+		constraints.anchor = GridBagConstraints.WEST;
+		constraints.insets = new Insets(0, 5, 0, 5);
+		return constraints;
 	}
-
 
 }
