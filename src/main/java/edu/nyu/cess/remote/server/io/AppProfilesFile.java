@@ -1,5 +1,7 @@
-package edu.nyu.cess.remote.server.app;
+package edu.nyu.cess.remote.server.io;
 
+import edu.nyu.cess.remote.common.app.AppInfo;
+import edu.nyu.cess.remote.server.app.AppInfoCollection;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.error.YAMLException;
