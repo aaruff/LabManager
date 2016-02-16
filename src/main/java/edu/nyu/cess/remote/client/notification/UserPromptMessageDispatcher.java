@@ -1,7 +1,8 @@
 package edu.nyu.cess.remote.client.notification;
 
-import edu.nyu.cess.remote.client.net.message.MessageDispatcher;
-import edu.nyu.cess.remote.common.net.Message;
+import edu.nyu.cess.remote.common.message.dispatch.DispatchControl;
+import edu.nyu.cess.remote.common.message.dispatch.MessageDispatcher;
+import edu.nyu.cess.remote.common.message.Message;
 import org.apache.log4j.Logger;
 
 /**
@@ -12,6 +13,7 @@ public class UserPromptMessageDispatcher implements MessageDispatcher
 	final static Logger log = Logger.getLogger(UserPromptMessageDispatcher.class);
 
 	private UserPromptHandler userPromptHandler;
+    private DispatchControl dispatchControl;
 
 	public UserPromptMessageDispatcher(UserPromptHandler userPromptHandler)
 	{
@@ -21,7 +23,7 @@ public class UserPromptMessageDispatcher implements MessageDispatcher
 	/**
 	 * {@link MessageDispatcher}
 	 */
-	public void dispatchMessage(Message message)
+	@Override public void dispatchMessage(Message message)
 	{
 		String userMessage = message.getClientMessage();
 		if ( userMessage == null || userMessage.isEmpty()) {
@@ -30,5 +32,13 @@ public class UserPromptMessageDispatcher implements MessageDispatcher
 		}
 
 		userPromptHandler.notifyUser(userMessage);
+	}
+
+    /**
+     * {@link MessageDispatcher}
+     */
+	@Override public void setDispatchControl(DispatchControl dispatchControl)
+	{
+        this.dispatchControl = dispatchControl;
 	}
 }

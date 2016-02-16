@@ -30,7 +30,7 @@ public class NetInfoFileValidator implements Validator
 		NetworkInfo netInfo = netInfoFile.getNetworkInfo();
 		PortInfo portInfo = netInfoFile.getPortInfo();
 
-		IpValidator ipValidator = new IpValidator(netInfo.getServerIpAddress());
+		IpValidator ipValidator = new IpValidator(netInfo.getServerIp());
 		if ( ! ipValidator.validate()) {
 			errors.addAll(ipValidator.getErrors());
 			return false;
@@ -43,7 +43,7 @@ public class NetInfoFileValidator implements Validator
 		}
 
 
-		HostNameValidator hostNameValidator = new HostNameValidator(netInfo.getClientName());
+		HostNameValidator hostNameValidator = new HostNameValidator(netInfo.getClientHostName());
 		if ( ! hostNameValidator.validate()) {
 			errors.addAll(hostNameValidator.getErrors());
 			return false;

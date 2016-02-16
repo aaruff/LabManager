@@ -1,6 +1,6 @@
 package edu.nyu.cess.remote.client.notification;
 
-import edu.nyu.cess.remote.client.ui.MessageRunnable;
+import edu.nyu.cess.remote.client.gui.MessageRunnable;
 
 import javax.swing.*;
 

@@ -3,12 +3,12 @@ package edu.nyu.cess.remote.client.app;
 import edu.nyu.cess.remote.client.app.process.AppExecutor;
 import edu.nyu.cess.remote.client.app.process.AppExeObservable;
 import edu.nyu.cess.remote.client.app.process.ProcessStateObserver;
-import edu.nyu.cess.remote.client.net.message.DispatchControl;
-import edu.nyu.cess.remote.client.net.message.MessageDispatcher;
+import edu.nyu.cess.remote.common.message.dispatch.DispatchControl;
+import edu.nyu.cess.remote.common.message.dispatch.MessageDispatcher;
 import edu.nyu.cess.remote.common.app.AppExe;
 import edu.nyu.cess.remote.common.app.AppExecutionValidator;
-import edu.nyu.cess.remote.common.net.Message;
-import edu.nyu.cess.remote.common.net.MessageType;
+import edu.nyu.cess.remote.common.message.Message;
+import edu.nyu.cess.remote.common.message.MessageType;
 import edu.nyu.cess.remote.common.net.NetworkInfo;
 import org.apache.log4j.Logger;
 
@@ -38,6 +38,14 @@ public class AppMessageDispatcher implements ProcessStateObserver, MessageDispat
 	/**
 	 * {@link MessageDispatcher}
      */
+	public void setDispatchControl(DispatchControl dispatchControl)
+	{
+		this.dispatchControl = dispatchControl;
+	}
+
+	/**
+	 * {@link MessageDispatcher}
+     */
 	public void dispatchMessage(Message message)
 	{
 		if ( ! AppExecutionValidator.validate(message.getAppExe())) {
@@ -45,10 +53,10 @@ public class AppMessageDispatcher implements ProcessStateObserver, MessageDispat
 			return;
 		}
 
-		if (MessageType.APPLICATION_EXECUTION == message.getMessageType()) {
+		if (MessageType.APP_EXE_REQUEST == message.getMessageType()) {
 			appHandler.executeRequest(message.getAppExe());
 		}
-		else if(MessageType.APPLICATION_STATE_UPDATE == message.getMessageType()) {
+		else if(MessageType.APP_EXE_UPDATE == message.getMessageType()) {
 			notifyStateChange(appHandler.getExecution());
 		}
 		else {
@@ -61,7 +69,7 @@ public class AppMessageDispatcher implements ProcessStateObserver, MessageDispat
      */
 	@Override public void notifyStateChange(AppExe appExe)
 	{
-		Message message = new Message(MessageType.STATE_UPDATE, appExe, networkInfo);
+		Message message = new Message(MessageType.APP_EXE_UPDATE, appExe, networkInfo);
 		dispatchControl.dispatchOutboundMessage(message);
 	}
 }
