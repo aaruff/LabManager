@@ -14,23 +14,30 @@ public class NetworkInfo implements Serializable
 
 	private final String clientHostName;
 
+    public NetworkInfo(String clientIpAddress, String serverIpAddress)
+    {
+        this.clientIpAddress = clientIpAddress;
+        this.serverIpAddress = serverIpAddress;
+        this.clientHostName = "";
+    }
+
 	public NetworkInfo(String clientHostName, String clientIpAddress, String serverIpAddress)
 	{
 		this.clientHostName = clientHostName;
 		this.clientIpAddress = clientIpAddress;
 		this.serverIpAddress = serverIpAddress;
 	}
-	public String getClientIpAddress()
+	public String getClientIp()
 	{
 		return clientIpAddress;
 	}
 
-	public String getServerIpAddress()
+	public String getServerIp()
 	{
 		return serverIpAddress;
 	}
 
-	public String getClientName()
+	public String getClientHostName()
 	{
 		return clientHostName;
 	}
