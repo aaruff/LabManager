@@ -1,4 +1,4 @@
-package edu.nyu.cess.remote.common.net;
+package edu.nyu.cess.remote.common.message;
 
 import java.io.IOException;
 
@@ -29,4 +29,22 @@ public interface MessageSocket
 	 * @throws IOException Thrown if an IO error occurs while reading
      */
 	Message readMessage() throws IOException;
+
+	/**
+	 * Returns the socket's client IP address.
+	 * @return the socket's client IP address
+     */
+	String getClientIp();
+
+    /**
+     * Returns the socket's server IP address.
+     * @return the socket's server IP address
+     */
+    String getServerIp();
+
+    /**
+     * Returns the socket's client host name.
+     * @return the socket's client host name.
+     */
+    String getClientHostName();
 }

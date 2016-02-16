@@ -1,6 +1,7 @@
-package edu.nyu.cess.remote.common.net;
+package edu.nyu.cess.remote.common.message;
 
 import edu.nyu.cess.remote.common.app.AppExe;
+import edu.nyu.cess.remote.common.net.NetworkInfo;
 
 import java.io.Serializable;
 
