@@ -89,7 +89,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>edu.nyu.cess.remote.server.ServerInitializer</mainClass>
+							<mainClass>edu.nyu.cess.remote.server.Main</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
