@@ -1,6 +1,6 @@
-package edu.nyu.cess.remote.client.net.socket;
+package edu.nyu.cess.remote.client.message;
 
-import edu.nyu.cess.remote.client.net.message.MessageSender;
+import edu.nyu.cess.remote.common.message.*;
 import edu.nyu.cess.remote.common.net.*;
 import org.apache.log4j.Logger;
 
@@ -10,14 +10,14 @@ import java.io.IOException;
  * The SocketManager class handles the initialization of a persistent connection to the server, and passed inbound
  * messages to the MessageRouter to be handled.
  */
-public class SocketManager implements MessageSender, MessageSourceObservable
+public class MessageSocketManager implements MessageSender, MessageObservable
 {
-	final static Logger log = Logger.getLogger(SocketManager.class);
+	final static Logger log = Logger.getLogger(MessageSocketManager.class);
 
 	private MessageSocket messageSocket;
 	private NetworkInfo networkInfo;
 	private PortInfo portInfo;
-    private MessageSourceObserver messageSourceObserver;
+    private MessageObserver messageObserver;
 
 	/**
 	 * Provides this class with the NetworkInformation required to establish a persistent connection to the server, and
@@ -25,7 +25,7 @@ public class SocketManager implements MessageSender, MessageSourceObservable
 	 * @param networkInfo the network information
 	 * @param portInfo the port info
      */
-	public SocketManager(NetworkInfo networkInfo, PortInfo portInfo)
+	public MessageSocketManager(NetworkInfo networkInfo, PortInfo portInfo)
 	{
 		this.networkInfo = networkInfo;
 		this.portInfo = portInfo;
@@ -34,7 +34,7 @@ public class SocketManager implements MessageSender, MessageSourceObservable
 	/**
 	 * Initializes a persistent connection to the server, and passes all valid inbound messages to the router.
 	 */
-	public void startListening()
+	public void startSocketListener()
 	{
 		while (true) {
 			try {
@@ -42,7 +42,7 @@ public class SocketManager implements MessageSender, MessageSourceObservable
 				// TODO: Add locking mechanism to prevent sendmessage() from being called when a new socket is being created.
 				messageSocket = getNewMessageSocket();
 				while (messageSocket.isConnected()) {
-                    messageSourceObserver.notifyObserverMessageReceived(messageSocket.readMessage());
+                    messageObserver.notifyMessageReceived(messageSocket.readMessage());
 				}
 			} catch (IOException e) {
 				log.error("Failed to create a message socket.", e);
@@ -60,6 +60,17 @@ public class SocketManager implements MessageSender, MessageSourceObservable
 		}
 	}
 
+	/**
+	 * {@link MessageObservable}
+	 */
+	@Override public void addMessageSourceObserver(MessageObserver messageObserver)
+	{
+		this.messageObserver = messageObserver;
+	}
+
+	/**
+	 * {@link MessageSender}
+     */
 	@Override public synchronized void sendMessage(Message message)
 	{
 		try {
@@ -76,14 +87,6 @@ public class SocketManager implements MessageSender, MessageSourceObservable
      */
 	private ClientMessageSocket getNewMessageSocket() throws IOException
 	{
-		return new ClientMessageSocket(networkInfo.getServerIpAddress(), portInfo.getNumber());
+		return new ClientMessageSocket(networkInfo, portInfo.getNumber());
 	}
-
-    /**
-     * {@link MessageSourceObservable}
-     */
-    @Override public void addMessageSourceObserver(MessageSourceObserver messageSourceObserver)
-    {
-        this.messageSourceObserver = messageSourceObserver;
-    }
 }

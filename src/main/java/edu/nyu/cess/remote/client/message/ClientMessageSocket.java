@@ -1,7 +1,8 @@
-package edu.nyu.cess.remote.client.net.socket;
+package edu.nyu.cess.remote.client.message;
 
-import edu.nyu.cess.remote.common.net.Message;
-import edu.nyu.cess.remote.common.net.MessageSocket;
+import edu.nyu.cess.remote.common.message.Message;
+import edu.nyu.cess.remote.common.message.MessageSocket;
+import edu.nyu.cess.remote.common.net.NetworkInfo;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -13,17 +14,19 @@ import java.net.Socket;
  */
 public class ClientMessageSocket implements MessageSocket
 {
+	private final NetworkInfo networkInfo;
 	private final Socket socket;
 
 	/**
 	 * Initialize the client message socket with the required ip address and port.
-	 * @param ipAddress Server IP address
+	 * @param networkInfo client network info
 	 * @param port Server port
 	 * @throws IOException Thrown if an IO error occurs while initializing a socket.
      */
-	public ClientMessageSocket(String ipAddress, int port) throws IOException
+	public ClientMessageSocket(NetworkInfo networkInfo, int port) throws IOException
 	{
-		socket = new Socket(ipAddress, port);
+		this.networkInfo = networkInfo;
+		socket = new Socket(networkInfo.getServerIp(), port);
 	}
 
 	@Override public synchronized boolean isConnected()
@@ -49,5 +52,20 @@ public class ClientMessageSocket implements MessageSocket
 		}
 
 		return (Message) object;
+	}
+
+	@Override public String getClientIp()
+	{
+		return networkInfo.getClientIp();
+	}
+
+	@Override public String getServerIp()
+	{
+		return networkInfo.getServerIp();
+	}
+
+	@Override public String getClientHostName()
+	{
+		return networkInfo.getClientHostName();
 	}
 }

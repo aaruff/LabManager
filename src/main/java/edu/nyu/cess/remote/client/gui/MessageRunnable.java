@@ -1,4 +1,4 @@
-package edu.nyu.cess.remote.client.ui;
+package edu.nyu.cess.remote.client.gui;
 
 import javax.swing.*;
 
