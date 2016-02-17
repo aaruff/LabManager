@@ -16,7 +16,7 @@ import java.util.Map;
  */
 public class ClientSocketPoolManager implements ClientObserver, ClientAppExeManager, ClientStatusObservable, ClientSocketCollection
 {
-	final static Logger logger = Logger.getLogger(ClientSocketPoolManager.class);
+	final static Logger log = Logger.getLogger(ClientSocketPoolManager.class);
 
 	Map<String, Client> clients = new HashMap<>();
 
@@ -45,6 +45,7 @@ public class ClientSocketPoolManager implements ClientObserver, ClientAppExeMana
     @Override synchronized public void notifyClientConfirmed(String clientIp)
     {
         String hostName = clients.get(clientIp).getHostName();
+		log.info("Client " + hostName + " confirmed");
         observer.notifyNewClientConnected(hostName, clientIp);
     }
 
