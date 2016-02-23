@@ -68,4 +68,9 @@ public class ClientMessageSocket implements MessageSocket
 	{
 		return networkInfo.getClientHostName();
 	}
+
+	@Override public NetworkInfo getNetworkInfo()
+	{
+		return networkInfo;
+	}
 }
