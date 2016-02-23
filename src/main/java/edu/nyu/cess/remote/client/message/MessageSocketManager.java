@@ -42,7 +42,7 @@ public class MessageSocketManager implements MessageSender, MessageObservable
 				// TODO: Add locking mechanism to prevent sendmessage() from being called when a new socket is being created.
 				messageSocket = getNewMessageSocket();
 				while (messageSocket.isConnected()) {
-                    messageObserver.notifyMessageReceived(messageSocket.readMessage());
+                    messageObserver.notifyMessageReceived(networkInfo, messageSocket.readMessage());
 				}
 			} catch (IOException e) {
 				log.error("Failed to create a message socket.", e);
