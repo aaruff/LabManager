@@ -1,5 +1,7 @@
 package edu.nyu.cess.remote.common.message;
 
+import edu.nyu.cess.remote.common.net.NetworkInfo;
+
 import java.io.IOException;
 
 /**
@@ -47,4 +49,10 @@ public interface MessageSocket
      * @return the socket's client host name.
      */
     String getClientHostName();
+
+	/**
+	 * Returns the socket network information object.
+	 * @return the socket network information object.
+     */
+	NetworkInfo getNetworkInfo();
 }
