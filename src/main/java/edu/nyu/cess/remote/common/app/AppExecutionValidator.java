@@ -4,7 +4,12 @@ public class AppExecutionValidator
 {
     public static boolean validate(AppExe exe)
     {
-        return ! (exe == null || isEmpty(exe.getName()) || isEmpty(exe.getPath()) || isEmpty(exe.getArgs()) || isNotState(exe.getState()));
+		if (exe == null) {
+			return false;
+		}
+
+		AppInfo info = exe.getAppInfo();
+        return ! (info == null || isEmpty(info.getName()) || isEmpty(info.getPath()) || isEmpty(info.getArgs()) || isNotState(exe.getState()));
     }
 
     private static boolean isEmpty(String text)
