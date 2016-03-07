@@ -2,17 +2,19 @@ package edu.nyu.cess.remote.server.app;
 
 import edu.nyu.cess.remote.common.app.AppInfo;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Created by aruff on 2/8/16.
  */
-public class AppInfoCollection
+public class ClientAppInfoCollection implements AppInfoCollection
 {
     private Map<String, AppInfo> apps = new HashMap<>();
 
-    public AppInfoCollection(Map<String, AppInfo> apps)
+    public ClientAppInfoCollection(Map<String, AppInfo> apps)
     {
         this.apps = apps;
     }
@@ -24,6 +26,11 @@ public class AppInfoCollection
 
 	public String[] getAppNames()
 	{
-		return apps.keySet().toArray(new String[apps.size()]);
+		ArrayList<String> namesList = new ArrayList<>(apps.keySet());
+        Collections.sort(namesList);
+
+        String[] names = new String[namesList.size()];
+        namesList.toArray(names);
+        return names;
 	}
 }
