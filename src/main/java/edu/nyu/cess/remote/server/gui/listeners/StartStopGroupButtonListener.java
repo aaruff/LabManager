@@ -29,7 +29,7 @@ public class StartStopGroupButtonListener implements ActionListener
     public void actionPerformed(ActionEvent e)
 	{
 		JButton startStopGroupButton = (JButton) e.getSource();
-		String name = startStopGroupButton.getName();
+		String name = startStopGroupButton.getText();
 
 		AppState appState = AppState.STOPPED;
 		if (name.equals(startButtonName)) {
