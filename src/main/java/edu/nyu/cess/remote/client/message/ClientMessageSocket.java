@@ -3,6 +3,8 @@ package edu.nyu.cess.remote.client.message;
 import edu.nyu.cess.remote.common.message.Message;
 import edu.nyu.cess.remote.common.message.MessageSocket;
 import edu.nyu.cess.remote.common.net.NetworkInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -14,6 +16,7 @@ import java.net.Socket;
  */
 public class ClientMessageSocket implements MessageSocket
 {
+	private final static Logger log = LoggerFactory.getLogger(MessageSocketManager.class);
 	private final NetworkInfo networkInfo;
 	private final Socket socket;
 
@@ -26,22 +29,23 @@ public class ClientMessageSocket implements MessageSocket
 	public ClientMessageSocket(NetworkInfo networkInfo, int port) throws IOException
 	{
 		this.networkInfo = networkInfo;
+		log.debug("Attempting to create a socket connection to the server({}) from this client({})", networkInfo.getServerIp(), networkInfo.getClientIp());
 		socket = new Socket(networkInfo.getServerIp(), port);
 	}
 
-	@Override public synchronized boolean isConnected()
+	@Override public boolean isConnected()
 	{
 		return socket.isConnected() && ! socket.isClosed();
 	}
 
-	@Override public synchronized void sendMessage(Message message) throws IOException
+	@Override public void sendMessage(Message message) throws IOException
 	{
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
 		objectOutputStream.writeObject(message);
 		objectOutputStream.flush();
 	}
 
-	@Override public synchronized Message readMessage() throws IOException
+	@Override public Message readMessage() throws IOException
 	{
 		ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
 		Object object;
@@ -64,9 +68,9 @@ public class ClientMessageSocket implements MessageSocket
 		return networkInfo.getServerIp();
 	}
 
-	@Override public String getClientHostName()
+	@Override public String getClientName()
 	{
-		return networkInfo.getClientHostName();
+		return networkInfo.getClientName();
 	}
 
 	@Override public NetworkInfo getNetworkInfo()

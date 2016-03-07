@@ -1,8 +1,11 @@
 package edu.nyu.cess.remote.client.message;
 
 import edu.nyu.cess.remote.common.message.*;
-import edu.nyu.cess.remote.common.net.*;
-import org.apache.log4j.Logger;
+import edu.nyu.cess.remote.common.net.ConnectionState;
+import edu.nyu.cess.remote.common.net.NetworkInfo;
+import edu.nyu.cess.remote.common.net.PortInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -12,12 +15,13 @@ import java.io.IOException;
  */
 public class MessageSocketManager implements MessageSender, MessageObservable
 {
-	final static Logger log = Logger.getLogger(MessageSocketManager.class);
+	final static Logger log = LoggerFactory.getLogger(MessageSocketManager.class);
 
-	private MessageSocket messageSocket;
+	private final Object messageSocketLock = new Object();
+	private volatile MessageSocket messageSocket;
 	private NetworkInfo networkInfo;
 	private PortInfo portInfo;
-    private MessageObserver messageObserver;
+    private MessageSocketObserver messageSocketObserver;
 
 	/**
 	 * Provides this class with the NetworkInformation required to establish a persistent connection to the server, and
@@ -38,43 +42,49 @@ public class MessageSocketManager implements MessageSender, MessageObservable
 	{
 		while (true) {
 			try {
-				log.info("Attempting socket connection.");
-				// TODO: Add locking mechanism to prevent sendmessage() from being called when a new socket is being created.
-				messageSocket = getNewMessageSocket();
+				synchronized (messageSocketLock) {
+					messageSocket = getNewMessageSocket();
+				}
+				messageSocketObserver.notifyMessageSenderState(ConnectionState.CONNECTED);
 				while (messageSocket.isConnected()) {
-                    messageObserver.notifyMessageReceived(networkInfo, messageSocket.readMessage());
+					Message newClientMessage = messageSocket.readMessage();
+					// TODO: Validate messages before passing them on to the handler
+                    messageSocketObserver.notifyMessageReceived(networkInfo, newClientMessage);
 				}
 			} catch (IOException e) {
 				log.error("Failed to create a message socket.", e);
-
 			}
 
-			// Wait 2 minutes before trying to create another socket
+			messageSocketObserver.notifyMessageSenderState(ConnectionState.DISCONNECTED);
+
+			// Wait 1 minutes before trying to create another socket
 			try {
-				int milliseconds = 2000;
-				Thread.sleep(milliseconds);
+				int oneMinuteMilliseconds = 60000;
+				Thread.sleep(oneMinuteMilliseconds);
 			} catch (InterruptedException e) {
 				log.error("Thread sleep interrupted.", e);
 			}
-			log.info("Socket disconnected.");
+			log.debug("Socket disconnected.");
 		}
 	}
 
 	/**
 	 * {@link MessageObservable}
 	 */
-	@Override public void addMessageSourceObserver(MessageObserver messageObserver)
+	@Override public void addMessageSourceObserver(MessageSocketObserver messageSocketObserver)
 	{
-		this.messageObserver = messageObserver;
+		this.messageSocketObserver = messageSocketObserver;
 	}
 
 	/**
 	 * {@link MessageSender}
      */
-	@Override public synchronized void sendMessage(Message message)
+	@Override public void sendMessage(Message message)
 	{
 		try {
-			messageSocket.sendMessage(message);
+			synchronized (messageSocketLock) {
+				messageSocket.sendMessage(message);
+			}
 		} catch (IOException e) {
 			log.error("Failed to send message.", e);
 		}

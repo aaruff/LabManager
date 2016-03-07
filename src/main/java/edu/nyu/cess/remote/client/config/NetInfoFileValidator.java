@@ -43,7 +43,7 @@ public class NetInfoFileValidator implements Validator
 		}
 
 
-		HostNameValidator hostNameValidator = new HostNameValidator(netInfo.getClientHostName());
+		HostNameValidator hostNameValidator = new HostNameValidator(netInfo.getClientName());
 		if ( ! hostNameValidator.validate()) {
 			errors.addAll(hostNameValidator.getErrors());
 			return false;
