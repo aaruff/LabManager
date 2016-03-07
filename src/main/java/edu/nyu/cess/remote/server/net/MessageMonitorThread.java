@@ -1,36 +1,43 @@
 package edu.nyu.cess.remote.server.net;
 
 import edu.nyu.cess.remote.common.message.Message;
-import edu.nyu.cess.remote.common.message.MessageObserver;
+import edu.nyu.cess.remote.common.message.MessageSocketObserver;
 import edu.nyu.cess.remote.common.message.MessageSocket;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
 
-class MessageMonitorThread implements Runnable
+public class MessageMonitorThread implements Runnable
 {
     final Logger logger = Logger.getLogger(MessageMonitorThread.class);
 
-    private MessageObserver messageObserver;
+    private MessageSocketObserver messageSocketObserver;
     private MessageSocket messageSocket;
 
-    public MessageMonitorThread(MessageSocket messageSocket, MessageObserver messageObserver)
+    public MessageMonitorThread(MessageSocket messageSocket, MessageSocketObserver messageSocketObserver)
     {
         this.messageSocket = messageSocket;
-        this.messageObserver = messageObserver;
+        this.messageSocketObserver = messageSocketObserver;
     }
 
     public void run()
 	{
-        while (true) {
+		boolean socketEnabled = true;
+        while (socketEnabled) {
             try {
-                logger.info("Waiting for message from Client " + messageSocket.getClientIp());
                 Message message = messageSocket.readMessage();
-				messageObserver.notifyMessageReceived(message);
+
+				// todo: validate message before passing it to the observer:w
+				messageSocketObserver.notifyMessageReceived(messageSocket.getNetworkInfo(), message);
+				Thread.sleep(1000);
             } catch (IOException e) {
-                logger.error("Failed to read from the socket", e);
-            }
-        }
+                logger.info("Client connection lost, halting socket monitor thread..");
+				socketEnabled = false;
+            } catch (InterruptedException e) {
+				logger.error("Failed to pause the message monitor thread.", e);
+				socketEnabled = false;
+			}
+		}
 
     }
 }
