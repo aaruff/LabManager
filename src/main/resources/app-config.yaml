@@ -1,8 +1,8 @@
 ---
 name: 'Application One'
 path: 'C:\\path\to\one.exe'
-options: "--option"
+args: "--option"
 ---
 name: 'Application Two'
 path: 'C:\\path\to\two.exe'
-options: '--option'
+args: '--option'
