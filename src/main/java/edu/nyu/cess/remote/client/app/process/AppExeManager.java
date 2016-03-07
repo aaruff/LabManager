@@ -1,7 +1,11 @@
 package edu.nyu.cess.remote.client.app.process;
 
-import edu.nyu.cess.remote.common.app.*;
-import org.apache.log4j.Logger;
+import edu.nyu.cess.remote.common.app.AppExe;
+import edu.nyu.cess.remote.common.app.AppInfo;
+import edu.nyu.cess.remote.common.app.AppState;
+import edu.nyu.cess.remote.common.app.ErrorType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -10,13 +14,15 @@ import java.io.IOException;
  */
 public class AppExeManager implements AppExecutor, ProcessObserver, AppExeObservable
 {
-	final static Logger log = Logger.getLogger(AppExeManager.class);
+	final static Logger log = LoggerFactory.getLogger(AppExeManager.class);
 
-	ProcessStateObserver stateObserver;
+	private ProcessStateObserver stateObserver;
 
-	private AppExe appExe = new AppExe("", "", "", AppState.STOPPED);
+	private Object appExeLock = new Object();
 
-	private Process applicationProcess;
+	private volatile AppExe currentAppExe;
+
+	private Process appExeProcess;
 
 	private ProcessIOStreamGobbler errorGobbler;
 	private ProcessIOStreamGobbler outputGobbler;
@@ -28,7 +34,7 @@ public class AppExeManager implements AppExecutor, ProcessObserver, AppExeObserv
 	 */
     public AppExeManager()
     {
-		setAppExecutionState(AppState.STOPPED);
+		currentAppExe = new AppExe(new AppInfo(), AppState.STOPPED);
     }
 
 	/**
@@ -50,31 +56,54 @@ public class AppExeManager implements AppExecutor, ProcessObserver, AppExeObserv
     /**
      * {@link AppExecutor}
      */
-	@Override public synchronized void executeRequest(AppExe appExe)
+	@Override public synchronized void executeRequest(AppExe requestedAppExe)
 	{
-		switch(appExe.getState()) {
-			case STARTED:
-				switch (getCurrentState()) {
-					case STARTED:
-                        // TODO: Handle case where application start request received, but an application is already started
-						break;
-					case STOPPED:
-						setAppExe(appExe);
-                        start();
-						break;
-				}
-				break;
-			case STOPPED:
-				switch (getCurrentState()) {
-					case STARTED:
-						stopCurrentProcess();
-						break;
-					case STOPPED:
-                        // TODO: Handle case where application start request received, but an application is already started
-						break;
-				}
-				break;
-			default:
+		synchronized (appExeLock) {
+			AppState requestedState = requestedAppExe.getState();
+			AppState currentState = currentAppExe.getState();
+			AppInfo currentAppInfo = currentAppExe.getAppInfo();
+			AppInfo requestedAppInfo = currentAppExe.getAppInfo();
+
+			switch(currentState) {
+				case STARTED:
+					switch(requestedState) {
+						case STARTED:
+							if (currentAppInfo.equals(requestedAppInfo)) {
+								String errorMessage = String.format("Start Request Ignored: Application (%s) is already running.", requestedAppInfo.getName());
+								log.debug(errorMessage);
+								stateObserver.notifyStateChange(new AppExe(requestedAppInfo, AppState.STOPPED, ErrorType.SAME_APP_ALREADY_RUNNING, errorMessage));
+							}
+							else {
+								String errorMessage = String.format("Start Request Ignored: Another app (%s) is already running.", currentAppInfo.getName());
+								log.debug(errorMessage);
+								stateObserver.notifyStateChange(new AppExe(requestedAppInfo, AppState.STOPPED, ErrorType.OTHER_APP_ALREADY_RUNNING, errorMessage));
+							}
+							break;
+						case STOPPED:
+							if (currentAppInfo.equals(requestedAppInfo)) {
+								stopCurrentProcess();
+							}
+							else {
+								String errorMessage = String.format("Stop Request Ignored: The app to stop (%s) is different the the one currently running (%s).", requestedAppInfo.getName(), currentAppInfo.getName());
+								log.debug(errorMessage);
+								stateObserver.notifyStateChange(new AppExe(requestedAppInfo, AppState.STOPPED, ErrorType.OTHER_APP_ALREADY_RUNNING, errorMessage));
+							}
+							break;
+					}
+					break;
+				case STOPPED:
+					switch (requestedState) {
+						case STARTED:
+								performAppExe(requestedAppExe);
+							break;
+						case STOPPED:
+							String errorMessage = String.format("Stop Request Ignored: The app (%s) is not currently running.", requestedAppInfo.getName());
+							log.debug(errorMessage);
+							stateObserver.notifyStateChange(new AppExe(requestedAppInfo, AppState.STOPPED, ErrorType.APP_ALREADY_STOPPED, errorMessage));
+							break;
+					}
+					break;
+			}
 		}
 	}
 
@@ -83,100 +112,77 @@ public class AppExeManager implements AppExecutor, ProcessObserver, AppExeObserv
      */
     public AppExe getExecution()
     {
-        return appExe;
+		synchronized (appExeLock) {
+            return new AppExe(currentAppExe.getAppInfo().clone(), currentAppExe.getState());
+		}
     }
 
 	/* ---------------------------------------------------------------------
 	 *                          PRIVATE
 	 * ---------------------------------------------------------------------*/
 
-	private static ProcessObserver getProcessObserverFrom(AppExeManager appExeManager)
+	private void performAppExe(AppExe appExeRequest)
 	{
-		return appExeManager;
-	}
+		AppState exeState = AppState.STOPPED;
+		ErrorType errorType = ErrorType.NO_ERROR;
+		String errorMessage = "";
 
-    private synchronized void setAppExe(AppExe appExe)
-    {
-        this.appExe = appExe;
-    }
+		synchronized (appExeLock) {
+            log.debug("Attempting to start {}", appExeRequest);
+            try {
+                AppInfo appInfo = appExeRequest.getAppInfo();
+                appExeProcess = Runtime.getRuntime().exec(appInfo.getPath() + " " + appInfo.getArgs());
 
-    private synchronized AppState getCurrentState()
-    {
-        return appExe.getState();
-    }
+                if (appExeProcess != null) {
+					currentAppExe = new AppExe(appExeRequest.getAppInfo().clone(), AppState.STARTED);
 
-    private synchronized void setAppExecutionState(AppState appState)
-    {
-		appExe = new AppExe(appExe.getName(), appExe.getPath(), appExe.getArgs(), appState);
-    }
+                    errorGobbler = new ProcessIOStreamGobbler(appExeProcess.getErrorStream(), "ERROR");
+                    outputGobbler = new ProcessIOStreamGobbler(appExeProcess.getInputStream(), "OUTPUT");
 
-	private boolean start()
-	{
-		boolean execResult = false;
-		switch (appExe.getState()) {
-			case STOPPED:
-				if (applicationProcess == null) {
-					try {
-						String path = appExe.getPath();
-						String name = appExe.getName();
-						String args = appExe.getArgs();
+                    errorGobbler.start();
+                    outputGobbler.start();
 
-						log.info("Attempting to start " + path + name + " " + args);
-						applicationProcess = Runtime.getRuntime().exec(path + name + " " + args);
+                    processMonitor = new Thread(new ProcessCloseMonitor(this, appExeProcess));
+                    processMonitor.start();
 
-						if (applicationProcess != null) {
-							setAppExecutionState(AppState.STARTED);
-                            stateObserver.notifyStateChange(appExe);
+                    log.debug("{} has been executed.", appInfo.getName());
 
-							errorGobbler = new ProcessIOStreamGobbler(applicationProcess.getErrorStream(), "ERROR");
-							outputGobbler = new ProcessIOStreamGobbler(applicationProcess.getInputStream(), "OUTPUT");
+					exeState = AppState.STARTED;
+                }
+				else {
+					errorType = ErrorType.FAILED_TO_START;
+					errorMessage = String.format("Failed to execute %s", appExeRequest);
+					log.error(errorMessage);
+                }
+            } catch (SecurityException e) {
+				errorType = ErrorType.SECURITY_ERROR;
+				errorMessage = String.format("Security error: %s", e.getMessage());
+            } catch (IOException e) {
+				errorType = ErrorType.IO_ERROR;
+				errorMessage = String.format("Input/Output error: %s", e.getMessage());
+            }
+			finally {
+				log.error(errorMessage);
+			}
 
-							errorGobbler.start();
-							outputGobbler.start();
-
-							startProcessMonitor();
-
-							execResult = true;
-							log.info(name + " has been executed.");
-						}
-						else {
-							setAppExecutionState(AppState.STOPPED);
-						}
-					} catch (SecurityException e) {
-						log.error("Security Exception Occurred.", e);
-					} catch (IOException e) {
-						log.error("Process execution failed.", e);
-						setAppExecutionState(AppState.STOPPED);
-					}
-				}
-				break;
-			case STARTED:
-				execResult = true;
-				break;
-			default:
+			stateObserver.notifyStateChange(new AppExe(appExeRequest.getAppInfo(), exeState, errorType, errorMessage));
 		}
-
-		return execResult;
-	}
-
-	private void startProcessMonitor()
-	{
-		processMonitor = new Thread(new ProcessCloseMonitor(getProcessObserverFrom(this), applicationProcess));
-		processMonitor.start();
 	}
 
 	private void stopCurrentProcess()
 	{
-		if (applicationProcess != null) {
+		if (appExeProcess != null) {
 			processMonitor.interrupt();
-			applicationProcess.destroy();
+			appExeProcess.destroy();
 		}
 		outputGobbler = null;
 		errorGobbler = null;
-		applicationProcess = null;
+		appExeProcess = null;
 
-		log.info("Application stopped.");
-		setAppExecutionState(AppState.STOPPED);
-		stateObserver.notifyStateChange(appExe);
+		log.debug("Application stopped {}", currentAppExe);
+		synchronized (appExeLock) {
+			currentAppExe = new AppExe(currentAppExe.getAppInfo().clone(), AppState.STOPPED);
+			stateObserver.notifyStateChange(currentAppExe);
+		}
 	}
 }
