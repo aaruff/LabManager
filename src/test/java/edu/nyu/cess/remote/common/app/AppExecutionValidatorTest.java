@@ -11,16 +11,16 @@ public class AppExecutionValidatorTest
     public void When_InvalidAppExecutionIsInvalidated_ReturnFalse() throws Exception
     {
         assertFalse(AppExecutionValidator.validate(null));
-        assertFalse(AppExecutionValidator.validate(new AppExe(null,null,null,null)));
-        assertFalse(AppExecutionValidator.validate(new AppExe("",null,null,null)));
-        assertFalse(AppExecutionValidator.validate(new AppExe("","","",AppState.STARTED)));
-        assertFalse(AppExecutionValidator.validate(new AppExe(null,null,null,AppState.STARTED)));
+        assertFalse(AppExecutionValidator.validate(new AppExe(new AppInfo(null,null,null),null)));
+        assertFalse(AppExecutionValidator.validate(new AppExe(new AppInfo("",null,null),null)));
+        assertFalse(AppExecutionValidator.validate(new AppExe(new AppInfo("","",""),AppState.STARTED)));
+        assertFalse(AppExecutionValidator.validate(new AppExe(new AppInfo(null,null,null),AppState.STARTED)));
     }
 
     @Test
     public void When_ValidAppExecutionIsInvalidated_ReturnTrue() throws Exception
     {
-        assertTrue(AppExecutionValidator.validate(new AppExe("a","a","a",AppState.STARTED)));
+        assertTrue(AppExecutionValidator.validate(new AppExe(new AppInfo("a","a","a"),AppState.STARTED)));
     }
 
 }

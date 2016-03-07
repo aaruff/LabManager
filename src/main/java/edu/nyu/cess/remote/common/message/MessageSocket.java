@@ -48,7 +48,7 @@ public interface MessageSocket
      * Returns the socket's client host name.
      * @return the socket's client host name.
      */
-    String getClientHostName();
+    String getClientName();
 
 	/**
 	 * Returns the socket network information object.

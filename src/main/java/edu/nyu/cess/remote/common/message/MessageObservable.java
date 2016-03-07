@@ -5,5 +5,5 @@ package edu.nyu.cess.remote.common.message;
  */
 public interface MessageObservable
 {
-    void addMessageSourceObserver(MessageObserver messageObserver);
+    void addMessageSourceObserver(MessageSocketObserver messageSocketObserver);
 }

@@ -12,18 +12,18 @@ public class NetworkInfo implements Serializable
 	private final String clientIpAddress;
 	private final String serverIpAddress;
 
-	private final String clientHostName;
+	private final String clientName;
 
     public NetworkInfo(String clientIpAddress, String serverIpAddress)
     {
         this.clientIpAddress = clientIpAddress;
         this.serverIpAddress = serverIpAddress;
-        this.clientHostName = "";
+        this.clientName = "";
     }
 
-	public NetworkInfo(String clientHostName, String clientIpAddress, String serverIpAddress)
+	public NetworkInfo(String clientName, String clientIpAddress, String serverIpAddress)
 	{
-		this.clientHostName = clientHostName;
+		this.clientName = clientName;
 		this.clientIpAddress = clientIpAddress;
 		this.serverIpAddress = serverIpAddress;
 	}
@@ -37,8 +37,13 @@ public class NetworkInfo implements Serializable
 		return serverIpAddress;
 	}
 
-	public String getClientHostName()
+	public String getClientName()
 	{
-		return clientHostName;
+		return clientName;
+	}
+
+	public String toString()
+	{
+		return "{client IP: " + clientIpAddress + ", server IP: " + serverIpAddress + ", client name: " + clientName + "}";
 	}
 }
