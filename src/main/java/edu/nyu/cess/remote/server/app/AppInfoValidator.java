@@ -25,26 +25,26 @@ public class AppInfoValidator
 		}
 
 		// Options are not required, but should not be null
-		if (appInfo.getOptions() == null) {
+		if (appInfo.getArgs() == null) {
 			return false;
 		}
 
 		return true;
 	}
 
-	public static boolean validateCollection(AppInfoCollection appInfoCollection)
+	public static boolean validateCollection(ClientAppInfoCollection clientAppInfoCollection)
 	{
-		if (appInfoCollection == null) {
+		if (clientAppInfoCollection == null) {
 			return false;
 		}
 
-		if (appInfoCollection.getAppNames() == null || appInfoCollection.getAppNames().length == 0) {
+		if (clientAppInfoCollection.getAppNames() == null || clientAppInfoCollection.getAppNames().length == 0) {
 			return false;
 		}
 
-		String[] names = appInfoCollection.getAppNames();
+		String[] names = clientAppInfoCollection.getAppNames();
 		for (int i = 0; i < names.length; ++i) {
-			if (names[i] == null || names[i].isEmpty() || ! validate(appInfoCollection.getAppInfo(names[i]))) {
+			if (names[i] == null || names[i].isEmpty() || ! validate(clientAppInfoCollection.getAppInfo(names[i]))) {
 				return false;
 			}
 		}

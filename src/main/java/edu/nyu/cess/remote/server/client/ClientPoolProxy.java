@@ -5,29 +5,27 @@ package edu.nyu.cess.remote.server.client;
 
 import edu.nyu.cess.remote.common.app.AppExe;
 import edu.nyu.cess.remote.common.message.Message;
-import edu.nyu.cess.remote.common.message.MessageObserver;
+import edu.nyu.cess.remote.common.message.MessageSocketObserver;
 import edu.nyu.cess.remote.common.message.MessageType;
+import edu.nyu.cess.remote.common.net.ConnectionState;
 import edu.nyu.cess.remote.common.net.NetworkInfo;
 import edu.nyu.cess.remote.server.net.ClientConnectionMonitor;
-import edu.nyu.cess.remote.server.net.ClientNameRequestRunnable;
 import edu.nyu.cess.remote.server.net.ClientSocket;
 import edu.nyu.cess.remote.server.net.MessageMonitorThread;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This class handles all clientAppExecutions that are currently connected to the server, and forwards
  * the client state changes to the the client observer.
  */
-public class ClientPoolProxy implements ClientAppExeManager, ClientPoolObservable, ClientPool, MessageObserver, ClientDisconnectionObserver
+public class ClientPoolProxy implements ClientPoolExecutionManager, ClientPoolObservable, ClientPool, MessageSocketObserver, ClientDisconnectionObserver
 {
-	final static Logger log = Logger.getLogger(ClientPoolProxy.class);
+	private final static Logger log = LoggerFactory.getLogger(ClientPoolProxy.class);
 
-	private Map<String, Thread> clientNameRequestThreads = new HashMap<>();
 	private Map<String, AppExe> clientAppExecutions = new HashMap<>();
 	private Map<String, ClientSocket> clientSockets = new HashMap<>();
 
@@ -49,28 +47,24 @@ public class ClientPoolProxy implements ClientAppExeManager, ClientPoolObservabl
 		clientAppExecutions.remove(clientIp);
 		clientSockets.remove(clientIp);
 
-		if (clientNameRequestThreads.containsKey(clientIp)) {
-			clientNameRequestThreads.remove(clientIp).interrupt();
-		}
-
 		clientPoolObserver.notifyClientDisconnected(clientIp);
 	}
 
 	/**
-	 * {@link MessageObserver}
+	 * {@link MessageSocketObserver}
 	 */
 	@Override public void notifyMessageReceived(NetworkInfo networkInfo, Message message)
 	{
 		if ( ! clientSockets.containsKey(networkInfo.getClientIp())) {
-			log.error("Message received from an unknown client " + networkInfo.getClientIp());
+			log.error("Message received from an unknown client: {} ", networkInfo.getClientIp());
 			return;
 		}
 
 		switch(message.getMessageType()) {
-			case NETWORK_INFO_UPDATE:
-				handleNetworkInfoUpdate(networkInfo, message);
 			case APP_EXE_UPDATE:
+                log.debug("App execution update received from: {}", networkInfo.getClientName());
 				AppExe appExe = message.getAppExe();
+                handleAppExeUpdate(networkInfo, appExe);
 				break;
 			case APP_EXE_REQUEST:
 				// Ignore
@@ -82,33 +76,29 @@ public class ClientPoolProxy implements ClientAppExeManager, ClientPoolObservabl
 		}
 	}
 
-	private void handleNetworkInfoUpdate(NetworkInfo networkInfo, Message message)
+	@Override public void notifyMessageSenderState(ConnectionState connectionState)
 	{
-		ClientSocket clientSocket = clientSockets.get(networkInfo.getClientIp());
-		String currentClientName = networkInfo.getClientHostName();
-		String messageClientName = message.getNetworkInfo().getClientHostName();
-		String clientIp = networkInfo.getClientIp();
 
-		if ( ! currentClientName.isEmpty() || messageClientName.isEmpty()) {
-			log.error("Update received from " + clientIp + " without a client name specified.");
-			return;
-		}
-
-		if (clientNameRequestThreads.containsKey(clientIp) && clientNameRequestThreads.get(clientIp).isAlive()) {
-			clientNameRequestThreads.remove(clientIp).interrupt();
-		}
-
-        log.debug("Network Confirmation Message Received from " + clientIp);
-        clientSocket.updateClientName(messageClientName);
-        clientPoolObserver.notifyNewClientConnected(messageClientName, clientIp);
 	}
+
+	private void handleAppExeUpdate(NetworkInfo networkInfo, AppExe latestAppExe)
+    {
+        boolean hasAppExe = clientAppExecutions.containsKey(networkInfo.getClientIp());
+        if (hasAppExe && clientAppExecutions.get(networkInfo.getClientIp()).isSameAppSameState(latestAppExe)) {
+            log.debug("AppExe update ({}) has not changed, and will be ignored.", networkInfo.getClientName());
+            return;
+        }
+
+        log.debug("AppExe ({}) received from {} received. ", latestAppExe, networkInfo.getClientName());
+        clientAppExecutions.put(networkInfo.getClientIp(), latestAppExe);
+        clientPoolObserver.notifyClientAppUpdate(latestAppExe, networkInfo.getClientIp());
+    }
 
 	/**
 	 * {@link ClientPool}
      */
-	public void addClientSocket(Socket socket)
+	public void addClient(ClientSocket clientSocket)
 	{
-		ClientSocket clientSocket = new ClientSocket(socket);
 		String clientIp = clientSocket.getClientIp();
 
 		clientSockets.put(clientIp, clientSocket);
@@ -119,21 +109,26 @@ public class ClientPoolProxy implements ClientAppExeManager, ClientPoolObservabl
 		Thread portMonitorThread = new Thread(new ClientConnectionMonitor(clientSocket, this));
 		portMonitorThread.start();
 
-		clientNameRequestThreads.put(clientIp, new Thread(new ClientNameRequestRunnable(clientSocket)));
-		clientNameRequestThreads.get(clientIp).start();
+		clientPoolObserver.notifyNewClientConnected(clientSocket.getClientName(), clientIp);
 	}
 
     /**
-     * {@link ClientAppExeManager}
+     * {@link ClientPoolExecutionManager}
      */
-    @Override public void executeApp(String clientIp, AppExe appExe)
+    @Override public void executeApp(AppExe appExe, ArrayList<String> ipAddresses)
     {
-		ClientSocket clientSocket = clientSockets.get(clientIp);
-		NetworkInfo networkInfo = clientSocket.getNetworkInfo();
-		try {
-			clientSocket.sendMessage(new Message(MessageType.APP_EXE_REQUEST, appExe, networkInfo));
-		} catch (IOException e) {
-			log.error("Failed to send application execution request", e);
+		long seed = System.nanoTime();
+		Collections.shuffle(ipAddresses, new Random(seed));
+		for (String ipAddress : ipAddresses) {
+			if (clientSockets.containsKey(ipAddress)) {
+				ClientSocket clientSocket = clientSockets.get(ipAddress);
+				try {
+					clientSocket.sendMessage(new Message(MessageType.APP_EXE_REQUEST, appExe, clientSocket.getNetworkInfo()));
+                    log.debug("Message sent to client. " + clientSocket.getNetworkInfo().toString());
+				} catch (IOException e) {
+					log.error("Failed to send application execution request", e);
+				}
+			}
 		}
 	}
 }

@@ -24,22 +24,22 @@ public class AppInfoValidatorTest
 
 		appInfo.setName("");
 		appInfo.setPath("");
-		appInfo.setOptions("");
+		appInfo.setArgs("");
 		assertFalse(AppInfoValidator.validate(appInfo));
 
 		appInfo.setName("");
 		appInfo.setPath("C:\\foo\\bar");
-		appInfo.setOptions("-a -b -c");
+		appInfo.setArgs("-a -b -c");
 		assertFalse(AppInfoValidator.validate(appInfo));
 
 		appInfo.setName("foo");
 		appInfo.setPath("");
-		appInfo.setOptions("");
+		appInfo.setArgs("");
 		assertFalse(AppInfoValidator.validate(appInfo));
 
 		appInfo.setName("foo");
 		appInfo.setPath("C:\\foo\\bar");
-		appInfo.setOptions(null);
+		appInfo.setArgs(null);
 		assertFalse(AppInfoValidator.validate(appInfo));
 	}
 
@@ -49,43 +49,43 @@ public class AppInfoValidatorTest
 		HashMap<String, AppInfo> appInfoMap = new HashMap<>();
 		appInfoMap.put("", new AppInfo());
 		appInfoMap.put("", null);
-		assertFalse(AppInfoValidator.validateCollection(new AppInfoCollection(appInfoMap)));
+		assertFalse(AppInfoValidator.validateCollection(new ClientAppInfoCollection(appInfoMap)));
 
 		appInfoMap = new HashMap<>();
 		appInfoMap.put("doo", new AppInfo());
 		appInfoMap.get("doo").setName("correct");
 		appInfoMap.get("doo").setPath("C:\\foo\\bar");
-		appInfoMap.get("doo").setOptions("-f -b");
+		appInfoMap.get("doo").setArgs("-f -b");
 
 		appInfoMap.put("foo", new AppInfo());
 		appInfoMap.get("foo").setName("");
 		appInfoMap.get("foo").setPath("");
-		appInfoMap.get("foo").setOptions("");
-		assertFalse(AppInfoValidator.validateCollection(new AppInfoCollection(appInfoMap)));
+		appInfoMap.get("foo").setArgs("");
+		assertFalse(AppInfoValidator.validateCollection(new ClientAppInfoCollection(appInfoMap)));
 
 		appInfoMap = new HashMap<>();
 		appInfoMap.put("doo", new AppInfo());
 		appInfoMap.get("doo").setName("correct");
 		appInfoMap.get("doo").setPath("C:\\foo\\bar");
-		appInfoMap.get("doo").setOptions("-f -b");
+		appInfoMap.get("doo").setArgs("-f -b");
 
 		appInfoMap.put("foo", new AppInfo());
 		appInfoMap.get("foo").setName("foo");
 		appInfoMap.get("foo").setPath("");
-		appInfoMap.get("foo").setOptions(null);
-		assertFalse(AppInfoValidator.validateCollection(new AppInfoCollection(appInfoMap)));
+		appInfoMap.get("foo").setArgs(null);
+		assertFalse(AppInfoValidator.validateCollection(new ClientAppInfoCollection(appInfoMap)));
 
 		appInfoMap = new HashMap<>();
 		appInfoMap.put("doo", new AppInfo());
 		appInfoMap.get("doo").setName("correct");
 		appInfoMap.get("doo").setPath("C:\\foo\\bar");
-		appInfoMap.get("doo").setOptions("-f -b");
+		appInfoMap.get("doo").setArgs("-f -b");
 
 		appInfoMap.put("foo", new AppInfo());
 		appInfoMap.get("foo").setName("foo");
 		appInfoMap.get("foo").setPath("");
-		appInfoMap.get("foo").setOptions("");
-		assertFalse(AppInfoValidator.validateCollection(new AppInfoCollection(appInfoMap)));
+		appInfoMap.get("foo").setArgs("");
+		assertFalse(AppInfoValidator.validateCollection(new ClientAppInfoCollection(appInfoMap)));
 	}
 
 	@Test
@@ -95,21 +95,21 @@ public class AppInfoValidatorTest
 		appInfoMap.put("doo", new AppInfo());
 		appInfoMap.get("doo").setName("correct");
 		appInfoMap.get("doo").setPath("C:\\foo\\bar");
-		appInfoMap.get("doo").setOptions("-f -b");
+		appInfoMap.get("doo").setArgs("-f -b");
 
-		assertTrue(AppInfoValidator.validateCollection(new AppInfoCollection(appInfoMap)));
+		assertTrue(AppInfoValidator.validateCollection(new ClientAppInfoCollection(appInfoMap)));
 
 		appInfoMap = new HashMap<>();
 		appInfoMap.put("doo", new AppInfo());
 		appInfoMap.get("doo").setName("correct");
 		appInfoMap.get("doo").setPath("C:\\foo\\bar");
-		appInfoMap.get("doo").setOptions("-f -b");
+		appInfoMap.get("doo").setArgs("-f -b");
 
 		appInfoMap.put("foo", new AppInfo());
 		appInfoMap.get("foo").setName("foo");
 		appInfoMap.get("foo").setPath("/var/lib/foo");
-		appInfoMap.get("foo").setOptions("");
-		assertTrue(AppInfoValidator.validateCollection(new AppInfoCollection(appInfoMap)));
+		appInfoMap.get("foo").setArgs("");
+		assertTrue(AppInfoValidator.validateCollection(new ClientAppInfoCollection(appInfoMap)));
 	}
 
 	@Test
@@ -119,12 +119,12 @@ public class AppInfoValidatorTest
 
 		appInfo.setName("foo");
 		appInfo.setPath("C:\\foo\\bar");
-		appInfo.setOptions("-a -b -c");
+		appInfo.setArgs("-a -b -c");
 		assertTrue(AppInfoValidator.validate(appInfo));
 
 		appInfo.setName("foo");
 		appInfo.setPath("C:\\foo\\bar");
-		appInfo.setOptions("");
+		appInfo.setArgs("");
 		assertTrue(AppInfoValidator.validate(appInfo));
 	}
 

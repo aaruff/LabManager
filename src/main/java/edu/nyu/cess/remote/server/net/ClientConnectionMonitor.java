@@ -5,6 +5,8 @@ import edu.nyu.cess.remote.common.message.MessageSocket;
 import edu.nyu.cess.remote.common.message.MessageType;
 import edu.nyu.cess.remote.common.net.NetworkInfo;
 import edu.nyu.cess.remote.server.client.ClientDisconnectionObserver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -14,8 +16,9 @@ import java.io.IOException;
  * still established. The termination of this tread is used as a flag to signal
  * that the connection between the server and the client has been broken.
  */
-class ClientConnectionMonitor implements Runnable
+public class ClientConnectionMonitor implements Runnable
 {
+	private final static Logger log = LoggerFactory.getLogger(ClientConnectionMonitor.class);
     private MessageSocket messageSocket;
     private ClientDisconnectionObserver clientDisconnectionObserver;
 
@@ -27,24 +30,28 @@ class ClientConnectionMonitor implements Runnable
 
     public void run() {
         boolean interfaceState = true;
+		String clientName = messageSocket.getClientName();
         String clientIp = messageSocket.getClientIp();
         String serverIp = messageSocket.getServerIp();
-        Message pingMessage = new Message(MessageType.KEEP_ALIVE_PING, new NetworkInfo("", clientIp, serverIp));
+        Message appUpdateMessage = new Message(MessageType.APP_EXE_UPDATE, new NetworkInfo(clientName, clientIp, serverIp));
         /*
          *  Sends an empty packet to the respective client
          *  to determine if the socket connection is still established.
          */
         while (interfaceState) {
             try {
-                messageSocket.sendMessage(pingMessage);
-                Thread.sleep(40000);
+                messageSocket.sendMessage(appUpdateMessage);
+                Thread.sleep(60000);
             }
             catch (IOException e) {
-                clientDisconnectionObserver.notifyClientDisconnected(new NetworkInfo(clientIp, serverIp));
+				log.info("Socket connection to ({}) lost", clientName);
                 interfaceState = false;
             }
             catch (InterruptedException e) {
+				interfaceState = false;
             }
         }
+
+		clientDisconnectionObserver.notifyClientDisconnected(clientIp);
     }
 }

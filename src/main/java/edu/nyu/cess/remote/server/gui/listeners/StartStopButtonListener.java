@@ -16,14 +16,12 @@ public class StartStopButtonListener implements ActionListener
 	final static Logger log = Logger.getLogger(StartStopGroupButtonListener.class);
 
 	private StartStopButtonObserver startStopButtonObserver;
-	private final String clientName;
 	private final String clientIp;
 	private final String startButtonName;
 	private final String stopButtonName;
 
-	public StartStopButtonListener(StartStopButtonObserver startStopButtonObserver, String clientName, String clientIp, String startButtonName, String stopButtonName) {
+	public StartStopButtonListener(StartStopButtonObserver startStopButtonObserver, String clientIp, String startButtonName, String stopButtonName) {
 		this.startStopButtonObserver = startStopButtonObserver;
-		this.clientName = clientName;
 		this.clientIp = clientIp;
 		this.startButtonName = startButtonName;
 		this.stopButtonName = stopButtonName;
@@ -32,7 +30,7 @@ public class StartStopButtonListener implements ActionListener
     public void actionPerformed(ActionEvent e)
 	{
 		JButton startStopGroupButton = (JButton) e.getSource();
-		String name = startStopGroupButton.getName();
+		String name = startStopGroupButton.getText();
 
 		AppState appState = AppState.STOPPED;
 		if (name.equals(startButtonName)) {
@@ -45,6 +43,7 @@ public class StartStopButtonListener implements ActionListener
 			log.error("Button text does not match provided start/stop button text.");
 		}
 
-		startStopButtonObserver.notifyExeRequest(appState, clientName, clientIp);
+		log.debug(appState.toString() + " button selected.");
+		startStopButtonObserver.notifyExeRequest(appState, clientIp);
     }
 }

@@ -7,5 +7,5 @@ import edu.nyu.cess.remote.common.app.AppState;
  */
 public interface StartStopButtonObserver
 {
-	void notifyExeRequest(AppState appState, String clientName, String clientIp);
+	void notifyExeRequest(AppState appState, String clientIp);
 }
