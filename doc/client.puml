@@ -22,10 +22,11 @@ ServerMessageDispatcher --> Client:
 Client -> ServerMessageDispatcher: createPersistentServerConnection()
 
 ServerMessageDispatcher -> CommunicationNetworkInterface: setServerSocketConnection(int milliseconds)
-CommunicationNetworkInterface --> ServerMessageDispatcher :
+CommunicationNetworkInterface -> CommunicationNetworkInterface: getServerSocketConnection()
+CommunicationNetworkInterface -> Socket: <<create>> (String ipAddress, int portNumber)
+activate Socket
+Socket --> CommunicationNetworkInterface:
 
-ServerMessageDispatcher -> CommunicationNetworkInterface: handleInboundPacketRequests()
-CommunicationNetworkInterface -> CommunicationNetworkInterface: getSocketConnection()
 CommunicationNetworkInterface --> ServerMessageDispatcher :
 
 ServerMessageDispatcher -> CommunicationNetworkInterface: handleClientServerMessaging()
