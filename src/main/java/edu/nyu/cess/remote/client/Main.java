@@ -6,17 +6,21 @@ import edu.nyu.cess.remote.client.config.NetInfoFile;
 import edu.nyu.cess.remote.client.config.NetInfoFileValidator;
 import edu.nyu.cess.remote.client.message.MessageDispatchControl;
 import edu.nyu.cess.remote.client.message.MessageSocketManager;
-import edu.nyu.cess.remote.client.message.NetworkInfoUpdateDispatcher;
 import edu.nyu.cess.remote.common.message.MessageType;
 import edu.nyu.cess.remote.common.message.dispatch.DispatchControl;
 import edu.nyu.cess.remote.common.message.dispatch.MessageDispatcher;
 import edu.nyu.cess.remote.common.net.NetworkInfo;
 import edu.nyu.cess.remote.common.net.PortInfo;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class ClientInitializer
+/**
+ * The client main class is used to load in the required network configuration information, and attempts to
+ * contact the server, and maintain a connection to it until stopped.
+ */
+public class Main
 {
-	private final static Logger log = Logger.getLogger(ClientInitializer.class);
+	private final static Logger log = LoggerFactory.getLogger(Main.class);
 
 	/**
 	 * Reads in the client config file, and starts the client.
@@ -52,11 +56,9 @@ public class ClientInitializer
         DispatchControl dispatchControl = new MessageDispatchControl(messageSocketManager, messageSocketManager);
 
         MessageDispatcher appMessageDispatcher = new AppMessageDispatcher(appExeManager, appExeManager, networkInfo);
-        MessageDispatcher networkInfoUpdateDispatcher = new NetworkInfoUpdateDispatcher(networkInfo);
 
         dispatchControl.setMessageDispatcher(MessageType.APP_EXE_REQUEST, appMessageDispatcher);
         dispatchControl.setMessageDispatcher(MessageType.APP_EXE_UPDATE, appMessageDispatcher);
-        dispatchControl.setMessageDispatcher(MessageType.NETWORK_INFO_UPDATE, networkInfoUpdateDispatcher);
 
         messageSocketManager.startSocketListener();
 	}
