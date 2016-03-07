@@ -11,9 +11,21 @@ public class AppInfo implements Comparable<AppInfo>, Serializable
 
 	private String name;
 	private String path;
-	private String options;
+	private String args;
 
-	public AppInfo(){}
+	public AppInfo()
+	{
+		name = "";
+		path = "";
+		args = "";
+	}
+
+	public AppInfo(String name, String path, String args)
+	{
+		this.name = name;
+		this.path = path;
+		this.args = args;
+	}
 
 	/**
 	 * Returns the app name.
@@ -55,18 +67,28 @@ public class AppInfo implements Comparable<AppInfo>, Serializable
 	 * Returns the option.
 	 * @return option string
      */
-	public String getOptions()
+	public String getArgs()
 	{
-		return options;
+		return args;
 	}
 
 	/**
 	 * Sets the option.
-	 * @param options
+	 * @param args
      */
-	public void setOptions(String options)
+	public void setArgs(String args)
 	{
-		this.options = options;
+		this.args = args;
+	}
+
+	public boolean equals(AppInfo other)
+	{
+		return name.equals(other.getName()) && path.equals(other.getPath()) && args.equals(other.getArgs());
+	}
+
+	public AppInfo clone()
+	{
+		return new AppInfo(name, path, args);
 	}
 
 	/**
@@ -81,5 +103,10 @@ public class AppInfo implements Comparable<AppInfo>, Serializable
 	public int compareTo(AppInfo appInfo)
 	{
 		return name.compareTo(appInfo.getName());
+	}
+
+	public String toString()
+	{
+		return "{name=\"" + name + "\", path= \"" + path + "\", args=\"" + args + "\"}";
 	}
 }
