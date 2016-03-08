@@ -65,7 +65,6 @@ public class AppMessageDispatcher implements ProcessStateObserver, MessageDispat
      */
 	public void dispatchMessage(Message message)
 	{
-
 		switch(message.getMessageType()) {
 
 			case APP_EXE_REQUEST:
@@ -75,15 +74,13 @@ public class AppMessageDispatcher implements ProcessStateObserver, MessageDispat
 					return;
 				}
 
-				log.debug("Dispatching APP_EXE_REQUEST {}", message.getAppExe());
 				appHandler.executeRequest(message.getAppExe());
 				break;
 			case APP_EXE_UPDATE:
-				log.debug("APP_EXE_UPDATE received, sending {}", appHandler.getExecution());
 				notifyStateChange(appHandler.getExecution());
 				break;
 			default:
-				log.error("AppMessageDispatcher received an unsupported message type ({})", message.getAppExe());
+				log.error("Unspecified message type ({}) received and ignored.", message.getMessageType());
 				break;
 		}
 	}
