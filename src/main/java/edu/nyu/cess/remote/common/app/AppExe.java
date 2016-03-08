@@ -43,7 +43,7 @@ public class AppExe implements Serializable
 
 	@Override public String toString()
     {
-        return "{appInfo=\"" + appInfo.toString() + "\", state=\"" + appState.toString() +"\"}";
+		return String.format("{appInfo=%s, state=%s, errorType=%s, errorMessage=%s}", appInfo, appState, errorType, errorMessage);
     }
 
 	public ErrorType getErrorType()
