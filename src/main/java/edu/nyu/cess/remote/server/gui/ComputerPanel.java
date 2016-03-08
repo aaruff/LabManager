@@ -18,6 +18,10 @@ public class ComputerPanel extends JPanel
 	private final JLabel hostNameLabel;
 	private final JLabel appExeStateLabel;
 
+	private final Color PANEL_RUNNING_APP_COLOR = new Color(204, 255, 204);
+	private final Color PANEL_CONNECTED_COLOR = new Color(255, 255, 255);
+	private final Color PANEL_NOT_CONNECTED_COLOR = new Color(255, 194, 194);
+
     private ConnectionState connectionState;
 
     public boolean isConnectionState(ConnectionState connectionState)
@@ -36,9 +40,7 @@ public class ComputerPanel extends JPanel
 		 */
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBorder(BorderFactory.createLineBorder((connectionState == ConnectionState.CONNECTED) ? Color.BLACK : Color.LIGHT_GRAY));
-		Color white = new Color(255, 255, 255);
-		Color lightRed = new Color(255, 194, 194);
-		setBackground((connectionState == ConnectionState.CONNECTED) ? white : lightRed);
+		setBackground((connectionState == ConnectionState.CONNECTED) ? PANEL_CONNECTED_COLOR : PANEL_NOT_CONNECTED_COLOR);
 
 		/*
 		 * Host Name
@@ -97,13 +99,13 @@ public class ComputerPanel extends JPanel
                     name = name.substring(0, 24) + "...";
                 }
                 appExeStateLabel.setText(name);
-                setBackground(new Color(204, 255, 204));
+                setBackground(PANEL_RUNNING_APP_COLOR);
                 startButton.setEnabled(false);
                 stopButton.setEnabled(true);
                 break;
             case STOPPED:
                 appExeStateLabel.setText("Connected");
-                setBackground(new Color(255, 255, 255));
+                setBackground(PANEL_CONNECTED_COLOR);
                 startButton.setEnabled(true);
                 stopButton.setEnabled(false);
                 break;
@@ -116,7 +118,7 @@ public class ComputerPanel extends JPanel
         switch(connectionState) {
             case CONNECTED:
                 if (this.connectionState == ConnectionState.DISCONNECTED) {
-                    setBackground(new Color(255, 255, 255));
+                    setBackground(PANEL_CONNECTED_COLOR);
                     startButton.setEnabled(true);
                     appExeStateLabel.setText("Connected");
                     appExeStateLabel.setForeground(Color.BLACK);
@@ -128,7 +130,7 @@ public class ComputerPanel extends JPanel
             case DISCONNECTED:
                 if (this.connectionState == ConnectionState.CONNECTED){
                     startButton.setEnabled(false);
-                    setBackground(new Color(253, 236, 236));
+                    setBackground(PANEL_NOT_CONNECTED_COLOR);
                     setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
                     appExeStateLabel.setText("Not Connected");
                     appExeStateLabel.setForeground(Color.GRAY);
