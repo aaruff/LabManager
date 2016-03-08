@@ -107,6 +107,6 @@ public class AppInfo implements Comparable<AppInfo>, Serializable
 
 	public String toString()
 	{
-		return "{name=\"" + name + "\", path= \"" + path + "\", args=\"" + args + "\"}";
+		return String.format("{name=%s, path=%s, args=%s}", name, path, args);
 	}
 }
