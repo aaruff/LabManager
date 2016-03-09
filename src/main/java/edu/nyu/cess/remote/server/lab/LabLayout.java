@@ -5,11 +5,17 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * Created by aruff on 2/24/16.
+ * This class contains the lab layout information, such as the
+ * computer names, IP address, and row they are located in.
  */
 public class LabLayout
 {
 	public List<Row> rows;
+
+	public LabLayout()
+	{
+		rows = new ArrayList<>();
+	}
 
 	public List<Row> getRows()
 	{
