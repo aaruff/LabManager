@@ -43,6 +43,7 @@ public class MessageSocketManager implements MessageSender, MessageObservable
 		while (true) {
 			try {
 				synchronized (messageSocketLock) {
+					log.debug("Attempting to establishing a new socket connection.");
 					messageSocket = getNewMessageSocket();
 				}
 				messageSocketObserver.notifyMessageSenderState(ConnectionState.CONNECTED);
@@ -52,7 +53,7 @@ public class MessageSocketManager implements MessageSender, MessageObservable
                     messageSocketObserver.notifyMessageReceived(networkInfo, newClientMessage);
 				}
 			} catch (IOException e) {
-				log.error("Failed to create a message socket.", e);
+				log.error("IO Exception: {}", e.getMessage());
 			}
 
 			messageSocketObserver.notifyMessageSenderState(ConnectionState.DISCONNECTED);
@@ -62,7 +63,7 @@ public class MessageSocketManager implements MessageSender, MessageObservable
 				int oneMinuteMilliseconds = 60000;
 				Thread.sleep(oneMinuteMilliseconds);
 			} catch (InterruptedException e) {
-				log.error("Thread sleep interrupted.", e);
+				log.error("Interruption Exception: {}.", e.getMessage());
 			}
 			log.debug("Socket disconnected.");
 		}
@@ -86,7 +87,7 @@ public class MessageSocketManager implements MessageSender, MessageObservable
 				messageSocket.sendMessage(message);
 			}
 		} catch (IOException e) {
-			log.error("Failed to send message.", e);
+			log.error("IO Exception: Failed to send message. Error = {}", e.getMessage());
 		}
 	}
 
