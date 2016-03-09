@@ -7,7 +7,8 @@ import edu.nyu.cess.remote.common.net.NetworkInfo;
 import edu.nyu.cess.remote.server.client.ClientPool;
 import edu.nyu.cess.remote.server.client.ClientPoolProxy;
 import edu.nyu.cess.remote.server.lab.LabLayout;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -19,7 +20,7 @@ import java.net.Socket;
  */
 public class ClientSocketConnectionMonitor
 {
-    final static Logger log = Logger.getLogger(ClientSocketConnectionMonitor.class);
+	private final static Logger log = LoggerFactory.getLogger(ClientSocketConnectionMonitor.class);
 
     private ClientPool clientPool;
 
@@ -28,11 +29,17 @@ public class ClientSocketConnectionMonitor
         this.clientPool = clientPool;
 	}
 
-	public void monitorNewClientSocketConnections(int port, LabLayout labLayout) throws IOException
+	public void monitorNewClientSocketConnections(int port, LabLayout labLayout)
     {
-        ServerSocket serverSocket = new ServerSocket(port);
+		ServerSocket serverSocket;
+		try {
+			serverSocket = new ServerSocket(port);
+		} catch (IOException e) {
+			log.error("Failed to start the server socket. Error: {}", e.getMessage());
+			return;
+		}
 
-        Socket clientSocket;
+		Socket clientSocket;
 		while (true) {
             clientSocket = null;
             while (clientSocket == null) {
@@ -46,8 +53,12 @@ public class ClientSocketConnectionMonitor
 
             String remoteIp = clientSocket.getInetAddress().getHostAddress();
             if (! labLayout.getComputersByIp().containsKey(remoteIp)) {
-                clientSocket.close();
-                log.error("Connection by " + remoteIp + " was rejected. Only clients in lab-layout.yaml are allowed.");
+				try {
+					clientSocket.close();
+				} catch (IOException e) {
+					log.error("Failed to close the server socket. Error: {}", e.getMessage());
+				}
+				log.error("Connection by " + remoteIp + " was rejected. Only clients in lab-layout.yaml are allowed.");
             }
             else {
                 log.debug("Client connected: " + remoteIp);
