@@ -1,9 +1,9 @@
 package edu.nyu.cess.remote.server.gui;
 
 import edu.nyu.cess.remote.common.app.AppExe;
+import edu.nyu.cess.remote.common.net.ConnectionState;
 import edu.nyu.cess.remote.server.gui.listeners.StartStopButtonListener;
 import edu.nyu.cess.remote.server.gui.observers.StartStopButtonObserver;
-import edu.nyu.cess.remote.common.net.ConnectionState;
 
 import javax.swing.*;
 import java.awt.*;
@@ -62,7 +62,7 @@ public class ComputerPanel extends JPanel
 
 		appExeStateLabel = new JLabel();
 		appExeStateLabel.setText((connectionState == ConnectionState.CONNECTED) ? "Connected" : "Not Connected");
-		appExeStateLabel.setFont(new Font("arial", Font.PLAIN, 12));
+		appExeStateLabel.setFont(new Font("arial", Font.PLAIN, 14));
 		appExeStateLabel.setForeground((connectionState == ConnectionState.DISCONNECTED) ? Color.GRAY : Color.BLACK);
 
 		applicationStatePanel.add(appExeStateLabel);
@@ -104,10 +104,47 @@ public class ComputerPanel extends JPanel
                 stopButton.setEnabled(true);
                 break;
             case STOPPED:
-                appExeStateLabel.setText("Connected");
-                setBackground(PANEL_CONNECTED_COLOR);
-                startButton.setEnabled(true);
-                stopButton.setEnabled(false);
+				setBackground(PANEL_CONNECTED_COLOR);
+				switch(appExe.getErrorType()) {
+					case NO_ERROR:
+						appExeStateLabel.setText("Connected");
+						appExeStateLabel.setForeground(Color.BLACK);
+						startButton.setEnabled(true);
+						stopButton.setEnabled(false);
+						break;
+					case SAME_APP_SAME_STATE:
+						appExeStateLabel.setText("Error: Already running");
+						appExeStateLabel.setForeground(Color.RED);
+						break;
+					case SAME_APP_ALREADY_STOPPED:
+						appExeStateLabel.setText("Error: Already stopped");
+						appExeStateLabel.setForeground(Color.RED);
+						break;
+					case SAME_APP_ALREADY_RUNNING:
+						appExeStateLabel.setText("Error: Already running");
+						appExeStateLabel.setForeground(Color.RED);
+						break;
+					case OTHER_APP_ALREADY_RUNNING:
+						appExeStateLabel.setText("Error: Other running");
+						appExeStateLabel.setForeground(Color.RED);
+						break;
+					case FAILED_TO_START:
+						appExeStateLabel.setText("Error: Failed start");
+						appExeStateLabel.setForeground(Color.RED);
+						break;
+					case SECURITY_ERROR:
+						appExeStateLabel.setText("Security error");
+						appExeStateLabel.setForeground(Color.RED);
+						break;
+					case IO_ERROR:
+						appExeStateLabel.setText("Input/Output Error");
+						appExeStateLabel.setForeground(Color.RED);
+						break;
+					case APP_ALREADY_STOPPED:
+						appExeStateLabel.setText("Error: App already stopped");
+						setBackground(PANEL_CONNECTED_COLOR);
+						break;
+				}
                 break;
         }
     }
