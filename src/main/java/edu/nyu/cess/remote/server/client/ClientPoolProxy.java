@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * This class handles all clientAppExecutions that are currently connected to the server, and forwards
+ * ClientPoolProxy handles all client app executions that are currently connected to the server, and forwards
  * the client state changes to the the client observer.
  */
 public class ClientPoolProxy implements ClientPoolExecutionManager, ClientPoolObservable, ClientPool, MessageSocketObserver, ClientDisconnectionObserver
@@ -28,6 +28,10 @@ public class ClientPoolProxy implements ClientPoolExecutionManager, ClientPoolOb
 
 	private Map<String, AppExe> clientAppExecutions = new HashMap<>();
 	private Map<String, ClientSocket> clientSockets = new HashMap<>();
+
+	private final Object clientSocketsLock = new Object();
+	private final Object clientAppExecutionsLock = new Object();
+	private final Object clientPoolObserverLock = new Object();
 
     private ClientPoolObserver clientPoolObserver;
 
@@ -44,10 +48,16 @@ public class ClientPoolProxy implements ClientPoolExecutionManager, ClientPoolOb
 	 */
 	@Override public void notifyClientDisconnected(String clientIp)
 	{
-		clientAppExecutions.remove(clientIp);
-		clientSockets.remove(clientIp);
+		synchronized (clientAppExecutionsLock) {
+			clientAppExecutions.remove(clientIp);
+		}
+		synchronized (clientSocketsLock) {
+			clientSockets.remove(clientIp);
+		}
 
-		clientPoolObserver.notifyClientDisconnected(clientIp);
+		synchronized (clientPoolObserverLock) {
+			clientPoolObserver.notifyClientDisconnected(clientIp);
+		}
 	}
 
 	/**
@@ -55,44 +65,36 @@ public class ClientPoolProxy implements ClientPoolExecutionManager, ClientPoolOb
 	 */
 	@Override public void notifyMessageReceived(NetworkInfo networkInfo, Message message)
 	{
-		if ( ! clientSockets.containsKey(networkInfo.getClientIp())) {
-			log.error("Message received from an unknown client: {} ", networkInfo.getClientIp());
-			return;
+		synchronized (clientSocketsLock) {
+			if ( ! clientSockets.containsKey(networkInfo.getClientIp())) {
+				log.error("Message received from an unknown computer {}.", networkInfo.getClientIp());
+				return;
+			}
 		}
 
 		switch(message.getMessageType()) {
 			case APP_EXE_UPDATE:
-                log.debug("App execution update received from: {}", networkInfo.getClientName());
+                log.debug("App execution update received from computer {}.", networkInfo.getClientName());
 				AppExe appExe = message.getAppExe();
                 handleAppExeUpdate(networkInfo, appExe);
 				break;
 			case APP_EXE_REQUEST:
-				// Ignore
+				log.error("Ignored app execution request from computer {}. The server does not perform app executions.",
+						networkInfo.getClientName());
 				break;
 			case KEEP_ALIVE_PING:
-				// Ignore
 			default:
 				break;
 		}
 	}
 
+	/**
+	 * {@link MessageSocketObserver}
+	 */
 	@Override public void notifyMessageSenderState(ConnectionState connectionState)
 	{
-
+		// TODO: Create a separate interface, not including this func.
 	}
-
-	private void handleAppExeUpdate(NetworkInfo networkInfo, AppExe latestAppExe)
-    {
-        boolean hasAppExe = clientAppExecutions.containsKey(networkInfo.getClientIp());
-        if (hasAppExe && clientAppExecutions.get(networkInfo.getClientIp()).isSameAppSameState(latestAppExe)) {
-            log.debug("AppExe update ({}) has not changed, and will be ignored.", networkInfo.getClientName());
-            return;
-        }
-
-        log.debug("AppExe ({}) received from {} received. ", latestAppExe, networkInfo.getClientName());
-        clientAppExecutions.put(networkInfo.getClientIp(), latestAppExe);
-        clientPoolObserver.notifyClientAppUpdate(latestAppExe, networkInfo.getClientIp());
-    }
 
 	/**
 	 * {@link ClientPool}
@@ -101,7 +103,9 @@ public class ClientPoolProxy implements ClientPoolExecutionManager, ClientPoolOb
 	{
 		String clientIp = clientSocket.getClientIp();
 
-		clientSockets.put(clientIp, clientSocket);
+		synchronized (clientSocketsLock) {
+			clientSockets.put(clientIp, clientSocket);
+		}
 
 		Thread messageMonitorThread = new Thread(new MessageMonitorThread(clientSocket, this));
 		messageMonitorThread.start();
@@ -109,7 +113,9 @@ public class ClientPoolProxy implements ClientPoolExecutionManager, ClientPoolOb
 		Thread portMonitorThread = new Thread(new ClientConnectionMonitor(clientSocket, this));
 		portMonitorThread.start();
 
-		clientPoolObserver.notifyNewClientConnected(clientSocket.getClientName(), clientIp);
+		synchronized (clientPoolObserverLock) {
+            clientPoolObserver.notifyNewClientConnected(clientSocket.getClientName(), clientIp);
+		}
 	}
 
     /**
@@ -119,16 +125,48 @@ public class ClientPoolProxy implements ClientPoolExecutionManager, ClientPoolOb
     {
 		long seed = System.nanoTime();
 		Collections.shuffle(ipAddresses, new Random(seed));
-		for (String ipAddress : ipAddresses) {
-			if (clientSockets.containsKey(ipAddress)) {
-				ClientSocket clientSocket = clientSockets.get(ipAddress);
-				try {
-					clientSocket.sendMessage(new Message(MessageType.APP_EXE_REQUEST, appExe, clientSocket.getNetworkInfo()));
-                    log.debug("Message sent to client. " + clientSocket.getNetworkInfo().toString());
-				} catch (IOException e) {
-					log.error("Failed to send application execution request", e);
+
+		synchronized (clientSocketsLock) {
+			for (String ipAddress : ipAddresses) {
+				if (clientSockets.containsKey(ipAddress)) {
+					ClientSocket clientSocket = clientSockets.get(ipAddress);
+					try {
+						clientSocket.sendMessage(new Message(MessageType.APP_EXE_REQUEST, appExe, clientSocket.getNetworkInfo()));
+						log.debug("Message sent to client. " + clientSocket.getNetworkInfo().toString());
+					} catch (IOException e) {
+						log.error("Failed to send application execution request", e);
+					}
 				}
 			}
 		}
 	}
+
+	/**
+	 * Handles application executions updates sent by the client, and notifies observers of any changes.
+	 *
+	 * @param networkInfo The client's network information
+	 * @param currentAppExe The current application execution information
+     */
+	private void handleAppExeUpdate(NetworkInfo networkInfo, AppExe currentAppExe)
+	{
+		String clientName = networkInfo.getClientName();
+		String clientIp = networkInfo.getClientIp();
+		synchronized (clientAppExecutionsLock) {
+			boolean clientHasAppExe = clientAppExecutions.containsKey(clientIp);
+			AppExe previousAppExe = clientAppExecutions.get(clientIp);
+			if (clientHasAppExe && previousAppExe.isSame(currentAppExe)) {
+				log.debug("Duplicate app update from computer {} received and ignored. previous = {}, current = {}",
+						clientName, previousAppExe, currentAppExe);
+				return;
+			}
+
+			log.debug("AppExe ({}) received from {} received. ", currentAppExe, networkInfo.getClientName());
+			clientAppExecutions.put(networkInfo.getClientIp(), currentAppExe);
+		}
+
+		synchronized (clientPoolObserverLock) {
+			clientPoolObserver.notifyClientAppUpdate(currentAppExe, networkInfo.getClientIp());
+		}
+	}
+
 }
