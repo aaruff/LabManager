@@ -5,7 +5,7 @@ package edu.nyu.cess.remote.server.yaml;
  */
 public class YamlExceptionMessage
 {
-	public static String getMessage()
+	public static String getUserErrorMessage()
 	{
 		return "YAML Error: There was a an error in the configuration file. \nPlease make sure that:\n" +
 				"1. There is a '---' before each set of configuration parameters.\n" +
