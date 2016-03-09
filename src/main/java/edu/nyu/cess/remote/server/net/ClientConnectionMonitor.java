@@ -44,7 +44,7 @@ public class ClientConnectionMonitor implements Runnable
                 Thread.sleep(60000);
             }
             catch (IOException e) {
-				log.info("Socket connection to ({}) lost", clientName);
+				log.error("Socket connection to ({}:{}) lost: {}", clientName, clientIp, e.getMessage());
                 interfaceState = false;
             }
             catch (InterruptedException e) {
