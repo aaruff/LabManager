@@ -10,11 +10,13 @@ import java.util.Map;
 /**
  * Created by aruff on 2/8/16.
  */
-public class ClientAppInfoCollection implements AppInfoCollection
+public class AppInfoCollection
 {
     private Map<String, AppInfo> apps = new HashMap<>();
 
-    public ClientAppInfoCollection(Map<String, AppInfo> apps)
+	public AppInfoCollection() {}
+
+    public AppInfoCollection(Map<String, AppInfo> apps)
     {
         this.apps = apps;
     }
