@@ -11,10 +11,11 @@ import edu.nyu.cess.remote.server.gui.observers.StartStopButtonObserver;
 import edu.nyu.cess.remote.server.gui.observers.StartStopGroupButtonObserver;
 import edu.nyu.cess.remote.server.gui.observers.ViewAppExeObserver;
 import edu.nyu.cess.remote.server.gui.panels.ComputerLayoutPanel;
+import edu.nyu.cess.remote.server.gui.panels.ComputersConnectedPanel;
 import edu.nyu.cess.remote.server.lab.Computer;
 import edu.nyu.cess.remote.server.lab.LabLayout;
 import edu.nyu.cess.remote.server.lib.ComputerNameAlphaNumericSort;
-import org.apache.log4j.Logger;
+import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,16 +23,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 /**
- * @author Anwar A. Ruff
+ * The lab frame lays the the lab manager view, and renders it, and handles any events that occur.
  */
 public class LabFrame extends JFrame implements StartStopGroupButtonObserver, StartStopButtonObserver, LabView
 {
-	final static Logger log = Logger.getLogger(LabFrame.class);
-
 	private static final long serialVersionUID = 1L;
 
-	private final JPanel contentPane = new JPanel(new GridBagLayout());
+	private final JPanel contentPane = new JPanel(new MigLayout(""));
 
+	private final ComputersConnectedPanel computersConnectedPanel;
 	private final ComputerLayoutPanel computerLayoutPanel;
 	private final JPanel computerRangePanel;
 	private final JPanel appExecutionPanel;
@@ -49,18 +49,27 @@ public class LabFrame extends JFrame implements StartStopGroupButtonObserver, St
 	{
 		this.viewAppExeObserver = viewAppExeObserver;
 
+		// Content Panel
 		contentPane.setBackground(Color.white);
 
+		// Computers Connected Panel
+		computersConnectedPanel = new ComputersConnectedPanel();
+		contentPane.add(computersConnectedPanel, "wrap");
+
+		// Menu bar
+		/*
+		JMenuBar menuBar = new JMenuBar();
+		JMenu labManagerMenu = new JMenu("Lab Manager");
+		labManagerMenu.add(new JMenuItem("Add a Program"));
+		menuBar.add(labManagerMenu);
+		setJMenuBar(menuBar);
+		*/
+
+		// Computer Layout Panel
 		computerLayoutPanel = new ComputerLayoutPanel(labLayout, this);
-		contentPane.add(computerLayoutPanel, getClientPanelConstraints());
+		contentPane.add(computerLayoutPanel, "wrap");
 
-		appExecutionPanel = new JPanel(new GridBagLayout());
-		appExecutionPanel.setBackground(Color.white);
-		appExecutionPanel.setOpaque(false);
-
-		appNameComboBox = new JComboBox<>(appNames);
-		appExecutionPanel.add(getAppSelectionPanel(appNameComboBox), getAppSelectionPanelConstraints());
-
+		// Sort lab computers
 		labComputers = labLayout.getAllComputers();
 		Collections.sort(labComputers, new ComputerNameAlphaNumericSort());
 		String[] names = new String[labComputers.size()];
@@ -68,39 +77,69 @@ public class LabFrame extends JFrame implements StartStopGroupButtonObserver, St
 			names[i] = labComputers.get(i).getName();
 		}
 
+		// Group App Execution Panel
 		fromClientComboBox = new JComboBox<>(new DefaultComboBoxModel<>(names));
+		fromClientComboBox.setFont(new Font("arial", Font.PLAIN, 14));
 		toClientComboBox = new JComboBox<>(new DefaultComboBoxModel<>(names));
+		toClientComboBox.setFont(new Font("arial", Font.PLAIN, 14));
 
-		// Computer Range Panel
 		computerRangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		computerRangePanel.setBackground(Color.white);
-		computerRangePanel.setOpaque(true);
-		computerRangePanel.add(new JLabel("Computer Range: "));
+
+		JLabel rangeFromLabel = new JLabel("Run on Computer");
+		rangeFromLabel.setFont(new Font("arial", Font.PLAIN, 14));
+		computerRangePanel.add(rangeFromLabel);
 		computerRangePanel.add(fromClientComboBox);
-		computerRangePanel.add(new JLabel(" to "));
+		JLabel rangeToLabel = new JLabel("to");
+		rangeToLabel.setFont(new Font("arial", Font.PLAIN, 14));
+		computerRangePanel.add(rangeToLabel);
 		computerRangePanel.add(toClientComboBox);
-		appExecutionPanel.add(computerRangePanel, getAppExeRangeConstraints());
+
+		appExecutionPanel = new JPanel(new MigLayout("", "[center]"));
+		appExecutionPanel.setBackground(Color.white);
+
+		JPanel titlePanel = new JPanel();
+		titlePanel.setBackground(Color.WHITE);
+		titlePanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.DARK_GRAY));
+		JLabel titleLabel = new JLabel("Group Program Execution");
+		titleLabel.setFont(new Font("arial", Font.BOLD, 14));
+		titlePanel.add(titleLabel);
+		appExecutionPanel.add(titlePanel, "growx, wrap");
+
+		appNameComboBox = new JComboBox<>(appNames);
+		appNameComboBox.setFont(new Font("arial", Font.PLAIN, 14));
+		JLabel applicationLabel = new JLabel("Program Name");
+		applicationLabel.setFont(new Font("arial", Font.PLAIN, 14));
+		JPanel programSelectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		programSelectionPanel.setBackground(Color.white);
+		programSelectionPanel.add(applicationLabel);
+		programSelectionPanel.add(appNameComboBox);
+		appExecutionPanel.add(programSelectionPanel, "wrap");
+
+		appExecutionPanel.add(computerRangePanel, "wrap");
 
 		// Start Stop Group Button Panel
-		String startButtonText = "Start Group";
+		String startButtonText = "Start";
 		JButton startGroupButton = new JButton(startButtonText);
+		startGroupButton.setFont(new Font("arial", Font.PLAIN, 14));
 		startGroupButton.setToolTipText("Starts the selected program on all computers in the selected range.");
 
-		String stopButtonText = "Stop Group";
+		String stopButtonText = "Stop";
 		JButton stopGroupButton = new JButton(stopButtonText);
+		stopGroupButton.setFont(new Font("arial", Font.PLAIN, 14));
 		stopGroupButton.setToolTipText("Stops the running program on all computers in the selected range");
 
 		startGroupButton.addActionListener(new StartStopGroupButtonListener(this, startButtonText, stopButtonText));
 		stopGroupButton.addActionListener(new StartStopGroupButtonListener(this, startButtonText, stopButtonText));
 
-		JPanel startStopButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		JPanel startStopButtonPanel = new JPanel(new FlowLayout());
 		startStopButtonPanel.setOpaque(false);
 		startStopButtonPanel.add(startGroupButton);
 		startStopButtonPanel.add(new JLabel());
 		startStopButtonPanel.add(stopGroupButton);
-		appExecutionPanel.add(startStopButtonPanel, getStartStopButtonPanelConstraints());
+		appExecutionPanel.add(startStopButtonPanel, "span");
 
-		contentPane.add(appExecutionPanel, getAppControlPanelConstraints());
+		contentPane.add(appExecutionPanel, "wrap");
 
 		setContentPane(contentPane);
 
@@ -146,6 +185,7 @@ public class LabFrame extends JFrame implements StartStopGroupButtonObserver, St
 	@Override public void addClient(String clientName, String clientIp)
 	{
 		computerLayoutPanel.updateComputerConnectionState(clientIp, ConnectionState.CONNECTED);
+		computersConnectedPanel.incrementComputersConnected();
 		contentPane.validate();
 		pack();
 	}
@@ -167,90 +207,8 @@ public class LabFrame extends JFrame implements StartStopGroupButtonObserver, St
 	public void removeClient(String clientIp)
 	{
 		computerLayoutPanel.updateComputerConnectionState(clientIp, ConnectionState.DISCONNECTED);
+		computersConnectedPanel.decrementComputersConnected();
 		contentPane.validate();
 		pack();
 	}
-
-	/* ----------------------------------------------------
-	 *                       PRIVATE
-	 * ---------------------------------------------------- */
-
-
-	private GridBagConstraints getAppControlPanelConstraints()
-	{
-		GridBagConstraints constraints = new GridBagConstraints();
-		constraints.weightx = 0.5;
-		constraints.weighty = 0.1;
-		constraints.gridx = 1;
-		constraints.gridy = 3;
-		constraints.fill = GridBagConstraints.HORIZONTAL;
-		constraints.anchor = GridBagConstraints.PAGE_END;
-		constraints.ipady = 20;
-		constraints.insets = new Insets(0, 0, 10, 0);
-
-		return constraints;
-	}
-
-	private GridBagConstraints getClientPanelConstraints()
-	{
-		GridBagConstraints constraints = new GridBagConstraints();
-		constraints.weightx = 1.0;
-		constraints.weighty = 0.8;
-		constraints.gridx = 0;
-		constraints.gridy = 0;
-		constraints.fill = GridBagConstraints.BOTH;
-		constraints.gridwidth = 2;
-		constraints.insets = new Insets(10, 0, 0, 0);
-
-		return constraints;
-	}
-
-	private GridBagConstraints getAppExeRangeConstraints()
-	{
-		GridBagConstraints constraints = new GridBagConstraints();
-		constraints.weightx = 1.0;
-		constraints.weighty = 0.4;
-		constraints.gridx = 0;
-		constraints.gridy = 1;
-		constraints.fill = GridBagConstraints.BOTH;
-		constraints.insets = new Insets(0, 5, 0, 0);
-
-		return constraints;
-	}
-
-	private JPanel getAppSelectionPanel(JComboBox<String> comboBox)
-	{
-		JLabel applicationLabel = new JLabel("Select a Program: ");
-		JPanel programSelectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		programSelectionPanel.setBackground(Color.white);
-		programSelectionPanel.setOpaque(false);
-		programSelectionPanel.add(applicationLabel);
-		programSelectionPanel.add(comboBox);
-		return programSelectionPanel;
-	}
-
-	private GridBagConstraints getAppSelectionPanelConstraints()
-	{
-		GridBagConstraints constraints = new GridBagConstraints();
-		constraints.weightx = 1.0;
-		constraints.weighty = 0.5;
-		constraints.gridx = 0;
-		constraints.gridy = 0;
-		constraints.insets = new Insets(0, 5, 0, 0);
-		constraints.fill = GridBagConstraints.HORIZONTAL;
-		return constraints;
-	}
-
-	private GridBagConstraints getStartStopButtonPanelConstraints()
-	{
-		GridBagConstraints constraints = new GridBagConstraints();
-		constraints.weightx = 0.5;
-		constraints.weighty = 0.1;
-		constraints.gridx = 0;
-		constraints.gridy = 2;
-		constraints.anchor = GridBagConstraints.WEST;
-		constraints.insets = new Insets(0, 5, 0, 5);
-		return constraints;
-	}
-
 }
