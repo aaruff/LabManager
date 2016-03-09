@@ -36,9 +36,9 @@ public class AppExe implements Serializable
 		return appInfo;
 	}
 
-    public boolean isSameAppSameState(AppExe appExe)
+    public boolean isSame(AppExe appExe)
     {
-        return appInfo.equals(appExe.getAppInfo()) && appState == appExe.getState();
+        return appInfo.equals(appExe.getAppInfo()) && appState == appExe.getState() && errorType == appExe.getErrorType();
     }
 
 	@Override public String toString()
