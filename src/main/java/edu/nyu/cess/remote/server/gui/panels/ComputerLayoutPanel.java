@@ -1,12 +1,12 @@
 package edu.nyu.cess.remote.server.gui.panels;
 
 import edu.nyu.cess.remote.common.app.AppExe;
+import edu.nyu.cess.remote.common.net.ConnectionState;
 import edu.nyu.cess.remote.server.gui.ComputerPanel;
 import edu.nyu.cess.remote.server.gui.observers.StartStopButtonObserver;
 import edu.nyu.cess.remote.server.lab.Computer;
 import edu.nyu.cess.remote.server.lab.LabLayout;
 import edu.nyu.cess.remote.server.lab.Row;
-import edu.nyu.cess.remote.common.net.ConnectionState;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
@@ -19,25 +19,14 @@ import java.util.Map;
  */
 public class ComputerLayoutPanel extends JPanel
 {
-    private final String COMPUTERS_CONNECTED = "Computers Connected: ";
-
 	private final Map<String, ComputerPanel> computerPanels = new HashMap<>();
-    private final JLabel computersConnectedLabel;
-
-    private int connectedComputers = 0;
 
 	public ComputerLayoutPanel(LabLayout labLayout, StartStopButtonObserver startStopButtonObserver)
 	{
-		super(new MigLayout());
+		super(new MigLayout(""));
 
         setBackground(Color.white);
 
-        computersConnectedLabel = new JLabel(COMPUTERS_CONNECTED + connectedComputers);
-        computersConnectedLabel.setFont(new Font("arial", Font.PLAIN, 14));
-        JPanel clientsConnectedPanel = new JPanel(new MigLayout());
-        clientsConnectedPanel.setBackground(Color.white);
-        clientsConnectedPanel.add(computersConnectedLabel);
-        add(clientsConnectedPanel, "dock north");
 
 		for (Row row : labLayout.getRows()) {
 			int counter = 1;
@@ -59,18 +48,14 @@ public class ComputerLayoutPanel extends JPanel
             case CONNECTED:
                 if (computerPanel.isConnectionState(ConnectionState.DISCONNECTED)) {
                     computerPanel.updateState(ConnectionState.CONNECTED);
-                    ++connectedComputers;
                 }
                 break;
             case DISCONNECTED:
                 if (computerPanel.isConnectionState(ConnectionState.CONNECTED)) {
                     computerPanel.updateState(ConnectionState.DISCONNECTED);
-                    --connectedComputers;
                 }
                 break;
         }
-
-        computersConnectedLabel.setText(COMPUTERS_CONNECTED + connectedComputers);
 	}
 
 	public void updateAppExeState(String computerIp, AppExe appExe)
