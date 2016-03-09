@@ -32,19 +32,19 @@ public class AppInfoValidator
 		return true;
 	}
 
-	public static boolean validateCollection(ClientAppInfoCollection clientAppInfoCollection)
+	public static boolean validateCollection(AppInfoCollection appInfoCollection)
 	{
-		if (clientAppInfoCollection == null) {
+		if (appInfoCollection == null) {
 			return false;
 		}
 
-		if (clientAppInfoCollection.getAppNames() == null || clientAppInfoCollection.getAppNames().length == 0) {
+		if (appInfoCollection.getAppNames() == null || appInfoCollection.getAppNames().length == 0) {
 			return false;
 		}
 
-		String[] names = clientAppInfoCollection.getAppNames();
+		String[] names = appInfoCollection.getAppNames();
 		for (int i = 0; i < names.length; ++i) {
-			if (names[i] == null || names[i].isEmpty() || ! validate(clientAppInfoCollection.getAppInfo(names[i]))) {
+			if (names[i] == null || names[i].isEmpty() || ! validate(appInfoCollection.getAppInfo(names[i]))) {
 				return false;
 			}
 		}

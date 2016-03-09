@@ -1,7 +1,7 @@
 package edu.nyu.cess.remote.server.io;
 
 import edu.nyu.cess.remote.common.app.AppInfo;
-import edu.nyu.cess.remote.server.app.ClientAppInfoCollection;
+import edu.nyu.cess.remote.server.app.AppInfoCollection;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -19,7 +19,7 @@ public class AppProfilesFile
 	 * @return AppInfoCollection the collection of applications that are available for execution in the lab
 	 * @throws YAMLException when an error occurs reading the app info file
      */
-	public static ClientAppInfoCollection readFile(InputStream inputStream) throws YAMLException
+	public static AppInfoCollection readFile(InputStream inputStream) throws YAMLException
 	{
 		Yaml yaml = new Yaml(new Constructor(AppInfo.class));
 
@@ -28,6 +28,6 @@ public class AppProfilesFile
 			AppInfo appInfo = (AppInfo) remoteExecProfile;
 			appProfileList.put(appInfo.getName(), appInfo);
 		}
-		return new ClientAppInfoCollection(appProfileList);
+		return new AppInfoCollection(appProfileList);
 	}
 }

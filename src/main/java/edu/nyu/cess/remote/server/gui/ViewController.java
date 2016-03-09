@@ -3,7 +3,7 @@ package edu.nyu.cess.remote.server.gui;
 import edu.nyu.cess.remote.common.app.AppExe;
 import edu.nyu.cess.remote.common.app.AppState;
 import edu.nyu.cess.remote.server.Main;
-import edu.nyu.cess.remote.server.app.ClientAppInfoCollection;
+import edu.nyu.cess.remote.server.app.AppInfoCollection;
 import edu.nyu.cess.remote.server.client.ClientPoolExecutionManager;
 import edu.nyu.cess.remote.server.client.ClientPoolObserver;
 import edu.nyu.cess.remote.server.gui.observers.ViewAppExeObserver;
@@ -20,17 +20,17 @@ public class ViewController implements ClientPoolObserver, ViewAppExeObserver
 {
 	final static Logger logger = Logger.getLogger(Main.class);
 
-	private final ClientAppInfoCollection clientAppInfoCollection;
+	private final AppInfoCollection appInfoCollection;
 	private LabFrame labFrame;
     private ClientPoolExecutionManager clientPoolExecutionManager;
 
-    public ViewController(ClientAppInfoCollection clientAppInfoCollection,
+    public ViewController(AppInfoCollection appInfoCollection,
 						  ClientPoolExecutionManager clientPoolExecutionManager,
 						  LabLayout labLayout)
 	{
         this.clientPoolExecutionManager = clientPoolExecutionManager;
-        this.clientAppInfoCollection = clientAppInfoCollection;
-		this.labFrame = new LabFrame(clientAppInfoCollection.getAppNames(), labLayout, this);
+        this.appInfoCollection = appInfoCollection;
+		this.labFrame = new LabFrame(appInfoCollection.getAppNames(), labLayout, this);
 	}
 
 	/**
@@ -51,7 +51,7 @@ public class ViewController implements ClientPoolObserver, ViewAppExeObserver
      */
 	@Override public void notifyAppExeRequest(String appName, AppState appState, ArrayList<String> ipAddresses)
 	{
-		AppExe appExe = new AppExe(clientAppInfoCollection.getAppInfo(appName), appState);
+		AppExe appExe = new AppExe(appInfoCollection.getAppInfo(appName), appState);
 		clientPoolExecutionManager.executeApp(appExe, ipAddresses);
 	}
 

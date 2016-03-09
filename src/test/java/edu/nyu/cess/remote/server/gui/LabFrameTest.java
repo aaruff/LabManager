@@ -3,7 +3,7 @@ package edu.nyu.cess.remote.server.gui;
 import edu.nyu.cess.remote.common.app.AppExe;
 import edu.nyu.cess.remote.common.app.AppInfo;
 import edu.nyu.cess.remote.common.app.AppState;
-import edu.nyu.cess.remote.server.app.ClientAppInfoCollection;
+import edu.nyu.cess.remote.server.app.AppInfoCollection;
 import edu.nyu.cess.remote.server.client.ClientPoolExecutionManager;
 import edu.nyu.cess.remote.server.io.LabLayoutFile;
 import edu.nyu.cess.remote.server.lab.Computer;
@@ -12,7 +12,10 @@ import edu.nyu.cess.remote.server.lab.LabLayout;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Random;
+import java.util.Scanner;
 
 import static org.mockito.Mockito.mock;
 
@@ -23,7 +26,7 @@ public class LabFrameTest
 {
     private final ArrayList<Computer> connectedComputers = new ArrayList<>();
     private final ArrayList<Computer> availableComputers;
-    private final ClientAppInfoCollection appCollection;
+    private final AppInfoCollection appCollection;
     private final ViewController viewController;
 
     public LabFrameTest() throws IOException
@@ -92,7 +95,7 @@ public class LabFrameTest
     }
 
 
-    private ClientAppInfoCollection getClientAppInfoCollection()
+    private AppInfoCollection getClientAppInfoCollection()
     {
         HashMap<String, AppInfo> appInfoMap = new HashMap<>();
         appInfoMap.put("Foo Bar Bin Baz Doo Bin Bow doo bee doo bee doo", new AppInfo("Foo Bar Bin Baz Doo Bin Bow doo bee doo bee doo", "", ""));
@@ -101,7 +104,7 @@ public class LabFrameTest
         appInfoMap.put("Baz", new AppInfo("Baz", "", ""));
         appInfoMap.put("Doo", new AppInfo("Doo", "", ""));
         appInfoMap.put("Doo12", new AppInfo("Doo12", "", ""));
-        return new ClientAppInfoCollection(appInfoMap);
+        return new AppInfoCollection(appInfoMap);
     }
 
     private void disconnectComputer()

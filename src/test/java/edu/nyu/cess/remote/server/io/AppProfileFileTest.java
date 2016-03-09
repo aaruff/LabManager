@@ -1,7 +1,7 @@
 package edu.nyu.cess.remote.server.io;
 
 import edu.nyu.cess.remote.common.app.AppInfo;
-import edu.nyu.cess.remote.server.app.ClientAppInfoCollection;
+import edu.nyu.cess.remote.server.app.AppInfoCollection;
 import org.junit.Test;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -18,7 +18,7 @@ public class AppProfileFileTest
 	public void When_GivenValidListFile_Should_ReturnRemoteExecProfileList() throws Exception
 	{
 
-		ClientAppInfoCollection appProfileList = null;
+		AppInfoCollection appProfileList = null;
 		try (InputStream inputStream = getClass().getResourceAsStream("/test-config.yaml")) {
 			appProfileList = AppProfilesFile.readFile(inputStream);
 		}
@@ -52,7 +52,7 @@ public class AppProfileFileTest
 	public void When_GivenListWithMissingField_Should_SetFieldToNull() throws Exception
 	{
 		InputStream inputStream = getClass().getResourceAsStream("/missing-field.yaml");
-		ClientAppInfoCollection appProfiles = AppProfilesFile.readFile(inputStream);
+		AppInfoCollection appProfiles = AppProfilesFile.readFile(inputStream);
 
 		assertNull(appProfiles.getAppInfo(""));
 	}
@@ -61,14 +61,14 @@ public class AppProfileFileTest
 	public void When_InvalidFileProvided_Should_ThrowYAMLException() throws Exception
 	{
 		InputStream inputStream = getClass().getResourceAsStream("/non-existent.yaml");
-		ClientAppInfoCollection appProfiles = AppProfilesFile.readFile(inputStream);
+		AppInfoCollection appProfiles = AppProfilesFile.readFile(inputStream);
 	}
 
 	@Test(expected=YAMLException.class)
 	public void When_InvalidExecFieldNameUsed_Should_ThrowYAMLException() throws Exception
 	{
 		InputStream inputStream = getClass().getResourceAsStream("/bad-config.yaml");
-		ClientAppInfoCollection appProfiles = AppProfilesFile.readFile(inputStream);
+		AppInfoCollection appProfiles = AppProfilesFile.readFile(inputStream);
 	}
 
 }
