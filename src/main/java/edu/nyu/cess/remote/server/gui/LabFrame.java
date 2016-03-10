@@ -29,7 +29,7 @@ public class LabFrame extends JFrame implements StartStopGroupButtonObserver, St
 {
 	private static final long serialVersionUID = 1L;
 
-	private final JPanel contentPane = new JPanel(new MigLayout(""));
+	private final JPanel contentPane = new JPanel(new MigLayout());
 
 	private final ComputersConnectedPanel computersConnectedPanel;
 	private final ComputerLayoutPanel computerLayoutPanel;
@@ -69,6 +69,19 @@ public class LabFrame extends JFrame implements StartStopGroupButtonObserver, St
 		computerLayoutPanel = new ComputerLayoutPanel(labLayout, this);
 		contentPane.add(computerLayoutPanel, "wrap");
 
+		// Application Selection Panel
+		appNameComboBox = new JComboBox<>(appNames);
+		appNameComboBox.setFont(new Font("arial", Font.PLAIN, 14));
+		JLabel applicationLabel = new JLabel("App Name");
+		applicationLabel.setFont(new Font("arial", Font.PLAIN, 14));
+		JPanel programSelectionPanel = new JPanel(new MigLayout("fillx"));
+		programSelectionPanel.setBackground(Color.white);
+		programSelectionPanel.add(applicationLabel, "align right");
+		programSelectionPanel.add(appNameComboBox);
+		contentPane.add(programSelectionPanel, "growx, wrap");
+
+		// Group App Execution Panel
+
 		// Sort lab computers
 		labComputers = labLayout.getAllComputers();
 		Collections.sort(labComputers, new ComputerNameAlphaNumericSort());
@@ -77,16 +90,15 @@ public class LabFrame extends JFrame implements StartStopGroupButtonObserver, St
 			names[i] = labComputers.get(i).getName();
 		}
 
-		// Group App Execution Panel
 		fromClientComboBox = new JComboBox<>(new DefaultComboBoxModel<>(names));
 		fromClientComboBox.setFont(new Font("arial", Font.PLAIN, 14));
 		toClientComboBox = new JComboBox<>(new DefaultComboBoxModel<>(names));
 		toClientComboBox.setFont(new Font("arial", Font.PLAIN, 14));
 
-		computerRangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		computerRangePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
 		computerRangePanel.setBackground(Color.white);
 
-		JLabel rangeFromLabel = new JLabel("Run on Computer");
+		JLabel rangeFromLabel = new JLabel("Computer Range");
 		rangeFromLabel.setFont(new Font("arial", Font.PLAIN, 14));
 		computerRangePanel.add(rangeFromLabel);
 		computerRangePanel.add(fromClientComboBox);
@@ -95,28 +107,10 @@ public class LabFrame extends JFrame implements StartStopGroupButtonObserver, St
 		computerRangePanel.add(rangeToLabel);
 		computerRangePanel.add(toClientComboBox);
 
-		appExecutionPanel = new JPanel(new MigLayout("", "[center]"));
+		contentPane.add(computerRangePanel, "growx, wrap");
+
+		appExecutionPanel = new JPanel(new MigLayout("fillx"));
 		appExecutionPanel.setBackground(Color.white);
-
-		JPanel titlePanel = new JPanel();
-		titlePanel.setBackground(Color.WHITE);
-		titlePanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.DARK_GRAY));
-		JLabel titleLabel = new JLabel("Group Program Execution");
-		titleLabel.setFont(new Font("arial", Font.BOLD, 14));
-		titlePanel.add(titleLabel);
-		appExecutionPanel.add(titlePanel, "growx, wrap");
-
-		appNameComboBox = new JComboBox<>(appNames);
-		appNameComboBox.setFont(new Font("arial", Font.PLAIN, 14));
-		JLabel applicationLabel = new JLabel("Program Name");
-		applicationLabel.setFont(new Font("arial", Font.PLAIN, 14));
-		JPanel programSelectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		programSelectionPanel.setBackground(Color.white);
-		programSelectionPanel.add(applicationLabel);
-		programSelectionPanel.add(appNameComboBox);
-		appExecutionPanel.add(programSelectionPanel, "wrap");
-
-		appExecutionPanel.add(computerRangePanel, "wrap");
 
 		// Start Stop Group Button Panel
 		String startButtonText = "Start";
@@ -132,14 +126,13 @@ public class LabFrame extends JFrame implements StartStopGroupButtonObserver, St
 		startGroupButton.addActionListener(new StartStopGroupButtonListener(this, startButtonText, stopButtonText));
 		stopGroupButton.addActionListener(new StartStopGroupButtonListener(this, startButtonText, stopButtonText));
 
-		JPanel startStopButtonPanel = new JPanel(new FlowLayout());
+		JPanel startStopButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
 		startStopButtonPanel.setOpaque(false);
 		startStopButtonPanel.add(startGroupButton);
 		startStopButtonPanel.add(new JLabel());
 		startStopButtonPanel.add(stopGroupButton);
-		appExecutionPanel.add(startStopButtonPanel, "span");
 
-		contentPane.add(appExecutionPanel, "wrap");
+		contentPane.add(startStopButtonPanel, "growx,wrap");
 
 		setContentPane(contentPane);
 
@@ -163,7 +156,6 @@ public class LabFrame extends JFrame implements StartStopGroupButtonObserver, St
 		}
 
 		String appName = String.valueOf(appNameComboBox.getSelectedItem());
-
 
 		viewAppExeObserver.notifyAppExeRequest(appName, state, ipAddresses);
 	}
