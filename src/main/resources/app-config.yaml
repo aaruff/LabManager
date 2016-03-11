@@ -1,0 +1,8 @@
+---
+name: 'Application One'
+path: 'C:\\path\to\one.exe'
+args: "--option"
+---
+name: 'Application Two'
+path: 'C:\\path\to\two.exe'
+args: '--option'
