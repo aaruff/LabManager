@@ -1,6 +1,5 @@
 # LabManager
-Executing and monitoring applications running remote computers. LabManager is primarily designed for use in Social Science
-Research Labs were an application (experiment) needs to be executed, and monitored, from one central server.
+LabManager is a lab management tool that provides remote execution, and monitoring, of applications on remote computers from a central location.
 
 ## Setup
 Java Version: 1.8
