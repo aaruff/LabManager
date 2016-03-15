@@ -3,6 +3,7 @@ package edu.nyu.cess.remote.server.net;
 import edu.nyu.cess.remote.common.message.Message;
 import edu.nyu.cess.remote.common.message.MessageSocket;
 import edu.nyu.cess.remote.common.message.MessageSocketObserver;
+import edu.nyu.cess.remote.common.message.MessageValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,12 +24,16 @@ public class MessageMonitorThread implements Runnable
 
     public void run()
 	{
+		MessageValidator messageValidator = new MessageValidator();
 		boolean socketEnabled = true;
         while (socketEnabled) {
             try {
                 Message message = messageSocket.readMessage();
+				if ( ! messageValidator.validate(message)) {
+					logger.error("Invalid message received. Error = {}", messageValidator.getErrorMessage());
+					continue;
+				}
 
-				// todo: validate message before passing it to the observer:w
 				messageSocketObserver.notifyMessageReceived(messageSocket.getNetworkInfo(), message);
 				Thread.sleep(1000);
             } catch (IOException e) {
