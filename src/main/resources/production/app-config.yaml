@@ -1,0 +1,35 @@
+# ######################################################################################################################
+# Application/Command Configuration File
+#
+# This file contains all of the application the lab manager can execute on the lab computers.
+#
+# Usage
+#	Each application must have three properties specified. The application name, path, and args (program arguments).
+#
+#	Application Properties
+#      name: The name you would like to use for the application (e.g. Firefox, Z-Tree, etc.)
+#      path: The path on the client computer to the executable, the form of wich depending on the client operating system.
+#      args: The program arguments you would like to pass to the application (e.g. -fullscreen, -client foo, etc.)
+#
+#	   All property values must be wrapped in single quotes ''.
+#
+#	Application Separator
+#    	Each application must have a three dash "---" separator, on its own line, above the name property.
+#		For Example:
+#			---
+#			name: 'foo'
+#			path: 'C:\\foo\bar\bin\foo.exe'
+#			args: ''
+#			---
+#			name: 'doo'
+#			path: 'C:\\foo\bar\bin\doo.exe'
+#			args: ''
+# ######################################################################################################################
+---
+name: 'Application One'
+path: 'C:\\path\to\one.exe'
+args: "--option"
+---
+name: 'Application Two'
+path: 'C:\\path\to\two.exe'
+args: '--option'
