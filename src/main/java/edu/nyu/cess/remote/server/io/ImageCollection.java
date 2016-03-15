@@ -18,7 +18,7 @@ public class ImageCollection
 	private HashMap<String, ImageIcon> imageIcons = new HashMap<>();
 
 	public static final String NETWORK_ICON = "NetworkIcon";
-	private static final String NETWORK_ICON_FILE = "/images/client-network.png";
+	private static final String NETWORK_ICON_FILE = "/production/images/client-network.png";
 
 	public ImageCollection()
 	{
