@@ -40,6 +40,7 @@ public class MessageSocketManager implements MessageSender, MessageObservable
 	 */
 	public void startSocketListener()
 	{
+		MessageValidator messageValidator = new MessageValidator();
 		while (true) {
 			try {
 				synchronized (messageSocketLock) {
@@ -49,8 +50,12 @@ public class MessageSocketManager implements MessageSender, MessageObservable
 				messageSocketObserver.notifyMessageSenderState(ConnectionState.CONNECTED);
 				while (messageSocket.isConnected()) {
 					Message newClientMessage = messageSocket.readMessage();
-					// TODO: Validate messages before passing them on to the handler
-                    messageSocketObserver.notifyMessageReceived(networkInfo, newClientMessage);
+					if ( ! messageValidator.validate(newClientMessage)) {
+						log.error("Invalid message. Error: {}", messageValidator.getErrorMessage());
+						continue;
+					}
+
+					messageSocketObserver.notifyMessageReceived(networkInfo, newClientMessage);
 				}
 			} catch (IOException e) {
 				log.error("IO Exception: {}", e.getMessage());
