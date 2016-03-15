@@ -112,9 +112,8 @@
 								</transformer>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
 									<resources>
-										<resource>config.properties</resource>
-										<resource>log4j.properties</resource>
-										<resource>log4j.xml</resource>
+										<resource>/production/*</resource>
+										<resource>/development/*</resource>
 									</resources>
 								</transformer>
 							</transformers>
@@ -136,11 +135,8 @@
 								</transformer>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
 									<resources>
-										<resource>lab-layout.yaml</resource>
-										<resource>application_info.txt</resource>
-										<resource>app-config.yaml</resource>
-										<resource>log4j.properties</resource>
-										<resource>log4j.xml</resource>
+										<resource>/production/*</resource>
+										<resource>/development/*</resource>
 									</resources>
 								</transformer>
 
