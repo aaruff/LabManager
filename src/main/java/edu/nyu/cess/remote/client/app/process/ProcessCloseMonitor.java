@@ -31,7 +31,6 @@ class ProcessCloseMonitor implements Runnable
                 log.info("process null, what the hell!");
             }
         } catch (InterruptedException e) {
-			//TODO: Notify the ProcessExecutionManager when the monitor is interrupted
             log.error("Process execution interrupted.", e);
         }
 
