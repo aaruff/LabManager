@@ -1,8 +1,12 @@
 # LabManager
-LabManager is a lab management tool that provides remote execution, and monitoring, of applications on remote computers from a central location.
+LabManager is a tool for remotely executing programs or command, and monitoring them from a single computer. This
+project is primarily intended for use in a computer lab, in which it is often useful to have an easy way to start and
+stop an application on multiple lab computers at once.
 
-## Setup
+## Requirements
 Java Version: 1.8
+
+## Installation
 
 ### Client
 
