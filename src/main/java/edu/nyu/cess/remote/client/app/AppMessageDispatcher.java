@@ -69,8 +69,7 @@ public class AppMessageDispatcher implements ProcessStateObserver, MessageDispat
 
 			case APP_EXE_REQUEST:
 				if ( ! AppExecutionValidator.validate(message.getAppExe())) {
-					// TODO: Add more information
-					log.error("Invalid app execution received and ignored.");
+					log.error("Ignored invalid app exe. Error: {}.", AppExecutionValidator.getValidationError(message.getAppExe()));
 					return;
 				}
 
