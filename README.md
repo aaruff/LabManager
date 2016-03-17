@@ -1,5 +1,5 @@
- LabManager
- ==========
+LabManager
+==========
 [![Build Status](https://travis-ci.org/aaruff/LabManager.svg?branch=master)](https://travis-ci.org/aaruff/LabManager)
 LabManager is a tool for remotely executing programs or command, and monitoring them from a single computer. This
 project is primarily intended for use in a computer lab, in which it is often useful to have an easy way to start and
