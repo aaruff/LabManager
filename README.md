@@ -16,13 +16,11 @@ The LabManager tool requires two separate installation steps, one for the contro
 The control program, is the program which sends application start/stop requests, and monitors its state. The execution program
 is installed on one or more computers, and executes applications on the controllers behalf.
 
-### Controller Installation
-The controller consists of an executable `LabManager-Controller.exe`, and three configuration files:
-- app-config.yaml
-- lab-layout.yaml
-- log4j.properties
+### Controller
+The controller consists of an executable `LabManager-Controller.exe`, and three configuration files: app-config.yaml,
+lab-layout.yaml, and log4j.properties.
 
-Copy the `server` folder containing all of the above files into a directory of your choice (e.g. `C:\LabManager\controller`).
+First copy the `controller` folder into a directory of your choice (e.g. `C:\LabManager\controller`) on the controlling computer.
 
 Edit the `app-config.yaml` file and declare all of the applications you would like to run on the executors. For example:
 ```
@@ -41,12 +39,10 @@ example
 For more examples see [this tutorial](http://www.mkyong.com/logging/log4j-log4j-properties-examples/).
 
 
-### Executor Installation
-The controller consists of an executable `LabManager-Executor.exe`, and two configuration files:
-- config.properties
-- log4j.properties
+### Executor
+The controller consists of an executable `LabManager-Executor.exe`, and two configuration files: config.properties, and log4j.properties.
 
-Copy the `client` folder containing all of the above files into a directory of your choice (e.g. `C:\LabManager\executor`).
+First copy the `executor` folder containing into a directory of your choice (e.g. `C:\LabManager\executor`) on the executor computer.
 
 Edit the `config.properties` file and specify the controller computer's IP address, it's port, and the executor
 (local computer's) computer name.
