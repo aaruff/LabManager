@@ -17,8 +17,8 @@ The control program, is the program which sends application start/stop requests,
 is installed on one or more computers, and executes applications on the controllers behalf.
 
 ### Controller
-The controller consists of an executable `LabManager-Controller.exe`, and three configuration files: app-config.yaml,
-lab-layout.yaml, and log4j.properties.
+The controller consists of an executable `LabManager-Controller.exe`, and three configuration files: `app-config.yaml`,
+`lab-layout.yaml`, and `log4j.properties`.
 
 First copy the `controller` folder into a directory of your choice (e.g. `C:\LabManager\controller`) on the controlling computer.
 
@@ -40,7 +40,7 @@ For more examples see [this tutorial](http://www.mkyong.com/logging/log4j-log4j-
 
 
 ### Executor
-The controller consists of an executable `LabManager-Executor.exe`, and two configuration files: config.properties, and log4j.properties.
+The controller consists of an executable `LabManager-Executor.exe`, and two configuration files: `config.properties`, and `log4j.properties`.
 
 First copy the `executor` folder containing into a directory of your choice (e.g. `C:\LabManager\executor`) on the executor computer.
 
