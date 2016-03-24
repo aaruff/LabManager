@@ -18,7 +18,7 @@ public class Main
 {
     public static void main(String[] args)
     {
-        AppInfoCollection appInfoCollection = ConfigFileLoader.getAppInfoCollection("production/app-config.yaml");
+        AppInfoCollection appInfoCollection = ConfigFileLoader.getAppInfoCollection("production/server/app-config.yaml");
 		LabLayout labLayout = ConfigFileLoader.getLabLayout("lab-layout.yaml");
 
 		ClientPoolProxy clientPoolProxy = new ClientPoolProxy();

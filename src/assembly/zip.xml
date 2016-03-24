@@ -17,7 +17,7 @@
 
 		<!-- Client -->
 		<fileSet>
-			<directory>${project.basedir}/src/main/resources/production</directory>
+			<directory>${project.basedir}/src/main/resources/production/client</directory>
 			<outputDirectory>client/config</outputDirectory>
 			<includes>
 				<include>config.properties</include>
@@ -34,7 +34,7 @@
 
 		<!-- Server -->
 		<fileSet>
-			<directory>${project.basedir}/src/main/resources/production</directory>
+			<directory>${project.basedir}/src/main/resources/production/server</directory>
 			<outputDirectory>server/config</outputDirectory>
 			<includes>
 				<include>app-config.yaml</include>
