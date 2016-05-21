@@ -4,7 +4,7 @@ import edu.nyu.cess.remote.server.lab.Computer;
 
 import java.util.Comparator;
 
-public class ComputerNameAlphaNumericSort implements Comparator<Computer>
+public class ComputerNameAlphaNumericComparator implements Comparator<Computer>
 {
     public int compare(Computer firstComputer, Computer secondComputer) {
         String firstString = removePadding(firstComputer.getName());

@@ -14,7 +14,7 @@ import edu.nyu.cess.remote.server.gui.panels.ComputerLayoutPanel;
 import edu.nyu.cess.remote.server.gui.panels.ComputersConnectedPanel;
 import edu.nyu.cess.remote.server.lab.Computer;
 import edu.nyu.cess.remote.server.lab.LabLayout;
-import edu.nyu.cess.remote.server.lib.ComputerNameAlphaNumericSort;
+import edu.nyu.cess.remote.server.lib.ComputerNameAlphaNumericComparator;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
@@ -84,7 +84,7 @@ public class LabFrame extends JFrame implements StartStopGroupButtonObserver, St
 
 		// Sort lab computers
 		labComputers = labLayout.getAllComputers();
-		Collections.sort(labComputers, new ComputerNameAlphaNumericSort());
+		Collections.sort(labComputers, new ComputerNameAlphaNumericComparator());
 		String[] names = new String[labComputers.size()];
 		for (int i = 0; i < labComputers.size(); ++i) {
 			names[i] = labComputers.get(i).getName();
