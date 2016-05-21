@@ -14,13 +14,11 @@ import edu.nyu.cess.remote.server.gui.panels.ComputerLayoutPanel;
 import edu.nyu.cess.remote.server.gui.panels.ComputersConnectedPanel;
 import edu.nyu.cess.remote.server.lab.Computer;
 import edu.nyu.cess.remote.server.lab.LabLayout;
-import edu.nyu.cess.remote.server.lib.ComputerNameAlphaNumericComparator;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 
 /**
  * The lab frame lays the the lab manager view, and renders it, and handles any events that occur.
@@ -56,15 +54,6 @@ public class LabFrame extends JFrame implements StartStopGroupButtonObserver, St
 		computersConnectedPanel = new ComputersConnectedPanel();
 		contentPane.add(computersConnectedPanel, "wrap");
 
-		// Menu bar
-		/*
-		JMenuBar menuBar = new JMenuBar();
-		JMenu labManagerMenu = new JMenu("Lab Manager");
-		labManagerMenu.add(new JMenuItem("Add a Program"));
-		menuBar.add(labManagerMenu);
-		setJMenuBar(menuBar);
-		*/
-
 		// Computer Layout Panel
 		computerLayoutPanel = new ComputerLayoutPanel(labLayout, this);
 		contentPane.add(computerLayoutPanel, "wrap");
@@ -84,7 +73,7 @@ public class LabFrame extends JFrame implements StartStopGroupButtonObserver, St
 
 		// Sort lab computers
 		labComputers = labLayout.getAllComputers();
-		Collections.sort(labComputers, new ComputerNameAlphaNumericComparator());
+		labComputers.sort((c1, c2) -> c1.getName().compareToIgnoreCase(c2.getName()));
 		String[] names = new String[labComputers.size()];
 		for (int i = 0; i < labComputers.size(); ++i) {
 			names[i] = labComputers.get(i).getName();
